@@ -4,20 +4,20 @@
 SaaS d'automatisation pour agents immobiliers
 
 ## ✅ Fait
-- Initialisation du projet en local (Git init + premier commit)
+- Initialisation du projet en local
 - Repo GitHub créé : github.com/timal76/flowestate
-- Projet Next.js configuré
 - SSH configuré sur Mac (port 443)
-- Push initial sur GitHub confirmé
-- Vercel connecté à GitHub et déployé ✅
-- Site en ligne automatiquement à chaque push
-
-## 🔄 En cours
-- Réflexion sur les fonctionnalités prioritaires
+- Vercel connecté et déployé
+- Landing page complète :
+  - Header fixe avec ligne or
+  - Hero section avec gradient doré et animation fade-in
+  - Section 3 fonctionnalités avec hover or
+  - Section tarifs : plans Starter 49€ et Pro 99€
+  - Section CTA finale
+  - Footer minimaliste
 
 ## ⏭️ Prochaine étape
-- Définir les fonctionnalités clés du SaaS
-- Commencer la structure des pages
+- Générateur d'annonces immobilières (page dédiée + formulaire + API Claude)
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
