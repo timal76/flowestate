@@ -5,19 +5,23 @@ SaaS d'automatisation pour agents immobiliers
 
 ## ✅ Fait
 - Initialisation du projet en local (Git init + premier commit)
-- Repo GitHub "flowestate" créé
+- Repo GitHub créé : github.com/timal76/flowestate
 - Projet Next.js configuré
+- SSH configuré sur Mac (port 443)
+- Push initial sur GitHub confirmé
+- Vercel connecté à GitHub et déployé ✅
+- Site en ligne automatiquement à chaque push
 
 ## 🔄 En cours
-- Connexion repo local → GitHub (push initial pas encore confirmé)
+- Réflexion sur les fonctionnalités prioritaires
 
 ## ⏭️ Prochaine étape
-- Confirmer le push sur GitHub
-- Démarrer la structure du projet
+- Définir les fonctionnalités clés du SaaS
+- Commencer la structure des pages
 
 ## 🗂️ Stack technique
-- Next.js
-- TypeScript
+- Next.js + TypeScript
+- GitHub : github.com/timal76/flowestate
 - Hébergement : Vercel
 
 ## 📅 Dernière mise à jour
