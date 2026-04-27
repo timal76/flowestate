@@ -20,7 +20,7 @@ export default function HomePage() {
       </a>
     </nav>
   </div>
-  <div className="h-px w-full bg-gradient-to-r from-transparent via-[#C9A96E]/70 to-transparent" />
+  <div className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-[#C9A96E]/100 to-transparent" />
 </header>
 
       {/* Hero */}
@@ -47,7 +47,7 @@ export default function HomePage() {
       <div className="pt-4">
         <a
           href="#"
-          className="animate-fade-in-up-delayed inline-flex items-center rounded-full border border-[#C9A96E] bg-transparent px-8 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 ease-out hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+          className="animate-fade-in-up-delayed inline-flex items-center rounded-full border-2 border-[#C9A96E] bg-transparent px-8 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 ease-out hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
         >
           Commencer gratuitement
         </a>
@@ -69,7 +69,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            <article className="rounded-2xl border border-white/10 bg-white/[0.02] p-8">
+            <article className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   aria-hidden="true"
@@ -89,7 +89,7 @@ export default function HomePage() {
               </p>
             </article>
 
-            <article className="rounded-2xl border border-white/10 bg-white/[0.02] p-8">
+            <article className="rounded-2xl border border-white/10 bg-white/[0.02]p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   aria-hidden="true"
@@ -112,7 +112,7 @@ export default function HomePage() {
               </p>
             </article>
 
-            <article className="rounded-2xl border border-white/10 bg-white/[0.02] p-8">
+            <article className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">"
               <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   aria-hidden="true"
@@ -139,8 +139,108 @@ export default function HomePage() {
       </section>
 
       {/* Ancres demandées dans la navigation */}
-      <section id="tarifs" className="sr-only" aria-hidden="true" />
+     {/* Tarifs */}
+<section id="tarifs" className="px-6 py-28 md:px-10">
+  <div className="mx-auto w-full max-w-7xl">
+    <div className="mb-14 max-w-2xl space-y-4">
+      <h2 className="text-3xl font-semibold md:text-4xl">Des plans simples et efficaces.</h2>
+      <p className="text-[#A0A0A0]">
+        Choisissez le niveau d'automatisation adapté à votre équipe.
+      </p>
+    </div>
+
+    <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+    <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+  <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Starter</p>
+  <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
+    49€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+  </p>
+
+  <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
+    <li className="flex items-center gap-3 py-3">
+      <span className="text-[#C9A96E]">✓</span>
+      <span>1 utilisateur</span>
+    </li>
+    <li className="flex items-center gap-3 py-3">
+      <span className="text-[#C9A96E]">✓</span>
+      <span>Accès aux 3 outils IA</span>
+    </li>
+    <li className="flex items-center gap-3 py-3">
+      <span className="text-[#C9A96E]">✓</span>
+      <span>50 générations/mois</span>
+    </li>
+  </ul>
+
+  <a
+    href="#"
+    className="mt-auto inline-flex w-full items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+  >
+    Commencer
+  </a>
+</article>
+
+<article
+  className="flex flex-col rounded-2xl border border-[#C9A96E] bg-white/[0.03] p-8 transition-all duration-300 hover:border-[#C9A96E] hover:bg-white/[0.05]"
+  style={{ boxShadow: "0 0 28px rgba(201, 169, 110, 0.18)" }}
+>
+  <div className="mb-3 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
+    Le plus populaire
+  </div>
+  <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Pro</p>
+  <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
+    99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+  </p>
+
+  <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
+    <li className="flex items-center gap-3 py-3">
+      <span className="text-[#C9A96E]">✓</span>
+      <span>5 utilisateurs</span>
+    </li>
+    <li className="flex items-center gap-3 py-3">
+      <span className="text-[#C9A96E]">✓</span>
+      <span>Accès aux 3 outils IA</span>
+    </li>
+    <li className="flex items-center gap-3 py-3">
+      <span className="text-[#C9A96E]">✓</span>
+      <span>Générations illimitées</span>
+    </li>
+    <li className="flex items-center gap-3 py-3">
+      <span className="text-[#C9A96E]">✓</span>
+      <span>Support prioritaire</span>
+    </li>
+  </ul>
+
+  <a
+    href="#"
+    className="mt-auto inline-flex w-full items-center justify-center rounded-full border border-[#B8943F] bg-[#B8943F] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90"
+  >
+    Choisir Pro
+  </a>
+</article>
+
+      
+    </div>
+  </div>
+</section>
       <section id="connexion" className="sr-only" aria-hidden="true" />
+
+      {/* CTA */}
+      <section className="border-t border-white/10 bg-white/[0.02] px-6 py-28 md:px-10">
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
+          <h2 className="text-3xl font-semibold text-[#F5F5F0] md:text-4xl">
+            Prêt à transformer votre quotidien ?
+          </h2>
+          <p className="mt-4 text-lg text-[#A0A0A0] md:text-xl">
+            Rejoignez les agences qui gagnent du temps chaque jour.
+          </p>
+          <a
+            href="#"
+            className="mt-10 inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-8 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 ease-out hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+          >
+            Commencer gratuitement
+          </a>
+        </div>
+      </section>
 
       {/* Footer minimaliste */}
       <footer className="border-t border-white/10 px-6 py-8 md:px-10">
