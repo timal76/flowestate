@@ -17,10 +17,19 @@ SaaS d'automatisation pour agents immobiliers
   - Rendu Markdown
   - Bouton copier
   - Ton humain et professionnel
+- Page emails de relance complète :
+  - Formulaire complet (prospect, bien, situation, objections, infos personnelles, délai)
+  - Champs agent : nom, agence, téléphone, email
+  - Choix du ton et de la longueur
+  - Intégration API Claude réelle
+  - Signature formatée automatiquement
+  - Bouton copier
+  - Rendu Markdown
 
 ## ⏭️ Prochaine étape
-- Page emails de relance
 - Page compte-rendu de visite
+- Export PDF
+- Authentification agents
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
