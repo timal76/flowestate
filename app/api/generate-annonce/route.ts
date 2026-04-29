@@ -1,0 +1,137 @@
+import { NextResponse } from "next/server";
+
+type GenerateAnnoncePayload = {
+  propertyType?: string;
+  mandateType?: string;
+  price?: string;
+  area?: string;
+  rooms?: string;
+  floor?: string;
+  elevator?: string;
+  dpe?: string;
+  parking?: string;
+  monthlyCharges?: string;
+  availability?: string;
+  location?: string;
+  highlights?: string;
+  tone?: string;
+  length?: string;
+  images?: Array<{
+    data?: string;
+    mediaType?: string;
+  }>;
+};
+
+export async function POST(request: Request) {
+  try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "ANTHROPIC_API_KEY manquant dans les variables d'environnement." },
+        { status: 500 }
+      );
+    }
+
+    const body = (await request.json()) as GenerateAnnoncePayload;
+
+    const userPrompt = `
+Voici les donnees du bien immobilier a transformer en annonce :
+
+- Type de bien : ${body.propertyType || "Non precise"}
+- Type de mandat : ${body.mandateType || "Non precise"}
+- Prix : ${body.price || "Non precise"}
+- Surface : ${body.area || "Non precise"} m2
+- Nombre de pieces : ${body.rooms || "Non precise"}
+- Localisation : ${body.location || "Non precise"}
+- Etage : ${body.floor || "Non precise"}
+- Ascenseur : ${body.elevator || "Non precise"}
+- DPE : ${body.dpe || "Non precise"}
+- Parking/Garage : ${body.parking || "Non precise"}
+- Charges mensuelles : ${body.monthlyCharges || "Non precise"} EUR
+- Disponibilite : ${body.availability || "Non precise"}
+- Points forts : ${body.highlights || "Non precise"}
+- Ton souhaite : ${body.tone || "Professionnel"}
+- Longueur souhaitee : ${body.length || "Standard (~300 mots)"}
+
+Consignes :
+- Redige en francais.
+- Propose une annonce immobiliere claire, elegante et persuasive.
+- Utilise un style adapte au ton demande.
+- Retourne uniquement le texte final de l'annonce, sans titre technique ni JSON.
+    `.trim();
+
+    const images = body.images ?? [];
+    const imageContents =
+      images
+        .filter((img) => Boolean(img?.data))
+        .map((img) => ({
+          type: "image" as const,
+          source: {
+            type: "base64" as const,
+            media_type: img.mediaType || "image/jpeg",
+            data: img.data as string,
+          },
+        })) ?? [];
+
+    const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-opus-4-5",
+        max_tokens: 800,
+        system:
+          "Tu es un agent immobilier expérimenté qui rédige ses propres annonces depuis 20 ans. Tu écris de façon naturelle, directe et convaincante. Ton style est humain, chaleureux et professionnel — jamais pompeux ni trop littéraire. Tu n'utilises jamais d'expressions comme 'havre de paix', 'demeure d'exception', 'nichée', 'baignée de lumière'. Tu décris les biens comme tu les as visités toi-même. Tu adaptes la longueur selon la demande : Courte = 150 mots, Standard = 300 mots, Détaillée = 500 mots. Tu ne mentionnes jamais l'IA.",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: userPrompt },
+              ...imageContents,
+            ],
+          },
+        ],
+      }),
+    });
+
+    const anthropicJson = (await anthropicResponse.json()) as {
+      content?: Array<{ type?: string; text?: string }>;
+      error?: { message?: string };
+    };
+
+    if (!anthropicResponse.ok) {
+      return NextResponse.json(
+        {
+          error:
+            anthropicJson.error?.message ||
+            "Erreur lors de l'appel a l'API Anthropic.",
+        },
+        { status: anthropicResponse.status }
+      );
+    }
+
+    const annonce =
+      anthropicJson.content
+        ?.filter((block) => block.type === "text" && Boolean(block.text))
+        .map((block) => block.text)
+        .join("\n")
+        .trim() || "";
+
+    if (!annonce) {
+      return NextResponse.json(
+        { error: "Aucun texte n'a ete genere par Anthropic." },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ annonce });
+  } catch {
+    return NextResponse.json(
+      { error: "Erreur interne lors de la generation de l'annonce." },
+      { status: 500 }
+    );
+  }
+}
