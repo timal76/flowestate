@@ -8,21 +8,25 @@ SaaS d'automatisation pour agents immobiliers
 - Repo GitHub créé : github.com/timal76/flowestate
 - SSH configuré sur Mac (port 443)
 - Vercel connecté et déployé
-- Landing page complète :
-  - Header fixe avec ligne or
-  - Hero section avec gradient doré et animation fade-in
-  - Section 3 fonctionnalités avec hover or
-  - Section tarifs : plans Starter 49€ et Pro 99€
-  - Section CTA finale
-  - Footer minimaliste
+- Landing page complète : header, hero, fonctionnalités, tarifs, CTA, footer
+- Générateur d'annonces complet :
+  - Formulaire avec tous les champs (type, mandat, prix, surface, pièces, étage, ascenseur, DPE, parking, charges, disponibilité, localisation, points forts)
+  - Upload de 5 photos maximum avec miniatures et suppression individuelle
+  - Choix de la longueur : courte, standard, détaillée
+  - Intégration API Claude réelle
+  - Rendu Markdown
+  - Bouton copier
+  - Ton humain et professionnel
 
 ## ⏭️ Prochaine étape
-- Générateur d'annonces immobilières (page dédiée + formulaire + API Claude)
+- Page emails de relance
+- Page compte-rendu de visite
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
 - GitHub : github.com/timal76/flowestate
 - Hébergement : Vercel
+- API : Anthropic Claude
 
 ## 📅 Dernière mise à jour
-- Session du 27 avril 2026
+- Session du 29 avril 2026
