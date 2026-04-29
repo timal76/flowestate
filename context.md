@@ -25,10 +25,18 @@ SaaS d'automatisation pour agents immobiliers
   - Signature formatée automatiquement
   - Bouton copier
   - Rendu Markdown
+- Page compte-rendu de visite complète :
+  - Formulaire complet (prospect, bien, visite, réactions, questions, prochaines étapes)
+  - Upload logo et signature électronique avec preview et suppression
+  - Intégration API Claude réelle
+  - Export PDF professionnel avec logo, signature, mise en page A4
+  - Bouton copier
+  - Rendu Markdown
 
 ## ⏭️ Prochaine étape
-- Page compte-rendu de visite
-- Export PDF
+- Corriger titres orphelins dans le PDF
+- Dashboard avec les 3 outils
+- Navigation entre les pages
 - Authentification agents
 
 ## 🗂️ Stack technique
