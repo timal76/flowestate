@@ -3,7 +3,7 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import ReactMarkdown from "react-markdown";
-import { FormEvent, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { FormEvent, useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 type PropertyType = "Appartement" | "Maison" | "Studio" | "Loft" | "Villa";
 type VisitDuration = "15 min" | "30 min" | "45 min" | "1h" | "1h30" | "2h";
@@ -70,7 +70,6 @@ const initialForm: FormState = {
 };
 
 export default function VisitReportPage() {
-  const pdfRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [generatedReport, setGeneratedReport] = useState("");
   const [copied, setCopied] = useState(false);
@@ -180,46 +179,51 @@ export default function VisitReportPage() {
   }
 
   async function handleDownloadPdf() {
-    if (!generatedReport || !pdfRef.current) return;
+    const element = document.getElementById("pdf-content");
+    if (!generatedReport || !element) return;
 
     try {
       setIsPdfLoading(true);
-
-      const canvas = await html2canvas(pdfRef.current, {
+      const canvas = await html2canvas(element, {
         scale: 2,
-        backgroundColor: "#ffffff",
         useCORS: true,
+        logging: false,
       });
 
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = 210;
-      const pdfHeight = 297;
-      const margin = 10;
-      const contentWidth = pdfWidth - margin * 2;
-      const contentHeight = (canvas.height * contentWidth) / canvas.width;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = pdfWidth / canvasWidth;
+      const scaledHeight = canvasHeight * ratio;
 
-      let renderedHeight = 0;
-      let pageIndex = 0;
-      while (renderedHeight < contentHeight) {
-        const sourceY = (renderedHeight * canvas.width) / contentWidth;
-        const remainingHeight = contentHeight - renderedHeight;
-        const pageContentHeight = Math.min(remainingHeight, pdfHeight - margin * 2);
-        const sourceHeight = (pageContentHeight * canvas.width) / contentWidth;
+      let position = 0;
+      let remainingHeight = scaledHeight;
+
+      while (remainingHeight > 0) {
+        const srcY = position / ratio;
+        const srcH = Math.min(pdfHeight / ratio, canvasHeight - srcY);
 
         const pageCanvas = document.createElement("canvas");
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sourceHeight;
+        pageCanvas.width = canvasWidth;
+        pageCanvas.height = srcH * 2;
         const ctx = pageCanvas.getContext("2d");
         if (!ctx) throw new Error("Impossible de générer le PDF.");
-        ctx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
+        ctx.drawImage(canvas, 0, srcY * 2, canvasWidth * 2, srcH * 2, 0, 0, canvasWidth, srcH * 2);
 
-        const pageImgData = pageCanvas.toDataURL("image/png");
-        if (pageIndex > 0) pdf.addPage();
-        pdf.addImage(pageImgData, "PNG", margin, margin, contentWidth, pageContentHeight);
+        if (position > 0) pdf.addPage();
+        pdf.addImage(
+          pageCanvas.toDataURL("image/png"),
+          "PNG",
+          0,
+          0,
+          pdfWidth,
+          Math.min(pdfHeight, remainingHeight)
+        );
 
-        renderedHeight += pageContentHeight;
-        pageIndex += 1;
+        position += pdfHeight / ratio;
+        remainingHeight -= pdfHeight;
       }
 
       pdf.save("compte-rendu-visite.pdf");
@@ -627,7 +631,7 @@ export default function VisitReportPage() {
 
       <div className="fixed -left-[9999px] top-0 z-[-1]">
         <div
-          ref={pdfRef}
+          id="pdf-content"
           style={{
             width: "794px",
             background: "#ffffff",
@@ -710,6 +714,7 @@ export default function VisitReportPage() {
           </div>
         </div>
       </div>
+
     </main>
   );
 }
