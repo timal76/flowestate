@@ -71,9 +71,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            <article className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
-              <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
+          <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+            <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+              <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 24 24"
@@ -82,18 +82,22 @@ export default function HomePage() {
                   stroke="currentColor"
                   strokeWidth="1.8"
                 >
-                  <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
+                  <path
+                    d="M4 10.75 12 4l8 6.75V20a2 2 0 01-2 2h-3v-7H11v7H8a2 2 0 01-2-2v-9.25z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </div>
               <h3 className="mb-3 text-xl font-semibold">Générateur d'annonces</h3>
-              <p className="text-sm leading-relaxed text-[#A0A0A0]">
+              <p className="flex-1 text-sm leading-relaxed text-[#A0A0A0]">
                 Créez des annonces claires et convaincantes en quelques secondes, adaptées à chaque
                 bien.
               </p>
             </article>
 
-            <article className="rounded-2xl border border-white/10 bg-white/[0.02]p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
-              <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
+            <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+              <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 24 24"
@@ -110,13 +114,13 @@ export default function HomePage() {
                 </svg>
               </div>
               <h3 className="mb-3 text-xl font-semibold">Emails de relance</h3>
-              <p className="text-sm leading-relaxed text-[#A0A0A0]">
+              <p className="flex-1 text-sm leading-relaxed text-[#A0A0A0]">
                 Envoyez des relances personnalisées automatiquement pour ne manquer aucune opportunité.
               </p>
             </article>
 
-            <article className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">"
-              <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
+            <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+              <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 24 24"
@@ -126,13 +130,20 @@ export default function HomePage() {
                   strokeWidth="1.8"
                 >
                   <path
-                    d="M7 4h10M7 20h10M6 8h12M6 12h8M6 16h12"
+                    d="M9 5h6M9 5a2 2 0 012-2h2a2 2 0 012 2v2H9V5z"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
+                  <path
+                    d="M8 10h14a2 2 0 012 2v9a2 2 0 01-2 2H8a2 2 0 01-2-2v-9a2 2 0 012-2z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path d="M10 14h10M10 17h10" strokeLinecap="round" />
                 </svg>
               </div>
               <h3 className="mb-3 text-xl font-semibold">Compte-rendu de visite</h3>
-              <p className="text-sm leading-relaxed text-[#A0A0A0]">
+              <p className="flex-1 text-sm leading-relaxed text-[#A0A0A0]">
                 Générez un compte-rendu structuré après chaque visite, prêt à partager avec vendeurs
                 et acquéreurs.
               </p>
