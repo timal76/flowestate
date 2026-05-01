@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const router = useRouter();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -38,9 +38,29 @@ export default function LoginPage() {
               "0 0 40px -16px rgba(184, 150, 90, 0.28), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
-          <h1 className="text-center text-2xl font-semibold text-[#F5F5F0]">Connexion</h1>
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#B8965A]/40 bg-[#B8965A]/10 text-[#B8965A]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={24}
+                height={24}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </div>
+          </div>
+
+          <h1 className="text-center text-2xl font-semibold text-[#F5F5F0]">Mot de passe oublié</h1>
           <p className="mt-2 text-center text-sm text-[#A0A0A0]">
-            Accédez à votre espace agent
+            Entrez votre email, on vous envoie un lien de réinitialisation
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -55,45 +75,20 @@ export default function LoginPage() {
               />
             </label>
 
-            <label className="block space-y-2">
-              <span className="text-sm text-[#A0A0A0]">Mot de passe</span>
-              <input
-                type="password"
-                name="password"
-                autoComplete="current-password"
-                placeholder="••••••••"
-                className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition focus:border-[#B8965A]/70"
-              />
-            </label>
-
-            <div className="flex justify-end">
-              <Link
-                href="/forgot-password"
-                className="text-xs font-medium text-[#B8965A] transition hover:text-[#c9a873]"
-              >
-                Mot de passe oublié ?
-              </Link>
-            </div>
-
             <button
               type="submit"
               className="w-full rounded-xl bg-[#B8965A] py-3 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#c9a873] active:scale-[0.99]"
             >
-              Se connecter
+              Envoyer le lien
             </button>
           </form>
 
-          <p className="my-8 text-center text-xs text-[#6b6b6b] select-none">
-            ────&nbsp;&nbsp;ou&nbsp;&nbsp;────
-          </p>
-
-          <p className="text-center text-sm text-[#A0A0A0]">
-            Pas encore de compte ?{" "}
+          <p className="mt-8 text-center text-sm text-[#A0A0A0]">
             <Link
-              href="/register"
+              href="/login"
               className="font-medium text-[#B8965A] transition hover:text-[#c9a873] hover:underline"
             >
-              Commencer gratuitement
+              Retour à la connexion
             </Link>
           </p>
         </div>

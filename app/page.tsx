@@ -1,41 +1,10 @@
 import Link from "next/link";
+import SiteHeader from "@/components/site-header";
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
-      {/* Header fixe */}
-      <header className="fixed inset-x-0 top-0 z-50 bg-[#0A0A0A]/85 backdrop-blur-md">
-  <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-6 md:px-10">
-    <div className="text-xl font-semibold tracking-wide text-[#C9A96E]">
-      FlowEstate
-    </div>
-
-    <nav className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm font-medium text-[#A0A0A0]">
-      <Link href="/dashboard" className="transition hover:text-[#F5F5F0]">
-        Dashboard
-      </Link>
-      <Link href="/annonces" className="transition hover:text-[#F5F5F0]">
-        Annonces
-      </Link>
-      <Link href="/emails" className="transition hover:text-[#F5F5F0]">
-        Emails
-      </Link>
-      <Link href="/comptes-rendus" className="transition hover:text-[#F5F5F0]">
-        Comptes-rendus
-      </Link>
-      <Link href="/" className="transition hover:text-[#F5F5F0]">
-        Accueil
-      </Link>
-      <Link
-        href="/login"
-        className="ml-8 inline-flex items-center rounded-full border border-[#C9A96E] bg-transparent px-4 py-2 text-xs font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
-      >
-        Connexion
-      </Link>
-    </nav>
-  </div>
-  <div className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-[#C9A96E]/100 to-transparent" />
-</header>
+      <SiteHeader />
 
       {/* Hero */}
       <section className="relative flex min-h-screen items-center px-6 pt-32 md:px-10">
@@ -59,12 +28,12 @@ export default function HomePage() {
       </p>
 
       <div className="pt-4">
-        <a
-          href="#"
+        <Link
+          href="/register"
           className="animate-fade-in-up-delayed inline-flex items-center rounded-full border-2 border-[#C9A96E] bg-transparent px-8 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 ease-out hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
         >
           Commencer gratuitement
-        </a>
+        </Link>
       </div>
     </div>
   </div>
@@ -206,12 +175,12 @@ export default function HomePage() {
     </li>
   </ul>
 
-  <a
-    href="#"
+  <Link
+    href="/register"
     className="mt-auto inline-flex w-full items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
   >
     Commencer
-  </a>
+  </Link>
 </article>
 
 <article
@@ -245,12 +214,12 @@ export default function HomePage() {
     </li>
   </ul>
 
-  <a
-    href="#"
+  <Link
+    href="/register"
     className="mt-auto inline-flex w-full items-center justify-center rounded-full border border-[#B8943F] bg-[#B8943F] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90"
   >
     Choisir Pro
-  </a>
+  </Link>
 </article>
 
       
@@ -268,12 +237,12 @@ export default function HomePage() {
           <p className="mt-4 text-lg text-[#A0A0A0] md:text-xl">
             Rejoignez les agences qui gagnent du temps chaque jour.
           </p>
-          <a
-            href="#"
+          <Link
+            href="/register"
             className="mt-10 inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-8 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 ease-out hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
           >
             Commencer gratuitement
-          </a>
+          </Link>
         </div>
       </section>
 

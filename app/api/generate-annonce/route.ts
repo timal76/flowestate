@@ -34,6 +34,21 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as GenerateAnnoncePayload;
 
+    const tone = body.tone || "Professionnel";
+
+    const systemPrompt = `Tu es un agent immobilier expérimenté qui rédige des annonces depuis 20 ans. Tu écris de façon naturelle, directe et convaincante. Ton style est humain et professionnel.
+
+Règles strictes :
+- Jamais d'expressions clichées : 'havre de paix', 'demeure d'exception', 'nichée', 'baignée de lumière', 'coup de coeur'
+- Commence toujours par une accroche forte et originale sur le bien ou la localisation
+- Structure : Accroche → Description du bien → Points forts → Informations pratiques (prix, charges, dispo)
+- Ton Professionnel : factuel, précis, sobre
+- Ton Chaleureux : humain, accessible, projections lifestyle
+- Ton Luxe : élégant, valorisant, vocabulaire haut de gamme sans être pompeux
+- Respecte strictement la longueur : Courte=150 mots, Standard=300 mots, Détaillée=500 mots
+- Ne mentionne jamais l'IA
+- Retourne uniquement le texte de l'annonce, rien d'autre`;
+
     const userPrompt = `
 Voici les donnees du bien immobilier a transformer en annonce :
 
@@ -50,8 +65,10 @@ Voici les donnees du bien immobilier a transformer en annonce :
 - Charges mensuelles : ${body.monthlyCharges || "Non precise"} EUR
 - Disponibilite : ${body.availability || "Non precise"}
 - Points forts : ${body.highlights || "Non precise"}
-- Ton souhaite : ${body.tone || "Professionnel"}
+- Ton souhaite : ${tone}
 - Longueur souhaitee : ${body.length || "Standard (~300 mots)"}
+
+Ton imposé : ${tone}. Sois cohérent avec ce ton du début à la fin de l'annonce.
 
 Consignes :
 - Redige en francais.
@@ -81,10 +98,9 @@ Consignes :
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-opus-4-5",
+        model: "claude-sonnet-4-5",
         max_tokens: 800,
-        system:
-          "Tu es un agent immobilier expérimenté qui rédige ses propres annonces depuis 20 ans. Tu écris de façon naturelle, directe et convaincante. Ton style est humain, chaleureux et professionnel — jamais pompeux ni trop littéraire. Tu n'utilises jamais d'expressions comme 'havre de paix', 'demeure d'exception', 'nichée', 'baignée de lumière'. Tu décris les biens comme tu les as visités toi-même. Tu adaptes la longueur selon la demande : Courte = 150 mots, Standard = 300 mots, Détaillée = 500 mots. Tu ne mentionnes jamais l'IA.",
+        system: systemPrompt,
         messages: [
           {
             role: "user",

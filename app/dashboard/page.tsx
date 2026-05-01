@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import SiteHeader from "@/components/site-header";
+
 export const dynamic = "force-dynamic";
 
 const goldRgb = "201, 169, 110";
@@ -143,41 +145,7 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
-      <header className="fixed inset-x-0 top-0 z-50 bg-[#0A0A0A]/85 backdrop-blur-md">
-        <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-6 md:px-10">
-          <Link href="/" className="text-xl font-semibold tracking-wide text-[#C9A96E]">
-            FlowEstate
-          </Link>
-
-          <nav className="flex flex-wrap items-center justify-end gap-x-8 gap-y-2 text-sm font-medium text-[#A0A0A0]">
-            <span
-              className="font-semibold text-[#C9A96E] underline decoration-[#C9A96E] decoration-2 underline-offset-4"
-              aria-current="page"
-            >
-              Dashboard
-            </span>
-            <Link href="/annonces" className="transition hover:text-[#F5F5F0]">
-              Annonces
-            </Link>
-            <Link href="/emails" className="transition hover:text-[#F5F5F0]">
-              Emails
-            </Link>
-            <Link href="/comptes-rendus" className="transition hover:text-[#F5F5F0]">
-              Comptes-rendus
-            </Link>
-            <Link href="/" className="transition hover:text-[#F5F5F0]">
-              Accueil
-            </Link>
-            <Link
-              href="/login"
-              className="ml-8 inline-flex items-center rounded-full border border-[#C9A96E] bg-transparent px-4 py-2 text-xs font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
-            >
-              Connexion
-            </Link>
-          </nav>
-        </div>
-        <div className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-[#C9A96E] to-transparent" />
-      </header>
+      <SiteHeader />
 
       <div
         className="pointer-events-none fixed inset-0 -z-10"
