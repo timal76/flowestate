@@ -341,7 +341,10 @@ export default function VisitReportPage() {
           <a href="/" className="text-xl font-semibold tracking-wide text-[#C9A96E]">
             FlowEstate
           </a>
-          <nav className="flex items-center gap-8 text-sm font-medium text-[#A0A0A0]">
+          <nav className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm font-medium text-[#A0A0A0]">
+            <a href="/dashboard" className="transition hover:text-[#F5F5F0]">
+              Dashboard
+            </a>
             <a href="/annonces" className="transition hover:text-[#F5F5F0]">
               Annonces
             </a>
@@ -353,6 +356,12 @@ export default function VisitReportPage() {
             </a>
             <a href="/" className="transition hover:text-[#F5F5F0]">
               Accueil
+            </a>
+            <a
+              href="/login"
+              className="ml-8 inline-flex items-center rounded-full border border-[#C9A96E] bg-transparent px-4 py-2 text-xs font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+            >
+              Connexion
             </a>
           </nav>
         </div>

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
@@ -8,19 +10,28 @@ export default function HomePage() {
       FlowEstate
     </div>
 
-    <nav className="flex items-center gap-8 text-sm font-medium text-[#A0A0A0]">
-      <a href="/annonces" className="transition hover:text-[#F5F5F0]">
+    <nav className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm font-medium text-[#A0A0A0]">
+      <Link href="/dashboard" className="transition hover:text-[#F5F5F0]">
+        Dashboard
+      </Link>
+      <Link href="/annonces" className="transition hover:text-[#F5F5F0]">
         Annonces
-      </a>
-      <a href="/emails" className="transition hover:text-[#F5F5F0]">
+      </Link>
+      <Link href="/emails" className="transition hover:text-[#F5F5F0]">
         Emails
-      </a>
-      <a href="/comptes-rendus" className="transition hover:text-[#F5F5F0]">
+      </Link>
+      <Link href="/comptes-rendus" className="transition hover:text-[#F5F5F0]">
         Comptes-rendus
-      </a>
-      <a href="/" className="transition hover:text-[#F5F5F0]">
+      </Link>
+      <Link href="/" className="transition hover:text-[#F5F5F0]">
         Accueil
-      </a>
+      </Link>
+      <Link
+        href="/login"
+        className="ml-8 inline-flex items-center rounded-full border border-[#C9A96E] bg-transparent px-4 py-2 text-xs font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+      >
+        Connexion
+      </Link>
     </nav>
   </div>
   <div className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-[#C9A96E]/100 to-transparent" />
@@ -72,7 +83,10 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
-            <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+            <Link
+              href="/annonces"
+              className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-inherit no-underline outline-none transition-all duration-300 hover:border-[#C9A96E]/75 hover:bg-white/[0.055] hover:shadow-[0_0_32px_-12px_rgba(201,169,110,0.38)] focus-visible:ring-2 focus-visible:ring-[#C9A96E]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] md:h-full"
+            >
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -95,9 +109,12 @@ export default function HomePage() {
                 Créez des annonces claires et convaincantes en quelques secondes, adaptées à chaque
                 bien.
               </p>
-            </article>
+            </Link>
 
-            <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+            <Link
+              href="/emails"
+              className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-inherit no-underline outline-none transition-all duration-300 hover:border-[#C9A96E]/75 hover:bg-white/[0.055] hover:shadow-[0_0_32px_-12px_rgba(201,169,110,0.38)] focus-visible:ring-2 focus-visible:ring-[#C9A96E]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] md:h-full"
+            >
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -119,9 +136,12 @@ export default function HomePage() {
               <p className="flex-1 text-sm leading-relaxed text-[#A0A0A0]">
                 Envoyez des relances personnalisées automatiquement pour ne manquer aucune opportunité.
               </p>
-            </article>
+            </Link>
 
-            <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+            <Link
+              href="/comptes-rendus"
+              className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-inherit no-underline outline-none transition-all duration-300 hover:border-[#C9A96E]/75 hover:bg-white/[0.055] hover:shadow-[0_0_32px_-12px_rgba(201,169,110,0.38)] focus-visible:ring-2 focus-visible:ring-[#C9A96E]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] md:h-full"
+            >
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -148,7 +168,7 @@ export default function HomePage() {
                 Générez un compte-rendu structuré après chaque visite, prêt à partager avec vendeurs
                 et acquéreurs.
               </p>
-            </article>
+            </Link>
           </div>
         </div>
       </section>
