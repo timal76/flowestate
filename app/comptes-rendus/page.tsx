@@ -342,14 +342,17 @@ export default function VisitReportPage() {
             FlowEstate
           </a>
           <nav className="flex items-center gap-8 text-sm font-medium text-[#A0A0A0]">
-            <a href="/#fonctionnalites" className="transition hover:text-[#F5F5F0]">
-              Fonctionnalites
+            <a href="/annonces" className="transition hover:text-[#F5F5F0]">
+              Annonces
             </a>
-            <a href="/#tarifs" className="transition hover:text-[#F5F5F0]">
-              Tarifs
+            <a href="/emails" className="transition hover:text-[#F5F5F0]">
+              Emails
             </a>
-            <a href="/#connexion" className="transition hover:text-[#F5F5F0]">
-              Connexion
+            <a href="/comptes-rendus" className="transition hover:text-[#F5F5F0]">
+              Comptes-rendus
+            </a>
+            <a href="/" className="transition hover:text-[#F5F5F0]">
+              Accueil
             </a>
           </nav>
         </div>
