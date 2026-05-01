@@ -75,18 +75,19 @@ export default function HomePage() {
             <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
-                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={22}
+                  height={22}
                   viewBox="0 0 24 24"
-                  className="h-5 w-5"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.8"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
                 >
-                  <path
-                    d="M4 10.75 12 4l8 6.75V20a2 2 0 01-2 2h-3v-7H11v7H8a2 2 0 01-2-2v-9.25z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
               </div>
               <h3 className="mb-3 text-xl font-semibold">Générateur d'annonces</h3>
@@ -99,18 +100,19 @@ export default function HomePage() {
             <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
-                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={22}
+                  height={22}
                   viewBox="0 0 24 24"
-                  className="h-5 w-5"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.8"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
                 >
-                  <path
-                    d="M4 6h16v12H4zM4 7l8 6 8-6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                 </svg>
               </div>
               <h3 className="mb-3 text-xl font-semibold">Emails de relance</h3>
@@ -122,24 +124,23 @@ export default function HomePage() {
             <article className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
-                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={22}
+                  height={22}
                   viewBox="0 0 24 24"
-                  className="h-5 w-5"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.8"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
                 >
-                  <path
-                    d="M9 5h6M9 5a2 2 0 012-2h2a2 2 0 012 2v2H9V5z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M8 10h14a2 2 0 012 2v9a2 2 0 01-2 2H8a2 2 0 01-2-2v-9a2 2 0 012-2z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M10 14h10M10 17h10" strokeLinecap="round" />
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                  <path d="M12 11h4" />
+                  <path d="M12 16h4" />
+                  <path d="M8 11h.01" />
+                  <path d="M8 16h.01" />
                 </svg>
               </div>
               <h3 className="mb-3 text-xl font-semibold">Compte-rendu de visite</h3>

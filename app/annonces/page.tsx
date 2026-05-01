@@ -179,7 +179,7 @@ export default function ListingsGeneratorPage() {
             </p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
             <form
               onSubmit={handleGenerate}
               className="rounded-2xl border border-white/10 bg-white/[0.02] p-8"
@@ -458,7 +458,7 @@ export default function ListingsGeneratorPage() {
               </button>
             </form>
 
-            <div className="rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8">
+            <div className="flex h-full min-h-[20rem] flex-col rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8 lg:min-h-0">
               <h2 className="text-xl font-semibold text-[#F5F5F0]">Votre annonce</h2>
               {generationError ? (
                 <p className="mt-6 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -466,7 +466,7 @@ export default function ListingsGeneratorPage() {
                 </p>
               ) : null}
               {generatedListing ? (
-                <div className="mt-6">
+                <div className="mt-6 flex flex-1 flex-col">
                   <div className="text-[#A0A0A0] [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6">
                     <ReactMarkdown>{generatedListing}</ReactMarkdown>
                   </div>
@@ -479,10 +479,28 @@ export default function ListingsGeneratorPage() {
                   </button>
                 </div>
               ) : (
-                <p className="mt-6 leading-relaxed text-[#A0A0A0]">
-                  Remplissez le formulaire et cliquez sur Générer — votre annonce apparaît ici en
-                  quelques secondes.
-                </p>
+                <div className="mt-8 flex flex-1 flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/20 px-6 py-12 text-center">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-6 w-6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M4 10.75 12 4l8 6.75V20a2 2 0 01-2 2h-3v-7H11v7H8a2 2 0 01-2-2v-9.25z"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-base font-medium text-[#F5F5F0]">Votre annonce apparaîtra ici</p>
+                  <p className="mt-2 text-sm text-[#A0A0A0]">
+                    Remplissez le formulaire et cliquez sur Générer
+                  </p>
+                </div>
               )}
             </div>
           </div>
