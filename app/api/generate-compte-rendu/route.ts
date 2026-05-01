@@ -61,6 +61,7 @@ Consignes :
 - Rédige en français.
 - Structure clairement le compte-rendu (contexte, observations, objections, recommandations, suite).
 - Produit un document exploitable en suivi client et partage vendeur.
+- Ne jamais inclure les informations de l'agent (nom, agence, téléphone, email) dans le corps du texte - elles seront ajoutées automatiquement dans la signature. Ne jamais écrire 'Compte-rendu rédigé le' ou 'Document établi le' dans le texte.
 - Retourne uniquement le texte final.
     `.trim();
 

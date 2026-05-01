@@ -3,7 +3,14 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import ReactMarkdown from "react-markdown";
-import { FormEvent, useEffect, useMemo, useState, type ChangeEvent } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type CSSProperties,
+} from "react";
 
 type PropertyType = "Appartement" | "Maison" | "Studio" | "Loft" | "Villa";
 type VisitDuration = "15 min" | "30 min" | "45 min" | "1h" | "1h30" | "2h";
@@ -23,6 +30,65 @@ function toCapitalizedWords(input: string) {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+const pdfBaseStyle: CSSProperties = {
+  width: "794px",
+  padding: "50px",
+  fontFamily: "Arial, sans-serif",
+  fontSize: "11px",
+  lineHeight: 1.5,
+  color: "#111",
+  backgroundColor: "#ffffff",
+  boxSizing: "border-box",
+};
+
+const pdfSectionTitleStyle: CSSProperties = {
+  fontSize: "12px",
+  fontWeight: "bold",
+  marginTop: "14px",
+  marginBottom: "5px",
+};
+
+function cleanPdfLine(line: string) {
+  return line.replace(/^#+\s*/g, "").replace(/[#*`]/g, "").trim();
+}
+
+function formatVisitDateFr(iso: string) {
+  if (!iso) return "—";
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("fr-FR");
+}
+
+function splitReportForPdf(lines: string[]) {
+  const idx = lines.findIndex((line) => {
+    const t = line.toLowerCase();
+    return (
+      (t.includes("question") && (t.includes("posé") || t.includes("pose"))) ||
+      t.startsWith("questions") ||
+      t.includes("analyse") ||
+      t.includes("recommandation") ||
+      t.includes("suite à donner") ||
+      t.includes("suite a donner") ||
+      (t.includes("suite") && t.includes("donner"))
+    );
+  });
+  if (idx < 0) {
+    const mid = Math.max(1, Math.ceil(lines.length / 2));
+    return { page1: lines.slice(0, mid), page2: lines.slice(mid) };
+  }
+  if (idx === 0) {
+    return { page1: [], page2: lines };
+  }
+  return { page1: lines.slice(0, idx), page2: lines.slice(idx) };
+}
+
+function isLikelySectionHeading(line: string) {
+  const t = line.trim();
+  if (!t) return false;
+  if (t.endsWith(":") && t.length < 80) return true;
+  if (t === t.toUpperCase() && t.length > 3 && t.length < 60 && !t.includes(".")) return true;
+  return false;
 }
 
 type FormState = {
@@ -117,31 +183,74 @@ export default function VisitReportPage() {
     event.target.value = "";
   }
 
-  const pdfLines = useMemo(
-    () =>
-      generatedReport
-        .replace(/\r\n/g, "\n")
-        .split("\n")
-        .map((line) => line.replace(/[#*]/g, "").trim())
-        .filter((line) => {
-          if (!line || line === "---") return false;
+  const { pdfPage1Lines, pdfPage2Lines } = useMemo(() => {
+    const lines = generatedReport
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .map(cleanPdfLine)
+      .filter((line) => {
+        if (!line || line === "---") return false;
 
-          const normalized = line.toLowerCase();
-          if (line.toUpperCase() === "COMPTE-RENDU DE VISITE") return false;
-          if (normalized.includes("document établi le")) return false;
+        const normalized = line.toLowerCase();
+        if (line.toUpperCase() === "COMPTE-RENDU DE VISITE") return false;
+        if (normalized.includes("document établi le")) return false;
+        if (normalized.includes("compte-rendu rédigé le")) return false;
+        if (normalized.includes("document rédigé le")) return false;
+        if (normalized.includes("compte-rendu établi le")) return false;
+        if (normalized.includes("agence :")) return false;
+        if (normalized.includes("agent en charge :")) return false;
+        if (normalized.includes("contact agent")) return false;
+        if (normalized.includes("date de visite :")) return false;
+        if (normalized.includes("durée :") || normalized.includes("duree :")) return false;
+        if (normalized.includes("tel :") || normalized.startsWith("tel ")) return false;
+        if (normalized.includes("bien visité :") || normalized.includes("bien visite :")) return false;
+        if (normalized.includes("adresse :")) return false;
+        if (normalized.includes("prix affiché :") || normalized.includes("prix affiche :")) return false;
+        if (normalized.startsWith("nom :")) return false;
+        if (normalized.startsWith("téléphone :") || normalized.startsWith("telephone :")) return false;
+        if (normalized.includes("email :")) return false;
 
-          const agent = toCapitalizedWords(form.agentName).toLowerCase();
-          const agency = toCapitalizedWords(form.agencyName).toLowerCase();
-          if (agent && agency) {
-            const withHyphen = `${agent} - ${agency}`;
-            const withEnDash = `${agent} – ${agency}`;
-            if (normalized.includes(withHyphen) || normalized.includes(withEnDash)) return false;
-          }
+        const agent = toCapitalizedWords(form.agentName).toLowerCase();
+        const agency = toCapitalizedWords(form.agencyName).toLowerCase();
+        const lineUpper = line.toUpperCase();
+        if (agent && agency) {
+          const withHyphen = `${agent} - ${agency}`;
+          const withEnDash = `${agent} – ${agency}`;
+          if (normalized.includes(withHyphen) || normalized.includes(withEnDash)) return false;
+          if (normalized === agent) return false;
+          if (lineUpper === agency.toUpperCase()) return false;
+        }
 
-          return true;
-        }),
-    [generatedReport, form.agentName, form.agencyName]
-  );
+        return true;
+      });
+
+    const { page1, page2 } = splitReportForPdf(lines);
+    return { pdfPage1Lines: page1, pdfPage2Lines: page2 };
+  }, [generatedReport, form.agentName, form.agencyName]);
+
+  const profilBullets = useMemo(() => {
+    const raw = form.personalInfo.trim();
+    if (!raw) return [];
+    const byNewline = raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    if (byNewline.length > 1) return byNewline;
+    const bySemi = raw.split(";").map((s) => s.trim()).filter(Boolean);
+    if (bySemi.length > 1) return bySemi;
+    return [raw];
+  }, [form.personalInfo]);
+
+  const contactAgentLine = useMemo(() => {
+    const name = toCapitalizedWords(form.agentName).trim() || "—";
+    const phone = form.agentPhone.trim() || "—";
+    const email = form.agentEmail.trim() || "—";
+    return `${name} — ${phone} — ${email}`;
+  }, [form.agentName, form.agentPhone, form.agentEmail]);
+
+  const propertyPriceDisplay = useMemo(() => {
+    if (!form.propertyPrice) return "—";
+    const n = Number(form.propertyPrice);
+    if (Number.isNaN(n)) return `${form.propertyPrice} €`;
+    return `${n.toLocaleString("fr-FR")} €`;
+  }, [form.propertyPrice]);
 
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -179,52 +288,41 @@ export default function VisitReportPage() {
   }
 
   async function handleDownloadPdf() {
-    const element = document.getElementById("pdf-content");
-    if (!generatedReport || !element) return;
+    if (!generatedReport) return;
+    const page1 = document.getElementById("pdf-page-1");
+    const page2 = document.getElementById("pdf-page-2");
+    if (!page1 || !page2) return;
 
     try {
       setIsPdfLoading(true);
-      const canvas = await html2canvas(element, {
+      const canvasOpts = {
         scale: 2,
         useCORS: true,
         logging: false,
-      });
+        backgroundColor: "#ffffff",
+      };
 
       const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = pdfWidth / canvasWidth;
-      const scaledHeight = canvasHeight * ratio;
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
 
-      let position = 0;
-      let remainingHeight = scaledHeight;
-
-      while (remainingHeight > 0) {
-        const srcY = position / ratio;
-        const srcH = Math.min(pdfHeight / ratio, canvasHeight - srcY);
-
-        const pageCanvas = document.createElement("canvas");
-        pageCanvas.width = canvasWidth;
-        pageCanvas.height = srcH * 2;
-        const ctx = pageCanvas.getContext("2d");
-        if (!ctx) throw new Error("Impossible de générer le PDF.");
-        ctx.drawImage(canvas, 0, srcY * 2, canvasWidth * 2, srcH * 2, 0, 0, canvasWidth, srcH * 2);
-
-        if (position > 0) pdf.addPage();
-        pdf.addImage(
-          pageCanvas.toDataURL("image/png"),
-          "PNG",
-          0,
-          0,
-          pdfWidth,
-          Math.min(pdfHeight, remainingHeight)
-        );
-
-        position += pdfHeight / ratio;
-        remainingHeight -= pdfHeight;
+      async function addPageFromElement(element: HTMLElement, addNewPage: boolean) {
+        const canvas = await html2canvas(element, canvasOpts);
+        const imgData = canvas.toDataURL("image/png");
+        let imgW = pageW;
+        let imgH = (canvas.height * imgW) / canvas.width;
+        if (imgH > pageH) {
+          const scale = pageH / imgH;
+          imgW *= scale;
+          imgH = pageH;
+        }
+        const x = (pageW - imgW) / 2;
+        if (addNewPage) pdf.addPage();
+        pdf.addImage(imgData, "PNG", x, 0, imgW, imgH);
       }
+
+      await addPageFromElement(page1 as HTMLElement, false);
+      await addPageFromElement(page2 as HTMLElement, true);
 
       pdf.save("compte-rendu-visite.pdf");
     } catch (error) {
@@ -629,88 +727,174 @@ export default function VisitReportPage() {
         </div>
       </section>
 
-      <div className="fixed -left-[9999px] top-0 z-[-1]">
-        <div
-          id="pdf-content"
-          style={{
-            width: "794px",
-            background: "#ffffff",
-            color: "#1f1f1f",
-            fontFamily: "Arial, sans-serif",
-            padding: "40px 48px 20px 48px",
-            boxSizing: "border-box",
-          }}
-        >
+      <div
+        id="pdf-content"
+        className="fixed -left-[9999px] top-0 z-[-1]"
+        style={{ width: "794px" }}
+        aria-hidden
+      >
+        <div id="pdf-page-1" style={pdfBaseStyle}>
           <div
             style={{
               display: "flex",
-              alignItems: "flex-start",
+              alignItems: "center",
               justifyContent: "space-between",
-              borderBottom: "1px solid #d9d9d9",
-              paddingBottom: "16px",
+              gap: "12px",
+              paddingBottom: "10px",
             }}
           >
-            <div style={{ width: "130px", height: "40px" }}>
+            <div style={{ width: "140px", minHeight: "44px", display: "flex", alignItems: "center" }}>
               {logoPreview ? (
                 <img
                   src={logoPreview}
-                  alt="Logo agence"
-                  style={{ maxHeight: "40px", maxWidth: "130px", objectFit: "contain" }}
+                  alt=""
+                  style={{ maxHeight: "44px", maxWidth: "140px", objectFit: "contain" }}
                 />
               ) : null}
             </div>
-            <div style={{ textAlign: "center", flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: "21px" }}>COMPTE-RENDU DE VISITE</div>
-              <div style={{ marginTop: "4px", fontSize: "13px", color: "#555" }}>{form.agencyName}</div>
+            <div style={{ flex: 1, textAlign: "center" }}>
+              <div style={{ fontSize: "16px", fontWeight: "bold", color: "#111" }}>
+                COMPTE-RENDU DE VISITE
+              </div>
             </div>
-            <div style={{ width: "130px", textAlign: "right", fontSize: "12px", color: "#555" }}>
+            <div style={{ width: "140px", textAlign: "right", fontSize: "10px", color: "#111" }}>
               {new Date().toLocaleDateString("fr-FR")}
             </div>
           </div>
-
-          <div style={{ marginTop: "24px" }}>
-            {pdfLines.map((line, idx) => {
-              const isHeading = line.endsWith(":") || line === line.toUpperCase();
-              return (
-                <p
-                  // eslint-disable-next-line react/no-array-index-key
-                  key={`${line}-${idx}`}
-                  style={{
-                    margin: "0 0 12px 0",
-                    fontSize: isHeading ? "16px" : "14px",
-                    fontWeight: isHeading ? 700 : 400,
-                    lineHeight: 1.45,
-                    pageBreakAfter: isHeading ? "avoid" : "auto",
-                    breakAfter: isHeading ? "avoid" : "auto",
-                    pageBreakBefore: !isHeading ? "avoid" : "auto",
-                    breakBefore: !isHeading ? "avoid" : "auto",
-                  }}
-                >
-                  {line}
-                </p>
-              );
-            })}
+          <div style={{ borderBottom: "1px solid #cccccc", marginBottom: "10px" }} />
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: "11px",
+              fontWeight: "bold",
+              color: "#111",
+              marginBottom: "8px",
+            }}
+          >
+            {toCapitalizedWords(form.agencyName).trim() || "—"}
           </div>
 
-          <div style={{ marginTop: "10px", marginLeft: "auto", width: "250px", textAlign: "right" }}>
-            <div style={{ borderTop: "1px solid #d9d9d9", marginBottom: "10px" }} />
-            <div style={{ fontSize: "12px", lineHeight: 1.4 }}>{toCapitalizedWords(form.agentName)}</div>
-            <div style={{ fontSize: "12px", lineHeight: 1.4 }}>{toCapitalizedWords(form.agencyName)}</div>
-            <div style={{ fontSize: "12px", lineHeight: 1.4 }}>{form.agentPhone}</div>
-            <div style={{ fontSize: "12px", lineHeight: 1.4 }}>{form.agentEmail}</div>
-            {signaturePreview ? (
-              <img
-                src={signaturePreview}
-                alt="Signature"
-                style={{
-                  marginTop: "6px",
-                  marginLeft: "auto",
-                  maxHeight: "70px",
-                  maxWidth: "160px",
-                  objectFit: "contain",
-                }}
-              />
-            ) : null}
+          <div style={{ lineHeight: 1.5, color: "#111", marginBottom: "4px" }}>
+            <div>Date de visite : {formatVisitDateFr(form.visitDate)}</div>
+            <div>Durée : {form.visitDuration}</div>
+            <div>Contact agent : {contactAgentLine}</div>
+          </div>
+
+          <div style={pdfSectionTitleStyle}>BIEN VISITÉ</div>
+          <div style={{ lineHeight: 1.5, color: "#111" }}>
+            <div>Type : {form.propertyType}</div>
+            <div>Adresse : {form.propertyAddress.trim() || "—"}</div>
+            <div>Prix : {propertyPriceDisplay}</div>
+          </div>
+
+          <div style={pdfSectionTitleStyle}>PROSPECT</div>
+          <div style={{ lineHeight: 1.5, color: "#111" }}>
+            <div>Nom : {form.prospectName.trim() || "—"}</div>
+            <div>Téléphone : {form.prospectPhone.trim() || "—"}</div>
+            <div>Email : {form.prospectEmail.trim() || "—"}</div>
+          </div>
+
+          <div style={{ ...pdfSectionTitleStyle, fontStyle: "italic" }}>Profil :</div>
+          {profilBullets.length ? (
+            <div style={{ lineHeight: 1.5, color: "#111" }}>
+              {profilBullets.map((item, idx) => (
+                <p key={`profil-${idx}`} style={{ margin: "0 0 4px 0" }}>
+                  - {item}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <div style={{ lineHeight: 1.5, color: "#111" }}>—</div>
+          )}
+
+          <div style={pdfSectionTitleStyle}>DÉROULEMENT DE LA VISITE</div>
+          <div>
+            {pdfPage1Lines.length ? (
+              pdfPage1Lines.map((line, idx) => {
+                const sub = isLikelySectionHeading(line);
+                return (
+                  <p
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={`pdf-p1-${idx}`}
+                    style={{
+                      margin: sub ? "8px 0 4px 0" : "0 0 6px 0",
+                      fontSize: "11px",
+                      fontWeight: sub ? "bold" : "normal",
+                      lineHeight: 1.5,
+                      color: "#111",
+                    }}
+                  >
+                    {line}
+                  </p>
+                );
+              })
+            ) : (
+              <p style={{ margin: 0, fontSize: "11px", lineHeight: 1.5, color: "#111" }}>—</p>
+            )}
+          </div>
+        </div>
+
+        <div id="pdf-page-2" style={pdfBaseStyle}>
+          <div>
+            {pdfPage2Lines.length ? (
+              pdfPage2Lines.map((line, idx) => {
+                const sub = isLikelySectionHeading(line);
+                return (
+                  <p
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={`pdf-p2-${idx}`}
+                    style={{
+                      margin: sub ? "8px 0 4px 0" : "0 0 6px 0",
+                      fontSize: "11px",
+                      fontWeight: sub ? "bold" : "normal",
+                      lineHeight: 1.5,
+                      color: "#111",
+                    }}
+                  >
+                    {line}
+                  </p>
+                );
+              })
+            ) : (
+              <p style={{ margin: 0, fontSize: "11px", lineHeight: 1.5, color: "#111" }}>—</p>
+            )}
+          </div>
+
+          <div style={{ marginTop: "20px" }}>
+            <div style={{ fontSize: "11px", lineHeight: 1.5, color: "#111", marginBottom: "10px" }}>
+              Compte-rendu établi le {new Date().toLocaleDateString("fr-FR")}
+            </div>
+            <div style={{ borderTop: "1px solid #dddddd", marginBottom: "12px" }} />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+              <div style={{ textAlign: "right", maxWidth: "280px" }}>
+                <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
+                  {toCapitalizedWords(form.agentName).trim() || "—"}
+                </div>
+                <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
+                  {toCapitalizedWords(form.agencyName).trim() || "—"}
+                </div>
+                <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
+                  {form.agentPhone.trim() || "—"}
+                </div>
+                <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
+                  {form.agentEmail.trim() || "—"}
+                </div>
+                {signaturePreview ? (
+                  <img
+                    src={signaturePreview}
+                    alt=""
+                    style={{
+                      display: "block",
+                      marginTop: "8px",
+                      marginLeft: "auto",
+                      maxHeight: "72px",
+                      maxWidth: "200px",
+                      objectFit: "contain",
+                    }}
+                  />
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
       </div>
