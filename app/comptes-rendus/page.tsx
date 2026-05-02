@@ -504,17 +504,26 @@ export default function VisitReportPage() {
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Ton du compte-rendu</span>
-                  <select
-                    value={form.tone}
-                    onChange={(event) =>
-                      setForm((prev) => ({ ...prev, tone: event.target.value as ReportTone }))
-                    }
-                    className={selectFieldClassName}
-                  >
-                    <option>Professionnel</option>
-                    <option>Détaillé</option>
-                    <option>Synthétique</option>
-                  </select>
+                  <div className="flex gap-2" role="group" aria-label="Ton du compte-rendu">
+                    {(["Professionnel", "Détaillé", "Synthétique"] as const).map((toneOption) => {
+                      const selected = form.tone === toneOption;
+                      return (
+                        <button
+                          key={toneOption}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => setForm((prev) => ({ ...prev, tone: toneOption }))}
+                          className={`flex-1 rounded-xl border py-3 px-2 text-center text-sm font-medium transition-all duration-300 ease-out ${
+                            selected
+                              ? "border-[#C9A96E] bg-[#C9A96E]/10 text-[#C9A96E]"
+                              : "border-white/15 bg-transparent text-[#A0A0A0] hover:border-white/25 hover:text-[#C9C9C9]"
+                          }`}
+                        >
+                          {toneOption}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Nom de l'agent</span>
