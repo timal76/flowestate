@@ -161,11 +161,29 @@ function typeLabel(type: ActivityType) {
   return "Compte-rendu";
 }
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<{ success?: string; plan?: string }>;
+};
+
+function subscriptionSuccessMessage(plan: string | undefined): string {
+  if (plan === "starter") {
+    return "Bienvenue sur FlowEstate ! Votre abonnement Starter est actif.";
+  }
+  if (plan === "pro") {
+    return "Bienvenue sur FlowEstate ! Votre abonnement Pro est actif.";
+  }
+  return "Bienvenue sur FlowEstate ! Votre abonnement est actif.";
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
+
+  const sp = await searchParams;
+  const showSubscriptionSuccess = sp.success === "true";
+  const planParam = typeof sp.plan === "string" ? sp.plan : undefined;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -234,6 +252,11 @@ export default async function DashboardPage() {
       />
 
       <div className="mx-auto w-full max-w-7xl space-y-14 px-6 pb-24 pt-32 md:px-10">
+        {showSubscriptionSuccess ? (
+          <div className="mb-6 rounded-xl border border-green-500/30 bg-green-500/10 px-6 py-4 text-green-300">
+            {subscriptionSuccessMessage(planParam)}
+          </div>
+        ) : null}
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
             Bonjour, {prenom} <span aria-hidden>👋</span>
