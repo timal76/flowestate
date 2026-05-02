@@ -1,5 +1,8 @@
+import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { auth } from "@/app/api/auth/[...nextauth]/route";
 import SiteHeader from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +16,29 @@ function formatTodayFr() {
     month: "long",
     day: "numeric",
   });
+}
+
+function startOfCurrentMonthIso() {
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+function greetingNameFromSessionName(name: string | null | undefined) {
+  const trimmed = name?.trim();
+  if (!trimmed) return "Agent";
+  const first = trimmed.split(/\s+/)[0];
+  return first || "Agent";
+}
+
+function formatSavedTimeMinutes(totalMinutes: number): string {
+  if (totalMinutes <= 0) return "0 min";
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} h`;
+  return `${h} h ${m} min`;
 }
 
 type ActivityType = "annonce" | "email" | "compte-rendu";
@@ -140,8 +166,52 @@ function typeLabel(type: ActivityType) {
   return "Compte-rendu";
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const fromIso = startOfCurrentMonthIso();
+  const userId = session.user.id;
+
+  let annoncesCeMois = 0;
+  let emailsCeMois = 0;
+  let comptesRendusCeMois = 0;
+
+  if (url && key) {
+    const supabase = createClient(url, key);
+
+    const countThisMonth = async (type: "annonce" | "email" | "compte-rendu") => {
+      const { count, error } = await supabase
+        .from("generations")
+        .select("*", { count: "exact", head: true })
+        .eq("type", type)
+        .eq("user_id", userId)
+        .gte("created_at", fromIso);
+
+      if (error) {
+        console.error("[dashboard] generations count", type, error);
+        return 0;
+      }
+      return count ?? 0;
+    };
+
+    [annoncesCeMois, emailsCeMois, comptesRendusCeMois] = await Promise.all([
+      countThisMonth("annonce"),
+      countThisMonth("email"),
+      countThisMonth("compte-rendu"),
+    ]);
+  }
+
+  const minutesEconomisees =
+    annoncesCeMois * 15 + emailsCeMois * 10 + comptesRendusCeMois * 20;
+  const tempsEconomiseLabel = formatSavedTimeMinutes(minutesEconomisees);
+
   const dateLabel = formatTodayFr();
+  const prenom = greetingNameFromSessionName(session.user.name);
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
@@ -158,7 +228,7 @@ export default function DashboardPage() {
       <div className="mx-auto w-full max-w-7xl space-y-14 px-6 pb-24 pt-32 md:px-10">
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-            Bonjour, Thomas <span aria-hidden>👋</span>
+            Bonjour, {prenom} <span aria-hidden>👋</span>
           </h1>
           <p className="text-base capitalize text-[#A0A0A0] md:text-lg">{dateLabel}</p>
         </header>
@@ -187,7 +257,9 @@ export default function DashboardPage() {
                   </svg>
                 </span>
               </div>
-              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">12</p>
+              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">
+                {annoncesCeMois}
+              </p>
               <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
             </article>
 
@@ -212,7 +284,9 @@ export default function DashboardPage() {
                   </svg>
                 </span>
               </div>
-              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">34</p>
+              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">
+                {emailsCeMois}
+              </p>
               <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
             </article>
 
@@ -237,7 +311,9 @@ export default function DashboardPage() {
                   </svg>
                 </span>
               </div>
-              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">8</p>
+              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">
+                {comptesRendusCeMois}
+              </p>
               <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
             </article>
 
@@ -262,8 +338,10 @@ export default function DashboardPage() {
                   </svg>
                 </span>
               </div>
-              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">~3h</p>
-              <p className="mt-1 text-xs text-[#A0A0A0]/90">cette semaine</p>
+              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">
+                {tempsEconomiseLabel}
+              </p>
+              <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
             </article>
           </div>
         </section>

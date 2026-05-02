@@ -47,6 +47,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login",
   },
+  callbacks: {
+    jwt({ token, user }) {
+      if (user?.id) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = (token.id as string | undefined) ?? token.sub ?? "";
+      }
+      return session;
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
 });
 

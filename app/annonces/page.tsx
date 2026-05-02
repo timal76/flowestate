@@ -1,6 +1,7 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
+import { useSession } from "next-auth/react";
 import { FormEvent, useEffect, useState, type ChangeEvent } from "react";
 
 import SiteHeader from "@/components/site-header";
@@ -53,6 +54,7 @@ const selectFieldClassName =
   "w-full overflow-visible rounded-xl border border-white/15 bg-[#121212] pl-4 pr-10 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]";
 
 export default function ListingsGeneratorPage() {
+  const { data: session } = useSession();
   const [form, setForm] = useState<FormState>(initialForm);
   const [generatedListing, setGeneratedListing] = useState("");
   const [copied, setCopied] = useState(false);
@@ -107,11 +109,16 @@ export default function ListingsGeneratorPage() {
           ? await Promise.all(photoFiles.map((file) => fileToBase64(file)))
           : undefined;
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (session?.user?.id) {
+        headers["x-user-id"] = session.user.id;
+      }
+
       const response = await fetch("/api/generate-annonce", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({ ...form, images }),
       });
 

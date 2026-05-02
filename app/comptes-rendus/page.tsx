@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import SiteHeader from "@/components/site-header";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -140,6 +141,7 @@ const selectFieldClassName =
   "w-full overflow-visible rounded-xl border border-white/15 bg-[#121212] pl-4 pr-10 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]";
 
 export default function VisitReportPage() {
+  const { data: session } = useSession();
   const [form, setForm] = useState<FormState>(initialForm);
   const [generatedReport, setGeneratedReport] = useState("");
   const [copied, setCopied] = useState(false);
@@ -263,9 +265,16 @@ export default function VisitReportPage() {
 
     try {
       setIsLoading(true);
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (session?.user?.id) {
+        headers["x-user-id"] = session.user.id;
+      }
+
       const response = await fetch("/api/generate-compte-rendu", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(form),
       });
 

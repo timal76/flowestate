@@ -1,4 +1,20 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+
+async function recordGeneration(request: Request, type: "annonce" | "email" | "compte-rendu") {
+  const userId = request.headers.get("x-user-id")?.trim();
+  if (!userId) return;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return;
+
+  const supabase = createClient(url, key);
+  const { error } = await supabase.from("generations").insert({ type, user_id: userId });
+  if (error) {
+    console.error("[generations] insert", error);
+  }
+}
 
 type GenerateReportPayload = {
   prospectName?: string;
@@ -136,6 +152,8 @@ Consignes :
         { status: 502 }
       );
     }
+
+    await recordGeneration(request, "compte-rendu");
 
     return NextResponse.json({ compteRendu });
   } catch {
