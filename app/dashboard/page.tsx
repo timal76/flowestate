@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
+import { supabase } from "@/lib/supabase";
 import SiteHeader from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
@@ -185,6 +186,23 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const showSubscriptionSuccess = sp.success === "true";
   const planParam = typeof sp.plan === "string" ? sp.plan : undefined;
 
+  const { data: userData } = await supabase
+    .from("users")
+    .select("plan, subscription_status, trial_ends_at")
+    .eq("id", session.user.id)
+    .single();
+
+  const trialDaysLeft = userData?.trial_ends_at
+    ? Math.ceil(
+        (new Date(userData.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+    : null;
+
+  const showTrialBanner =
+    userData?.subscription_status === "trial" &&
+    trialDaysLeft !== null &&
+    trialDaysLeft > 0;
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const fromIso = startOfCurrentMonthIso();
@@ -261,6 +279,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
             Bonjour, {prenom} <span aria-hidden>👋</span>
           </h1>
+          {showTrialBanner && userData ? (
+            <div className="rounded-xl border border-[#C9A96E]/30 bg-[#C9A96E]/10 px-6 py-4 text-[#C9A96E]">
+              Essai gratuit — {trialDaysLeft} jour{trialDaysLeft > 1 ? "s" : ""} restant
+              {trialDaysLeft > 1 ? "s" : ""}. Votre plan{" "}
+              {userData.plan === "pro" ? "Pro" : "Starter"} sera activé automatiquement.
+            </div>
+          ) : null}
           <p className="text-base capitalize text-[#A0A0A0] md:text-lg">{dateLabel}</p>
         </header>
 

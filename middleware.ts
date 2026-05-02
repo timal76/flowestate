@@ -11,10 +11,7 @@ export default auth((req) => {
     req.nextUrl.pathname.startsWith("/forgot-password");
   const isProtectedRoute =
     req.nextUrl.pathname.startsWith("/dashboard") ||
-    req.nextUrl.pathname.startsWith("/historique") ||
-    req.nextUrl.pathname.startsWith("/annonces") ||
-    req.nextUrl.pathname.startsWith("/emails") ||
-    req.nextUrl.pathname.startsWith("/comptes-rendus");
+    req.nextUrl.pathname.startsWith("/historique");
 
   if (isProtectedRoute && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", req.url));

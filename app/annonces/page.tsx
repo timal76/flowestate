@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState, type ChangeEvent } from "react";
 
 import SiteHeader from "@/components/site-header";
@@ -54,7 +55,8 @@ const selectFieldClassName =
   "w-full overflow-visible rounded-xl border border-white/15 bg-[#121212] pl-4 pr-10 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]";
 
 export default function ListingsGeneratorPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
+  const router = useRouter();
   const [form, setForm] = useState<FormState>(initialForm);
   const [generatedListing, setGeneratedListing] = useState("");
   const [copied, setCopied] = useState(false);
@@ -100,6 +102,19 @@ export default function ListingsGeneratorPage() {
     event.preventDefault();
     setGenerationError("");
     setCopied(false);
+
+    if (sessionStatus === "loading") {
+      return;
+    }
+
+    if (!session?.user) {
+      const count = parseInt(localStorage.getItem("free_generations") || "0", 10);
+      if (count >= 5) {
+        router.push("/register?reason=limit");
+        return;
+      }
+      localStorage.setItem("free_generations", String(count + 1));
+    }
 
     try {
       setIsLoading(true);

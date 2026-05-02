@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const showLimitBanner = searchParams.get("reason") === "limit";
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -85,6 +87,12 @@ export default function RegisterPage() {
               "0 0 40px -16px rgba(184, 150, 90, 0.28), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
+          {showLimitBanner ? (
+            <div className="mb-6 rounded-xl border border-[#C9A96E]/30 bg-[#C9A96E]/10 px-4 py-3 text-center text-sm text-[#C9A96E]">
+              Vous avez utilisé vos 5 générations gratuites. Commencez votre essai gratuit de 14
+              jours !
+            </div>
+          ) : null}
           <h1 className="text-center text-2xl font-semibold text-[#F5F5F0]">
             Créer un compte
           </h1>
@@ -236,5 +244,17 @@ export default function RegisterPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#0A0A0A] px-6 py-16 text-[#F5F5F0] antialiased" />
+      }
+    >
+      <RegisterPageContent />
+    </Suspense>
   );
 }

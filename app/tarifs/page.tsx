@@ -52,8 +52,11 @@ export default function TarifsPage() {
                 plan="starter"
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-70"
               >
-                Commencer
+                Essayer Starter gratuitement
               </StripePlanCheckoutButton>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
+                14 jours gratuits, puis 49€/mois
+              </p>
             </article>
 
             <article
@@ -91,8 +94,11 @@ export default function TarifsPage() {
                 plan="pro"
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-[#B8943F] bg-[#B8943F] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90 disabled:cursor-wait disabled:opacity-70"
               >
-                Choisir Pro
+                Essayer Pro gratuitement
               </StripePlanCheckoutButton>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
+                14 jours gratuits, puis 99€/mois
+              </p>
             </article>
           </div>
         </div>
