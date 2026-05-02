@@ -5,7 +5,7 @@ SaaS d'automatisation pour agents immobiliers.
 
 ## ✅ Fait
 - Landing page complète avec essai gratuit 14 jours mis en avant
-- Navigation : Dashboard, Historique, Annonces, Emails, 
+- Navigation complète : Dashboard, Historique, Annonces, Emails, 
   Comptes-rendus, Accueil, Prénom+Déconnexion
 - Menu hamburger responsive sur mobile (toutes les pages)
 - Générateur d'annonces : formulaire complet, upload 5 photos, 
@@ -22,16 +22,16 @@ SaaS d'automatisation pour agents immobiliers.
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
 - Pages : login, register, forgot-password, 404, tarifs
-- Stats dashboard dynamiques par utilisateur (table generations)
-- Prompt Claude optimisé sur les 3 outils
 - Stripe intégré : checkout, plans Starter/Pro, essai 14 jours
+- Webhooks Stripe : subscription created/updated/deleted, 
+  checkout completed
 - Table users : plan, subscription_status, trial_ends_at, 
   stripe_customer_id, stripe_subscription_id
-- Clé API Anthropic + Supabase + NextAuth + Stripe sur Vercel
-- SSH configuré, GitHub connecté, Vercel déployé ✅ EN PRODUCTION
+- Homebrew + Stripe CLI installés
+- Toutes les variables d'environnement sur Vercel
 
 ## ⏭️ Prochaine étape
-- Webhooks Stripe (tracker abonnements actifs/annulés)
+- Tester les webhooks Stripe en local
 - Limiter les générations selon le plan (50/mois Starter)
 - Page profil agent
 - Ajouter variables Stripe sur Vercel
@@ -42,20 +42,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Hébergement : Vercel
 - Auth : NextAuth.js v5 beta
 - BDD : Supabase (PostgreSQL)
-- API : Anthropic Claude (claude-sonnet-4-5)
-- Paiement : Stripe (test mode)
-- PDF : html2canvas + jsPDF
-
-## 📅 Roadmap post-MVP
-### Phase 2
-- Webhooks Stripe, limites générations, page profil, 
-  historique complet
-
-### Phase 3
-- CRM léger, relances programmées, score annonce, multi-langue
-
-### Phase 4
-- Multi-agents, intégration SeLoger/LeBonCoin, app mobile
-
-## 📅 Dernière mise à jour
-- Session du 2 mai 2026
+- API : Anthropic
