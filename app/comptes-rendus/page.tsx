@@ -517,7 +517,7 @@ export default function VisitReportPage() {
                   </select>
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Nom de l&apos;agent</span>
+                  <span className="text-sm text-[#A0A0A0]">Nom de l'agent</span>
                   <input
                     type="text"
                     value={form.agentName}
@@ -539,7 +539,7 @@ export default function VisitReportPage() {
                   />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Téléphone de l&apos;agent</span>
+                  <span className="text-sm text-[#A0A0A0]">Téléphone de l'agent</span>
                   <input
                     type="text"
                     value={form.agentPhone}
@@ -550,7 +550,7 @@ export default function VisitReportPage() {
                   />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">E-mail de l&apos;agent</span>
+                  <span className="text-sm text-[#A0A0A0]">E-mail de l'agent</span>
                   <input
                     type="email"
                     value={form.agentEmail}
@@ -610,7 +610,7 @@ export default function VisitReportPage() {
 
                 <div className="grid gap-6 overflow-visible md:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-sm text-[#A0A0A0]">Logo de l&apos;agence</span>
+                    <span className="text-sm text-[#A0A0A0]">Logo de l'agence</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -763,7 +763,7 @@ export default function VisitReportPage() {
           <div style={{ lineHeight: 1.5, color: "#111", marginBottom: "4px" }}>
             <div>Date de visite : {formatVisitDateFr(form.visitDate)}</div>
             <div>Durée : {form.visitDuration}</div>
-            <div>Contact de l&apos;agent : {contactAgentLine}</div>
+            <div>Contact de l'agent : {contactAgentLine}</div>
           </div>
 
           <div style={pdfSectionTitleStyle}>BIEN VISITÉ</div>

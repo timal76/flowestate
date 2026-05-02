@@ -88,7 +88,7 @@ export default function EmailsGeneratorPage() {
 
       const payload = (await response.json()) as { email?: string; error?: string };
       if (!response.ok || !payload.email) {
-        throw new Error(payload.error || "Erreur lors de la génération de l'email.");
+        throw new Error(payload.error || "Erreur lors de la génération de l'e-mail.");
       }
 
       setGeneratedEmail(payload.email);
@@ -126,7 +126,7 @@ export default function EmailsGeneratorPage() {
           <div className="mb-12 max-w-3xl space-y-4">
             <h1 className="text-4xl font-semibold tracking-[0.02em] md:text-6xl">E-mails de relance</h1>
             <p className="text-lg text-[#A0A0A0] md:text-xl">
-              Décrivez la situation, FlowEstate rédige l&apos;e-mail.
+              Décrivez la situation, FlowEstate rédige l'e-mail.
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export default function EmailsGeneratorPage() {
             >
               <div className="grid gap-6 overflow-visible md:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Prénom et nom de l&apos;agent</span>
+                  <span className="text-sm text-[#A0A0A0]">Prénom et nom de l'agent</span>
                   <input
                     type="text"
                     value={form.agentName}
@@ -150,7 +150,7 @@ export default function EmailsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Nom de l&apos;agence</span>
+                  <span className="text-sm text-[#A0A0A0]">Nom de l'agence</span>
                   <input
                     type="text"
                     value={form.agencyName}
@@ -163,7 +163,7 @@ export default function EmailsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Téléphone de l&apos;agent</span>
+                  <span className="text-sm text-[#A0A0A0]">Téléphone de l'agent</span>
                   <input
                     type="text"
                     value={form.agentPhone}
@@ -176,7 +176,7 @@ export default function EmailsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">E-mail de l&apos;agent</span>
+                  <span className="text-sm text-[#A0A0A0]">E-mail de l'agent</span>
                   <input
                     type="email"
                     value={form.agentEmail}
@@ -315,7 +315,7 @@ export default function EmailsGeneratorPage() {
                     <option>Intéressé</option>
                     <option>Hésitant</option>
                     <option>Sans nouvelles depuis la visite</option>
-                    <option>A visité d&apos;autres biens</option>
+                    <option>A visité d'autres biens</option>
                   </select>
                 </label>
 
@@ -328,7 +328,7 @@ export default function EmailsGeneratorPage() {
                     }
                     className={selectFieldClassName}
                   >
-                    <option>Urgent (moins d&apos;1 mois)</option>
+                    <option>Urgent (moins d'1 mois)</option>
                     <option>Court terme (1-3 mois)</option>
                     <option>Moyen terme (3-6 mois)</option>
                     <option>Flexible</option>
@@ -336,7 +336,7 @@ export default function EmailsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Ton de l&apos;email</span>
+                  <span className="text-sm text-[#A0A0A0]">Ton de l'e-mail</span>
                   <select
                     value={form.tone}
                     onChange={(event) =>
@@ -395,7 +395,7 @@ export default function EmailsGeneratorPage() {
                 disabled={isLoading}
                 className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90 disabled:opacity-50"
               >
-                {isLoading ? "Génération en cours..." : "Générer l&apos;email"}
+                {isLoading ? "Génération en cours..." : "Générer l'e-mail"}
               </button>
             </form>
 

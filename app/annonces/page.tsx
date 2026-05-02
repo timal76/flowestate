@@ -155,10 +155,10 @@ export default function ListingsGeneratorPage() {
         <div className="relative mx-auto w-full max-w-7xl">
           <div className="mb-12 max-w-3xl space-y-4">
             <h1 className="text-4xl font-semibold tracking-[0.02em] md:text-6xl">
-              Générateur d&apos;annonces
+              Générateur d'annonces
             </h1>
             <p className="text-lg text-[#A0A0A0] md:text-xl">
-              Décrivez le bien, FlowEstate rédige l&apos;annonce.
+              Décrivez le bien, FlowEstate rédige l'annonce.
             </p>
           </div>
 
@@ -203,7 +203,7 @@ export default function ListingsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Ton de l&apos;annonce</span>
+                  <span className="text-sm text-[#A0A0A0]">Ton de l'annonce</span>
                   <select
                     value={form.tone}
                     onChange={(event) =>
@@ -218,7 +218,7 @@ export default function ListingsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Longueur de l&apos;annonce</span>
+                  <span className="text-sm text-[#A0A0A0]">Longueur de l'annonce</span>
                   <select
                     value={form.length}
                     onChange={(event) =>
@@ -373,7 +373,7 @@ export default function ListingsGeneratorPage() {
                       setForm((prev) => ({ ...prev, location: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex : Lyon 6e, à 5 min du parc de la Tête d&apos;Or"
+                    placeholder="Ex : Lyon 6e, à 5 min du parc de la Tête d'Or"
                   />
                 </label>
 
@@ -437,7 +437,7 @@ export default function ListingsGeneratorPage() {
                 disabled={isLoading}
                 className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90 disabled:opacity-50"
               >
-                {isLoading ? "Génération en cours..." : "Générer l&apos;annonce"}
+                {isLoading ? "Génération en cours..." : "Générer l'annonce"}
               </button>
             </form>
 
