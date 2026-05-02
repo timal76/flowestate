@@ -4,16 +4,27 @@
 SaaS d'automatisation pour agents immobiliers.
 
 ## ✅ Fait
-- Landing page complète (header, hero, fonctionnalités, tarifs, CTA, footer)
-- Navigation : header avec liens Annonces, Emails, Comptes-rendus et Accueil (landing + les 3 outils)
-- Générateur d'annonces : formulaire complet, upload 5 photos, longueur, API Claude, Markdown, copier
-- Emails de relance : formulaire complet, infos agent, signature formatée, API Claude, copier
-- Compte-rendu de visite : formulaire complet, upload logo + signature, PDF avec html2canvas + jsPDF, API Claude, copier
+- Landing page complète avec tous les boutons connectés
+- Navigation : header avec Dashboard, Annonces, Emails, 
+  Comptes-rendus, Accueil, Connexion
+- Menu hamburger responsive sur mobile (toutes les pages)
+- Générateur d'annonces : formulaire complet, upload 5 photos, 
+  longueur, ton, API Claude Sonnet, Markdown, copier
+- Emails de relance : formulaire complet, signature, API Claude, copier
+- Compte-rendu de visite : formulaire complet, PDF, API Claude, copier
+- Dashboard pro : stats, accès rapide, activité récente, conseil du jour
+- Page login /login
+- Page register /register
+- Page mot de passe oublié /forgot-password
+- Page 404 custom
+- Prompt Claude optimisé (sonnet-4-5, system prompt amélioré)
 - SSH configuré, GitHub connecté, Vercel déployé
 
 ## ⏭️ Prochaine étape
-- Dashboard page d'accueil pour les agents
-- Mettre la clé API sur Vercel
+- Authentification réelle (NextAuth.js)
+- Base de données
+- Clé API sur Vercel
+- Optimisation prompt emails et comptes-rendus
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
@@ -21,6 +32,16 @@ SaaS d'automatisation pour agents immobiliers.
 - Hébergement : Vercel
 - API : Anthropic Claude (claude-sonnet-4-5)
 - PDF : html2canvas + jsPDF
+
+## 📅 Roadmap post-MVP
+### Phase 2
+- Auth réelle, BDD, historique, templates, export PDF, stats
+
+### Phase 3
+- CRM léger, relances programmées, score annonce, multi-langue
+
+### Phase 4
+- Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
 - Session du 1er mai 2026

@@ -49,6 +49,9 @@ const initialForm: FormState = {
   length: "Standard (~300 mots)",
 };
 
+const selectFieldClassName =
+  "w-full overflow-visible rounded-xl border border-white/15 bg-[#121212] pl-4 pr-10 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]";
+
 export default function ListingsGeneratorPage() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [generatedListing, setGeneratedListing] = useState("");
@@ -115,7 +118,7 @@ export default function ListingsGeneratorPage() {
       const payload = (await response.json()) as { annonce?: string; error?: string };
 
       if (!response.ok || !payload.annonce) {
-        throw new Error(payload.error || "Erreur lors de la generation de l'annonce.");
+        throw new Error(payload.error || "Erreur lors de la génération de l'annonce.");
       }
 
       setGeneratedListing(payload.annonce);
@@ -152,19 +155,19 @@ export default function ListingsGeneratorPage() {
         <div className="relative mx-auto w-full max-w-7xl">
           <div className="mb-12 max-w-3xl space-y-4">
             <h1 className="text-4xl font-semibold tracking-[0.02em] md:text-6xl">
-              Generateur d'annonces
+              Générateur d&apos;annonces
             </h1>
             <p className="text-lg text-[#A0A0A0] md:text-xl">
-              Decrivez le bien, FlowEstate redige l'annonce.
+              Décrivez le bien, FlowEstate rédige l&apos;annonce.
             </p>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
             <form
               onSubmit={handleGenerate}
-              className="rounded-2xl border border-white/10 bg-white/[0.02] p-8"
+              className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 overflow-visible"
             >
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 overflow-visible md:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Type de bien</span>
                   <select
@@ -175,7 +178,7 @@ export default function ListingsGeneratorPage() {
                         propertyType: event.target.value as PropertyType,
                       }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Appartement</option>
                     <option>Maison</option>
@@ -192,7 +195,7 @@ export default function ListingsGeneratorPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, mandateType: event.target.value as MandateType }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Vente</option>
                     <option>Location</option>
@@ -200,13 +203,13 @@ export default function ListingsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Ton de l'annonce</span>
+                  <span className="text-sm text-[#A0A0A0]">Ton de l&apos;annonce</span>
                   <select
                     value={form.tone}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, tone: event.target.value as ListingTone }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Professionnel</option>
                     <option>Chaleureux</option>
@@ -215,13 +218,13 @@ export default function ListingsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Longueur de l'annonce</span>
+                  <span className="text-sm text-[#A0A0A0]">Longueur de l&apos;annonce</span>
                   <select
                     value={form.length}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, length: event.target.value as ListingLength }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Courte (~150 mots)</option>
                     <option>Standard (~300 mots)</option>
@@ -241,24 +244,24 @@ export default function ListingsGeneratorPage() {
                       setForm((prev) => ({ ...prev, price: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder={form.mandateType === "Location" ? "Ex: 1450" : "Ex: 420000"}
+                    placeholder={form.mandateType === "Location" ? "Ex : 1450" : "Ex : 420000"}
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Surface en m2</span>
+                  <span className="text-sm text-[#A0A0A0]">Surface en m²</span>
                   <input
                     type="number"
                     min={0}
                     value={form.area}
                     onChange={(event) => setForm((prev) => ({ ...prev, area: event.target.value }))}
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: 78"
+                    placeholder="Ex : 78"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Nombre de pieces</span>
+                  <span className="text-sm text-[#A0A0A0]">Nombre de pièces</span>
                   <input
                     type="number"
                     min={0}
@@ -267,12 +270,12 @@ export default function ListingsGeneratorPage() {
                       setForm((prev) => ({ ...prev, rooms: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: 4"
+                    placeholder="Ex : 4"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Etage</span>
+                  <span className="text-sm text-[#A0A0A0]">Étage</span>
                   <input
                     type="number"
                     min={0}
@@ -281,7 +284,7 @@ export default function ListingsGeneratorPage() {
                       setForm((prev) => ({ ...prev, floor: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: 3"
+                    placeholder="Ex : 3"
                   />
                 </label>
 
@@ -292,7 +295,7 @@ export default function ListingsGeneratorPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, elevator: event.target.value as ElevatorOption }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Oui</option>
                     <option>Non</option>
@@ -306,7 +309,7 @@ export default function ListingsGeneratorPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, dpe: event.target.value as DpeRating }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>A</option>
                     <option>B</option>
@@ -325,7 +328,7 @@ export default function ListingsGeneratorPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, parking: event.target.value as ParkingOption }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Inclus</option>
                     <option>Non inclus</option>
@@ -342,12 +345,12 @@ export default function ListingsGeneratorPage() {
                       setForm((prev) => ({ ...prev, monthlyCharges: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: 120"
+                    placeholder="Ex : 120"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Disponibilite</span>
+                  <span className="text-sm text-[#A0A0A0]">Disponibilité</span>
                   <input
                     type="text"
                     value={form.availability}
@@ -355,7 +358,7 @@ export default function ListingsGeneratorPage() {
                       setForm((prev) => ({ ...prev, availability: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: Immediate, 3 mois"
+                    placeholder="Ex : immédiate, dans 3 mois"
                   />
                 </label>
               </div>
@@ -370,13 +373,13 @@ export default function ListingsGeneratorPage() {
                       setForm((prev) => ({ ...prev, location: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: Lyon 6e, a 5 min du parc de la Tete d'Or"
+                    placeholder="Ex : Lyon 6e, à 5 min du parc de la Tête d&apos;Or"
                   />
                 </label>
 
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">
-                    Points forts (ex: vue degagee, parking, proche transports)
+                    Points forts (ex. : vue dégagée, parking, proche transports)
                   </span>
                   <textarea
                     rows={5}
@@ -385,10 +388,10 @@ export default function ListingsGeneratorPage() {
                       setForm((prev) => ({ ...prev, highlights: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Separez les points forts par des virgules"
+                    placeholder="Séparez les points forts par des virgules"
                   />
                   <div className="text-right text-xs text-[#A0A0A0]">
-                    {form.highlights.length} caracteres
+                    {form.highlights.length} caractères
                   </div>
                 </label>
 
@@ -434,7 +437,7 @@ export default function ListingsGeneratorPage() {
                 disabled={isLoading}
                 className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90 disabled:opacity-50"
               >
-                {isLoading ? "Génération en cours..." : "Generer l'annonce"}
+                {isLoading ? "Génération en cours..." : "Générer l&apos;annonce"}
               </button>
             </form>
 
@@ -455,7 +458,7 @@ export default function ListingsGeneratorPage() {
                     onClick={handleCopy}
                     className="mt-8 inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
                   >
-                    {copied ? "Copie" : "Copier"}
+                    {copied ? "Copié" : "Copier"}
                   </button>
                 </div>
               ) : (

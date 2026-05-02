@@ -33,6 +33,21 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as GenerateEmailPayload;
 
+    const systemPrompt = `Tu es un agent immobilier expérimenté qui rédige des emails 
+de relance depuis 20 ans. Tu écris de façon naturelle, directe 
+et humaine. Jamais pompeux ni robotique.
+
+Règles strictes :
+- Personnalise chaque email selon le profil du prospect, 
+  son intérêt, ses objections et sa situation
+- Commence toujours par : Objet: [objet accrocheur et personnalisé]
+- Structure : Accroche personnalisée → Corps → CTA clair → Politesse → Signature
+- Ton Professionnel : sobre, factuel, formule 'Bien cordialement'
+- Ton Chaleureux : humain, proche, formule 'À très bientôt'
+- Ton Urgent : direct, créateur d'urgence, formule 'Dans l'attente de votre retour'
+- Ne mentionne jamais l'IA
+- Retourne uniquement le texte final de l'email`;
+
     const userPrompt = `
 Rédige un email de relance immobilier avec ces informations :
 
@@ -55,25 +70,18 @@ Rédige un email de relance immobilier avec ces informations :
 - Ton de l'email : ${body.tone || "Professionnel"}
 - Longueur souhaitée : ${body.length || "Standard (10-15 lignes)"}
 
+Termine avec cette signature :
+---
+
+${body.agentName || "L'agent"}
+${body.agencyName || ""}
+${body.agentPhone || ""}
+${body.agentEmail || ""}
+
+Chaque élément sur sa propre ligne.
+
 Consignes :
 - Rédige en français.
-- Personnalise fortement le message.
-- Commence impérativement par un objet d'email accrocheur et personnalisé.
-- Adapte la formule de politesse finale selon le ton :
-  - Professionnel = "Bien cordialement"
-  - Chaleureux = "À très bientôt"
-  - Urgent = "Dans l'attente de votre retour"
-- Termine impérativement l'email avec cette signature exacte, formatée exactement ainsi, avec des doubles sauts de ligne :
-  ---
-
-  Timothé Costantin
-
-  FlowEstate
-
-  0750099231
-
-  timothecostantin@gmail.com
-- Chaque élément doit être sur sa propre ligne. Pas de virgule, pas d'espace entre les éléments.
 - Retourne uniquement le texte final.
     `.trim();
 
@@ -87,8 +95,7 @@ Consignes :
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
         max_tokens: 900,
-        system:
-          "Tu es un agent immobilier expérimenté qui rédige ses propres emails de relance depuis 20 ans. Tu écris de façon naturelle, directe et humaine. Jamais pompeux ni robotique. Tu personnalises chaque email selon le profil du prospect, son niveau d'intérêt, ses objections et sa situation personnelle. Tu ne mentionnes jamais l'IA. L'email doit sembler écrit par un vrai agent qui connaît bien son prospect.",
+        system: systemPrompt,
         messages: [
           {
             role: "user",

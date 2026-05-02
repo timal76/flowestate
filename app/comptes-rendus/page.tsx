@@ -136,6 +136,9 @@ const initialForm: FormState = {
   tone: "Professionnel",
 };
 
+const selectFieldClassName =
+  "w-full overflow-visible rounded-xl border border-white/15 bg-[#121212] pl-4 pr-10 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]";
+
 export default function VisitReportPage() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [generatedReport, setGeneratedReport] = useState("");
@@ -268,7 +271,7 @@ export default function VisitReportPage() {
 
       const payload = (await response.json()) as { compteRendu?: string; error?: string };
       if (!response.ok || !payload.compteRendu) {
-        throw new Error(payload.error || "Erreur lors de la generation du compte-rendu.");
+        throw new Error(payload.error || "Erreur lors de la génération du compte-rendu.");
       }
 
       setGeneratedReport(payload.compteRendu);
@@ -362,9 +365,9 @@ export default function VisitReportPage() {
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <form
               onSubmit={handleGenerate}
-              className="rounded-2xl border border-white/10 bg-white/[0.02] p-8"
+              className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 overflow-visible"
             >
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 overflow-visible md:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Prénom et nom du prospect</span>
                   <input
@@ -377,7 +380,7 @@ export default function VisitReportPage() {
                   />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Email du prospect</span>
+                  <span className="text-sm text-[#A0A0A0]">E-mail du prospect</span>
                   <input
                     type="email"
                     value={form.prospectEmail}
@@ -405,7 +408,7 @@ export default function VisitReportPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, propertyType: event.target.value as PropertyType }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Appartement</option>
                     <option>Maison</option>
@@ -455,7 +458,7 @@ export default function VisitReportPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, visitDuration: event.target.value as VisitDuration }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>15 min</option>
                     <option>30 min</option>
@@ -475,7 +478,7 @@ export default function VisitReportPage() {
                         prospectReaction: event.target.value as ProspectReaction,
                       }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Très enthousiaste</option>
                     <option>Intéressé</option>
@@ -491,7 +494,7 @@ export default function VisitReportPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, nextStep: event.target.value as NextStep }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Deuxième visite</option>
                     <option>Offre en cours</option>
@@ -506,7 +509,7 @@ export default function VisitReportPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, tone: event.target.value as ReportTone }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Professionnel</option>
                     <option>Détaillé</option>
@@ -547,7 +550,7 @@ export default function VisitReportPage() {
                   />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Email de l&apos;agent</span>
+                  <span className="text-sm text-[#A0A0A0]">E-mail de l&apos;agent</span>
                   <input
                     type="email"
                     value={form.agentEmail}
@@ -605,9 +608,9 @@ export default function VisitReportPage() {
                   />
                 </label>
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 overflow-visible md:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-sm text-[#A0A0A0]">Logo de l'agence</span>
+                    <span className="text-sm text-[#A0A0A0]">Logo de l&apos;agence</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -760,7 +763,7 @@ export default function VisitReportPage() {
           <div style={{ lineHeight: 1.5, color: "#111", marginBottom: "4px" }}>
             <div>Date de visite : {formatVisitDateFr(form.visitDate)}</div>
             <div>Durée : {form.visitDuration}</div>
-            <div>Contact agent : {contactAgentLine}</div>
+            <div>Contact de l&apos;agent : {contactAgentLine}</div>
           </div>
 
           <div style={pdfSectionTitleStyle}>BIEN VISITÉ</div>
@@ -774,7 +777,7 @@ export default function VisitReportPage() {
           <div style={{ lineHeight: 1.5, color: "#111" }}>
             <div>Nom : {form.prospectName.trim() || "—"}</div>
             <div>Téléphone : {form.prospectPhone.trim() || "—"}</div>
-            <div>Email : {form.prospectEmail.trim() || "—"}</div>
+            <div>E-mail : {form.prospectEmail.trim() || "—"}</div>
           </div>
 
           <div style={{ ...pdfSectionTitleStyle, fontStyle: "italic" }}>Profil :</div>

@@ -34,6 +34,29 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as GenerateReportPayload;
 
+    const systemPrompt = `Tu es un agent immobilier expérimenté qui rédige des 
+comptes-rendus de visite depuis 20 ans. Tu écris de façon 
+claire, structurée et professionnelle.
+
+Règles strictes :
+- Structure obligatoire : 
+  1. CONTEXTE DE LA VISITE (bien, date, durée, prospect)
+  2. DÉROULEMENT DE LA VISITE (observations, réactions)
+  3. POINTS POSITIFS relevés par le prospect
+  4. POINTS NÉGATIFS / OBJECTIONS
+  5. QUESTIONS POSÉES PAR LE PROSPECT
+  6. ANALYSE ET RECOMMANDATIONS
+  7. SUITE À DONNER (prochaine étape concrète)
+- Ton Professionnel : sobre, factuel, document formel
+- Ton Détaillé : exhaustif, chaque point développé, nuancé
+- Ton Synthétique : bullet points, concis, essentiel uniquement
+- Ne jamais mentionner le nom/agence/contact de l'agent 
+  dans le corps du texte (géré séparément dans le PDF)
+- Ne jamais écrire 'Compte-rendu rédigé le' ou 
+  'Document établi le'
+- Ne jamais mentionner l'IA
+- Retourne uniquement le texte du compte-rendu`;
+
     const userPrompt = `
 Rédige un compte-rendu de visite immobilier avec les informations suivantes :
 
@@ -75,8 +98,7 @@ Consignes :
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
         max_tokens: 2000,
-        system:
-          "Tu es un agent immobilier expérimenté qui rédige ses propres comptes-rendus de visite depuis 20 ans. Tu écris de façon claire, structurée et professionnelle. Ton compte-rendu doit être utile pour le suivi client et pour informer le vendeur. Tu ne mentionnes jamais l'IA. Le document doit sembler rédigé par un vrai agent.",
+        system: systemPrompt,
         messages: [
           {
             role: "user",

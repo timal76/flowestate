@@ -63,6 +63,9 @@ const initialForm: FormState = {
   length: "Standard (10-15 lignes)",
 };
 
+const selectFieldClassName =
+  "w-full overflow-visible rounded-xl border border-white/15 bg-[#121212] pl-4 pr-10 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]";
+
 export default function EmailsGeneratorPage() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [generatedEmail, setGeneratedEmail] = useState("");
@@ -85,7 +88,7 @@ export default function EmailsGeneratorPage() {
 
       const payload = (await response.json()) as { email?: string; error?: string };
       if (!response.ok || !payload.email) {
-        throw new Error(payload.error || "Erreur lors de la generation de l'email.");
+        throw new Error(payload.error || "Erreur lors de la génération de l'email.");
       }
 
       setGeneratedEmail(payload.email);
@@ -121,18 +124,18 @@ export default function EmailsGeneratorPage() {
 
         <div className="relative mx-auto w-full max-w-7xl">
           <div className="mb-12 max-w-3xl space-y-4">
-            <h1 className="text-4xl font-semibold tracking-[0.02em] md:text-6xl">Emails de relance</h1>
+            <h1 className="text-4xl font-semibold tracking-[0.02em] md:text-6xl">E-mails de relance</h1>
             <p className="text-lg text-[#A0A0A0] md:text-xl">
-              Décrivez la situation, FlowEstate rédige l&apos;email.
+              Décrivez la situation, FlowEstate rédige l&apos;e-mail.
             </p>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <form
               onSubmit={handleGenerate}
-              className="rounded-2xl border border-white/10 bg-white/[0.02] p-8"
+              className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 overflow-visible"
             >
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 overflow-visible md:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Prénom et nom de l&apos;agent</span>
                   <input
@@ -142,7 +145,7 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, agentName: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: Thomas Bernard"
+                    placeholder="Ex : Thomas Bernard"
                   />
                 </label>
 
@@ -155,7 +158,7 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, agencyName: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: FlowEstate Lyon"
+                    placeholder="Ex : FlowEstate Lyon"
                   />
                 </label>
 
@@ -168,12 +171,12 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, agentPhone: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: 06 12 34 56 78"
+                    placeholder="Ex : 06 12 34 56 78"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Email de l&apos;agent</span>
+                  <span className="text-sm text-[#A0A0A0]">E-mail de l&apos;agent</span>
                   <input
                     type="email"
                     value={form.agentEmail}
@@ -181,7 +184,7 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, agentEmail: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: thomas@flowestate.fr"
+                    placeholder="Ex : thomas@flowestate.fr"
                   />
                 </label>
 
@@ -194,12 +197,12 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, prospectName: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: Camille Martin"
+                    placeholder="Ex : Camille Martin"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Email du prospect</span>
+                  <span className="text-sm text-[#A0A0A0]">E-mail du prospect</span>
                   <input
                     type="email"
                     value={form.prospectEmail}
@@ -207,7 +210,7 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, prospectEmail: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: camille@email.com"
+                    placeholder="Ex : camille@email.com"
                   />
                 </label>
 
@@ -218,7 +221,7 @@ export default function EmailsGeneratorPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, propertyType: event.target.value as PropertyType }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Appartement</option>
                     <option>Maison</option>
@@ -237,7 +240,7 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, propertyLocation: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: Lyon 6e"
+                    placeholder="Ex : Lyon 6e"
                   />
                 </label>
 
@@ -251,7 +254,7 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, propertyPrice: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: 420000"
+                    placeholder="Ex : 420000"
                   />
                 </label>
 
@@ -277,7 +280,7 @@ export default function EmailsGeneratorPage() {
                       setForm((prev) => ({ ...prev, prospectBudget: event.target.value }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: 450000"
+                    placeholder="Ex : 450000"
                   />
                 </label>
 
@@ -291,7 +294,7 @@ export default function EmailsGeneratorPage() {
                         prospectSituation: event.target.value as ProspectSituation,
                       }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Premier achat</option>
                     <option>Investissement</option>
@@ -306,13 +309,13 @@ export default function EmailsGeneratorPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, visitFeedback: event.target.value as VisitFeedback }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Très intéressé</option>
                     <option>Intéressé</option>
                     <option>Hésitant</option>
                     <option>Sans nouvelles depuis la visite</option>
-                    <option>A visité d'autres biens</option>
+                    <option>A visité d&apos;autres biens</option>
                   </select>
                 </label>
 
@@ -323,9 +326,9 @@ export default function EmailsGeneratorPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, searchDelay: event.target.value as SearchDelay }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
-                    <option>Urgent (moins d'1 mois)</option>
+                    <option>Urgent (moins d&apos;1 mois)</option>
                     <option>Court terme (1-3 mois)</option>
                     <option>Moyen terme (3-6 mois)</option>
                     <option>Flexible</option>
@@ -333,13 +336,13 @@ export default function EmailsGeneratorPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Ton de l'email</span>
+                  <span className="text-sm text-[#A0A0A0]">Ton de l&apos;email</span>
                   <select
                     value={form.tone}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, tone: event.target.value as EmailTone }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Professionnel</option>
                     <option>Chaleureux</option>
@@ -354,7 +357,7 @@ export default function EmailsGeneratorPage() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, length: event.target.value as EmailLength }))
                     }
-                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    className={selectFieldClassName}
                   >
                     <option>Court (5-8 lignes)</option>
                     <option>Standard (10-15 lignes)</option>
@@ -371,7 +374,7 @@ export default function EmailsGeneratorPage() {
                     value={form.objections}
                     onChange={(event) => setForm((prev) => ({ ...prev, objections: event.target.value }))}
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: prix trop élevé, travaux à prévoir, trop petit"
+                    placeholder="Ex : prix trop élevé, travaux à prévoir, trop petit"
                   />
                 </label>
 
@@ -382,7 +385,7 @@ export default function EmailsGeneratorPage() {
                     value={form.personalInfo}
                     onChange={(event) => setForm((prev) => ({ ...prev, personalInfo: event.target.value }))}
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
-                    placeholder="Ex: jeune couple, 2 enfants, chien, télétravail"
+                    placeholder="Ex : jeune couple, 2 enfants, chien, télétravail"
                   />
                 </label>
               </div>
@@ -392,12 +395,12 @@ export default function EmailsGeneratorPage() {
                 disabled={isLoading}
                 className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90 disabled:opacity-50"
               >
-                {isLoading ? "Génération en cours..." : "Générer l'email"}
+                {isLoading ? "Génération en cours..." : "Générer l&apos;email"}
               </button>
             </form>
 
             <div className="rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8">
-              <h2 className="text-xl font-semibold text-[#F5F5F0]">Votre email</h2>
+              <h2 className="text-xl font-semibold text-[#F5F5F0]">Votre e-mail</h2>
               {generationError ? (
                 <p className="mt-6 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                   {generationError}
@@ -443,7 +446,7 @@ export default function EmailsGeneratorPage() {
                     </svg>
                   </div>
                   <p className="text-base font-medium text-[#F5F5F0]">
-                    Votre email personnalisé apparaîtra ici
+                    Votre e-mail personnalisé apparaîtra ici
                   </p>
                   <p className="mt-2 text-sm text-[#A0A0A0]">
                     Remplissez le formulaire et cliquez sur Générer
