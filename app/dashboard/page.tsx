@@ -43,58 +43,54 @@ function formatSavedTimeMinutes(totalMinutes: number): string {
 
 type ActivityType = "annonce" | "email" | "compte-rendu";
 
-type ActivityItem = {
+type GenerationRow = {
   id: string;
-  type: ActivityType;
-  description: string;
-  relativeTime: string;
+  type: string;
+  description: string | null;
+  created_at: string;
 };
 
-const recentActivity: ActivityItem[] = [
-  {
-    id: "1",
-    type: "annonce",
-    description: "Annonce générée — Appartement 75m² Lyon 6e",
-    relativeTime: "il y a 2h",
-  },
-  {
-    id: "2",
-    type: "email",
-    description: "Email de relance — Prospect M. Durand, visite reportée",
-    relativeTime: "hier",
-  },
-  {
-    id: "3",
-    type: "compte-rendu",
-    description: "Compte-rendu — Maison 120m² Caluire, prospect enthousiaste",
-    relativeTime: "il y a 3 jours",
-  },
-  {
-    id: "4",
-    type: "annonce",
-    description: "Annonce générée — Studio investissement Part-Dieu",
-    relativeTime: "il y a 3 jours",
-  },
-  {
-    id: "5",
-    type: "email",
-    description: "Relance suite visite — T3 Garibaldi, pièces jointes mandat",
-    relativeTime: "il y a 5 jours",
-  },
-];
+function formatRelativeTimeFr(iso: string): string {
+  const then = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - then.getTime();
+  if (diffMs < 0) return "à l'instant";
+
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 60) {
+    return diffMin < 1 ? "il y a 1 min" : `il y a ${diffMin} min`;
+  }
+
+  const startOfDay = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const dayStartNow = startOfDay(now);
+  const dayStartThen = startOfDay(then);
+  const calendarDayDiff = Math.round((dayStartNow - dayStartThen) / 86400000);
+
+  if (calendarDayDiff === 1) return "hier";
+  if (calendarDayDiff === 0) {
+    const hours = Math.floor(diffMin / 60);
+    return `il y a ${hours}h`;
+  }
+  return `il y a ${calendarDayDiff} jours`;
+}
+
+function isActivityType(t: string): t is ActivityType {
+  return t === "annonce" || t === "email" || t === "compte-rendu";
+}
+
+const activityIconShellClass =
+  "inline-flex h-10 w-10 flex-none shrink-0 items-center justify-center rounded-full border border-solid box-border aspect-square";
+const activityIconShellStyle = {
+  borderColor: `rgba(${goldRgb}, 0.45)`,
+  backgroundColor: `rgba(${goldRgb}, 0.12)`,
+} as const;
 
 function ActivityIcon({ type }: { type: ActivityType }) {
-  const base =
-    "inline-flex h-10 w-10 flex-none shrink-0 items-center justify-center rounded-full border border-solid text-[#F5F5F0] box-border aspect-square";
+  const iconClass = "block shrink-0 text-[#C9A96E]";
   if (type === "annonce") {
     return (
-      <div
-        className={base}
-        style={{
-          borderColor: `rgba(${goldRgb}, 0.45)`,
-          backgroundColor: `rgba(${goldRgb}, 0.12)`,
-        }}
-      >
+      <div className={`${activityIconShellClass} text-[#F5F5F0]`} style={activityIconShellStyle}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={18}
@@ -105,7 +101,7 @@ function ActivityIcon({ type }: { type: ActivityType }) {
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="block shrink-0 text-[#C9A96E]"
+          className={iconClass}
           aria-hidden
         >
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -116,7 +112,7 @@ function ActivityIcon({ type }: { type: ActivityType }) {
   }
   if (type === "email") {
     return (
-      <div className={`${base} border-sky-500/35 bg-sky-500/10`}>
+      <div className={`${activityIconShellClass} text-[#F5F5F0]`} style={activityIconShellStyle}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={18}
@@ -127,7 +123,7 @@ function ActivityIcon({ type }: { type: ActivityType }) {
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="block shrink-0 text-sky-300"
+          className={iconClass}
           aria-hidden
         >
           <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -137,7 +133,7 @@ function ActivityIcon({ type }: { type: ActivityType }) {
     );
   }
   return (
-    <div className={`${base} border-emerald-500/35 bg-emerald-500/10`}>
+    <div className={`${activityIconShellClass} text-[#F5F5F0]`} style={activityIconShellStyle}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width={18}
@@ -148,13 +144,12 @@ function ActivityIcon({ type }: { type: ActivityType }) {
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="block shrink-0 text-emerald-300"
+        className={iconClass}
         aria-hidden
       >
-        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-        <path d="M12 11h4" />
-        <path d="M12 16h4" />
+        <path d="M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1z" />
+        <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" />
+        <path d="M9 12h6M9 16h6" />
       </svg>
     </div>
   );
@@ -180,30 +175,43 @@ export default async function DashboardPage() {
   let annoncesCeMois = 0;
   let emailsCeMois = 0;
   let comptesRendusCeMois = 0;
+  let recentGenerations: GenerationRow[] = [];
 
   if (url && key) {
     const supabase = createClient(url, key);
 
-    const countThisMonth = async (type: "annonce" | "email" | "compte-rendu") => {
-      const { count, error } = await supabase
+    const countThisMonth = (type: "annonce" | "email" | "compte-rendu") =>
+      supabase
         .from("generations")
         .select("*", { count: "exact", head: true })
         .eq("type", type)
         .eq("user_id", userId)
         .gte("created_at", fromIso);
 
-      if (error) {
-        console.error("[dashboard] generations count", type, error);
-        return 0;
-      }
-      return count ?? 0;
-    };
-
-    [annoncesCeMois, emailsCeMois, comptesRendusCeMois] = await Promise.all([
+    const [annRes, emailRes, crRes, recentRes] = await Promise.all([
       countThisMonth("annonce"),
       countThisMonth("email"),
       countThisMonth("compte-rendu"),
+      supabase
+        .from("generations")
+        .select("id,type,description,created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(5),
     ]);
+
+    if (annRes.error) console.error("[dashboard] generations count annonce", annRes.error);
+    else annoncesCeMois = annRes.count ?? 0;
+    if (emailRes.error) console.error("[dashboard] generations count email", emailRes.error);
+    else emailsCeMois = emailRes.count ?? 0;
+    if (crRes.error) console.error("[dashboard] generations count compte-rendu", crRes.error);
+    else comptesRendusCeMois = crRes.count ?? 0;
+
+    if (recentRes.error) {
+      console.error("[dashboard] generations recent", recentRes.error);
+    } else {
+      recentGenerations = (recentRes.data ?? []) as GenerationRow[];
+    }
   }
 
   const minutesEconomisees =
@@ -451,22 +459,37 @@ export default async function DashboardPage() {
           <h2 id="activity-heading" className="mb-6 text-xl font-semibold md:text-2xl">
             Activité récente
           </h2>
-          <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.02]">
-            {recentActivity.map((item) => (
-              <li key={item.id} className="flex flex-wrap items-center gap-4 px-5 py-4 sm:flex-nowrap">
-                <div className="shrink-0">
-                  <ActivityIcon type={item.type} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[#F5F5F0]">{item.description}</p>
-                  <p className="mt-0.5 text-xs text-[#A0A0A0]">{item.relativeTime}</p>
-                </div>
-                <span className="shrink-0 rounded-full border border-[#C9A96E]/35 bg-[#C9A96E]/10 px-2.5 py-0.5 text-xs font-medium text-[#C9A96E]">
-                  {typeLabel(item.type)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {recentGenerations.length === 0 ? (
+            <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-10 text-center text-sm text-[#A0A0A0]">
+              Aucune activité ce mois — commencez à générer !
+            </p>
+          ) : (
+            <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.02]">
+              {recentGenerations.map((row) => {
+                const type: ActivityType = isActivityType(row.type) ? row.type : "annonce";
+                const description =
+                  row.description?.trim() || "Génération enregistrée";
+                const relativeTime = formatRelativeTimeFr(row.created_at);
+                return (
+                  <li
+                    key={row.id}
+                    className="flex flex-wrap items-center gap-4 px-5 py-4 sm:flex-nowrap"
+                  >
+                    <div className="shrink-0">
+                      <ActivityIcon type={type} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[#F5F5F0]">{description}</p>
+                      <p className="mt-0.5 text-xs text-[#A0A0A0]">{relativeTime}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 text-xs font-medium text-[#C9A96E]">
+                      {typeLabel(type)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </section>
 
         {/* Conseil */}

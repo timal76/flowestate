@@ -1,7 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-async function recordGeneration(request: Request, type: "annonce" | "email" | "compte-rendu") {
+async function recordGeneration(
+  request: Request,
+  type: "annonce" | "email" | "compte-rendu",
+  description: string,
+  prospectName: string | null
+) {
   const userId = request.headers.get("x-user-id")?.trim();
   if (!userId) return;
 
@@ -10,7 +15,12 @@ async function recordGeneration(request: Request, type: "annonce" | "email" | "c
   if (!url || !key) return;
 
   const supabase = createClient(url, key);
-  const { error } = await supabase.from("generations").insert({ type, user_id: userId });
+  const { error } = await supabase.from("generations").insert({
+    type,
+    user_id: userId,
+    description,
+    prospect_name: prospectName,
+  });
   if (error) {
     console.error("[generations] insert", error);
   }
@@ -153,7 +163,13 @@ Consignes :
       );
     }
 
-    await recordGeneration(request, "compte-rendu");
+    const generationDescription = `Compte-rendu — ${body.propertyType || "Bien"} ${body.propertyAddress || ""}, prospect ${body.prospectReaction || ""}`
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const prospectName = body.prospectName?.trim() || null;
+
+    await recordGeneration(request, "compte-rendu", generationDescription, prospectName);
 
     return NextResponse.json({ compteRendu });
   } catch {

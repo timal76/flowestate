@@ -74,6 +74,17 @@ export default function SiteHeader() {
       </Link>
     );
 
+  const historiqueDesktop =
+    pathname === "/historique" ? (
+      <span className={desktopDashboardActiveClass} aria-current="page">
+        Historique
+      </span>
+    ) : (
+      <Link href="/historique" className={desktopLinkClass}>
+        Historique
+      </Link>
+    );
+
   const dashboardMobile =
     pathname === "/dashboard" ? (
       <span
@@ -85,6 +96,17 @@ export default function SiteHeader() {
     ) : (
       <Link href="/dashboard" className={mobileLinkClass} onClick={closeMenu}>
         Dashboard
+      </Link>
+    );
+
+  const historiqueMobile =
+    pathname === "/historique" ? (
+      <span className={mobileDashboardActiveClass} aria-current="page">
+        Historique
+      </span>
+    ) : (
+      <Link href="/historique" className={mobileLinkClass} onClick={closeMenu}>
+        Historique
       </Link>
     );
 
@@ -140,6 +162,7 @@ export default function SiteHeader() {
 
         <nav className={desktopNavClass} aria-label="Navigation principale">
           {dashboardDesktop}
+          {historiqueDesktop}
           <Link href="/annonces" className={desktopLinkClass}>
             Annonces
           </Link>
@@ -163,6 +186,7 @@ export default function SiteHeader() {
         >
           <nav className="w-full py-3" aria-label="Navigation principale mobile">
             {dashboardMobile}
+            {historiqueMobile}
             <Link href="/annonces" className={mobileLinkClass} onClick={closeMenu}>
               Annonces
             </Link>
