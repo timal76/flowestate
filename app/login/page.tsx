@@ -1,15 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const successMessage = searchParams.get("message");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    router.push("/dashboard");
+    setError("");
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+
+    try {
+      setIsSubmitting(true);
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Email ou mot de passe incorrect");
+        return;
+      }
+
+      if (result?.ok) {
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+
+      setError("Email ou mot de passe incorrect");
+    } catch {
+      setError("Email ou mot de passe incorrect");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -43,6 +80,12 @@ export default function LoginPage() {
             Accédez à votre espace agent
           </p>
 
+          {successMessage ? (
+            <p className="mt-6 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-center text-sm text-emerald-200">
+              {successMessage}
+            </p>
+          ) : null}
+
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <label className="block space-y-2">
               <span className="text-sm text-[#A0A0A0]">Email</span>
@@ -52,6 +95,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 placeholder="thomas@agence.fr"
                 className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition focus:border-[#B8965A]/70"
+                disabled={isSubmitting}
               />
             </label>
 
@@ -63,6 +107,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition focus:border-[#B8965A]/70"
+                disabled={isSubmitting}
               />
             </label>
 
@@ -77,11 +122,18 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-[#B8965A] py-3 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#c9a873] active:scale-[0.99]"
+              disabled={isSubmitting}
+              className="w-full rounded-xl bg-[#B8965A] py-3 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#c9a873] active:scale-[0.99] disabled:opacity-60"
             >
-              Se connecter
+              {isSubmitting ? "Connexion en cours..." : "Se connecter"}
             </button>
           </form>
+
+          {error ? (
+            <p className="mt-6 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {error}
+            </p>
+          ) : null}
 
           <p className="my-8 text-center text-xs text-[#6b6b6b] select-none">
             ────&nbsp;&nbsp;ou&nbsp;&nbsp;────
@@ -99,5 +151,19 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="relative flex min-h-screen flex-col items-center justify-center bg-[#0A0A0A] px-6 py-16 text-[#F5F5F0] antialiased">
+          <p className="text-sm text-[#A0A0A0]">Chargement…</p>
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

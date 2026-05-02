@@ -1,15 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    router.push("/dashboard");
+    setError("");
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const firstName = String(formData.get("firstName") ?? "").trim();
+    const lastName = String(formData.get("lastName") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const agencyName = String(formData.get("agencyName") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
+    const termsAccepted = formData.get("terms") === "on";
+
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      return;
+    }
+
+    if (!termsAccepted) {
+      setError("Veuillez accepter les conditions");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, email, agencyName, password }),
+      });
+
+      const payload = (await response.json()) as { success?: boolean; error?: string };
+
+      if (!response.ok || !payload.success) {
+        setError(payload.error || "Une erreur est survenue.");
+        return;
+      }
+
+      router.push("/login?message=" + encodeURIComponent("Compte créé ! Connectez-vous."));
+    } catch {
+      setError("Une erreur est survenue.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const inputClass =
@@ -58,6 +102,7 @@ export default function RegisterPage() {
                   autoComplete="given-name"
                   placeholder="Prénom"
                   className={inputClass}
+                  disabled={isSubmitting}
                 />
               </label>
               <label className="block space-y-2">
@@ -68,6 +113,7 @@ export default function RegisterPage() {
                   autoComplete="family-name"
                   placeholder="Nom"
                   className={inputClass}
+                  disabled={isSubmitting}
                 />
               </label>
             </div>
@@ -80,6 +126,7 @@ export default function RegisterPage() {
                 autoComplete="email"
                 placeholder="thomas@agence.fr"
                 className={inputClass}
+                disabled={isSubmitting}
               />
             </label>
 
@@ -87,10 +134,11 @@ export default function RegisterPage() {
               <span className="text-sm text-[#A0A0A0]">Nom de l&apos;agence</span>
               <input
                 type="text"
-                name="agency"
+                name="agencyName"
                 autoComplete="organization"
                 placeholder="Ex: Agence Bernard Immobilier"
                 className={inputClass}
+                disabled={isSubmitting}
               />
             </label>
 
@@ -102,6 +150,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 placeholder="••••••••"
                 className={inputClass}
+                disabled={isSubmitting}
               />
             </label>
 
@@ -113,17 +162,22 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 placeholder="••••••••"
                 className={inputClass}
+                disabled={isSubmitting}
               />
             </label>
 
-            <label className="block cursor-pointer text-sm leading-snug text-[#A0A0A0]">
+            <label
+              htmlFor="register-terms"
+              className="block cursor-pointer text-sm leading-snug text-[#A0A0A0]"
+            >
               <div className="flex items-center gap-3">
                 <input
                   id="register-terms"
                   type="checkbox"
                   name="terms"
-                  required
+                  value="on"
                   className="peer sr-only appearance-none"
+                  disabled={isSubmitting}
                 />
                 <span
                   aria-hidden="true"
@@ -157,11 +211,18 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-[#B8965A] py-3 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#c9a873] active:scale-[0.99]"
+              disabled={isSubmitting}
+              className="w-full rounded-xl bg-[#B8965A] py-3 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#c9a873] active:scale-[0.99] disabled:opacity-60"
             >
-              Créer mon compte
+              {isSubmitting ? "Création en cours..." : "Créer mon compte"}
             </button>
           </form>
+
+          {error ? (
+            <p className="mt-6 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {error}
+            </p>
+          ) : null}
 
           <p className="mt-8 text-center text-sm text-[#A0A0A0]">
             Déjà un compte ?{" "}

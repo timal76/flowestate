@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 
 const desktopNavClass =
@@ -18,8 +19,29 @@ const mobileLinkClass =
 const mobileDashboardActiveClass =
   "block w-full border-b border-[#C9A96E]/20 px-6 py-3 text-sm font-semibold text-[#C9A96E] underline decoration-[#C9A96E] decoration-2 underline-offset-4";
 
+const connexionLinkClass =
+  "inline-flex items-center rounded-full border border-[#C9A96E] bg-transparent px-4 py-2 text-xs font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]";
+
+const signOutButtonClass =
+  "inline-flex items-center rounded-full border border-red-500/40 bg-transparent px-4 py-2 text-xs font-semibold text-red-300/95 transition hover:border-red-400/55 hover:bg-red-500/10 hover:text-red-200";
+
+function sessionFirstName(session: { user?: { name?: string | null; email?: string | null } } | null) {
+  const name = session?.user?.name?.trim();
+  if (name) {
+    const first = name.split(/\s+/)[0];
+    if (first) return first;
+  }
+  const email = session?.user?.email?.trim();
+  if (email) {
+    const local = email.split("@")[0];
+    if (local) return local;
+  }
+  return "Agent";
+}
+
 export default function SiteHeader() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -29,6 +51,14 @@ export default function SiteHeader() {
   }, [pathname]);
 
   const toggleMenu = useCallback(() => setMenuOpen((o) => !o), []);
+
+  const isAuthed = status === "authenticated" && session?.user;
+  const firstName = sessionFirstName(session);
+
+  async function handleSignOut() {
+    closeMenu();
+    await signOut({ callbackUrl: "/" });
+  }
 
   const dashboardDesktop =
     pathname === "/dashboard" ? (
@@ -57,6 +87,38 @@ export default function SiteHeader() {
         Dashboard
       </Link>
     );
+
+  const authDesktop = isAuthed ? (
+    <div className="inline-flex items-center gap-2 md:ml-8">
+      <span className="text-xs font-semibold tracking-wide text-[#C9A96E]">{firstName}</span>
+      <button type="button" onClick={() => void handleSignOut()} className={signOutButtonClass}>
+        Déconnexion
+      </button>
+    </div>
+  ) : (
+    <Link href="/login" className={`${connexionLinkClass} md:ml-8`}>
+      Connexion
+    </Link>
+  );
+
+  const authMobile = isAuthed ? (
+    <div className="space-y-3 border-b border-[#C9A96E]/20 px-6 py-3">
+      <p className="text-center text-xs font-semibold tracking-wide text-[#C9A96E]">{firstName}</p>
+      <button type="button" onClick={() => void handleSignOut()} className={`${signOutButtonClass} w-full justify-center`}>
+        Déconnexion
+      </button>
+    </div>
+  ) : (
+    <div className="border-b border-[#C9A96E]/20 px-6 py-3">
+      <Link
+        href="/login"
+        onClick={closeMenu}
+        className={`${connexionLinkClass} w-full justify-center`}
+      >
+        Connexion
+      </Link>
+    </div>
+  );
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-[#0A0A0A]/85 backdrop-blur-md">
@@ -90,12 +152,7 @@ export default function SiteHeader() {
           <Link href="/" className={desktopLinkClass}>
             Accueil
           </Link>
-          <Link
-            href="/login"
-            className={`inline-flex items-center rounded-full border border-[#C9A96E] bg-transparent px-4 py-2 text-xs font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A] md:ml-8`}
-          >
-            Connexion
-          </Link>
+          {authDesktop}
         </nav>
       </div>
 
@@ -118,15 +175,7 @@ export default function SiteHeader() {
             <Link href="/" className={mobileLinkClass} onClick={closeMenu}>
               Accueil
             </Link>
-            <div className="border-b border-[#C9A96E]/20 px-6 py-3">
-              <Link
-                href="/login"
-                onClick={closeMenu}
-                className="inline-flex w-full items-center justify-center rounded-full border border-[#C9A96E] bg-transparent px-4 py-2 text-xs font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
-              >
-                Connexion
-              </Link>
-            </div>
+            {authMobile}
           </nav>
         </div>
       ) : null}
