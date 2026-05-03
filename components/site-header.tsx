@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 
+import { supabase } from "@/lib/supabase";
+
 const desktopNavClass =
   "hidden md:flex md:flex-wrap md:items-center md:gap-x-8 md:gap-y-2 text-sm font-medium text-[#A0A0A0]";
 
@@ -25,6 +27,11 @@ const connexionLinkClass =
 const signOutButtonClass =
   "inline-flex items-center rounded-full border border-red-500/40 bg-transparent px-4 py-2 text-xs font-semibold text-red-300/95 transition hover:border-red-400/55 hover:bg-red-500/10 hover:text-red-200";
 
+const planBadgeBase = "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold";
+
+const offersButtonClass =
+  "inline-flex shrink-0 items-center rounded-full border border-[#C9A96E] bg-transparent px-3 py-1 text-xs font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]";
+
 function sessionFirstName(session: { user?: { name?: string | null; email?: string | null } } | null) {
   const name = session?.user?.name?.trim();
   if (name) {
@@ -39,10 +46,14 @@ function sessionFirstName(session: { user?: { name?: string | null; email?: stri
   return "Agent";
 }
 
+type BillingRow = { plan: string | null; subscription_status: string | null };
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [billing, setBilling] = useState<BillingRow | null>(null);
+  const [billingReady, setBillingReady] = useState(false);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
@@ -54,6 +65,54 @@ export default function SiteHeader() {
 
   const isAuthed = status === "authenticated" && session?.user;
   const firstName = sessionFirstName(session);
+
+  useEffect(() => {
+    if (!isAuthed || !session?.user?.id) {
+      setBilling(null);
+      setBillingReady(false);
+      return;
+    }
+
+    let cancelled = false;
+    setBillingReady(false);
+
+    void (async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("plan, subscription_status")
+        .eq("id", session.user.id)
+        .single();
+
+      if (cancelled) return;
+
+      if (error || !data) {
+        setBilling(null);
+      } else {
+        setBilling({
+          plan: data.plan as string | null,
+          subscription_status: data.subscription_status as string | null,
+        });
+      }
+      setBillingReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthed, session?.user?.id]);
+
+  const plan = billing?.plan ?? "free";
+  const subStatus = billing?.subscription_status ?? "";
+  const showOffers =
+    billingReady && isAuthed && (plan === "free" || subStatus === "inactive");
+  const isTrialish = subStatus === "trial" || subStatus === "trialing";
+  const showPlanBadge =
+    billingReady &&
+    isAuthed &&
+    !showOffers &&
+    (isTrialish ||
+      plan === "pro" ||
+      (plan === "starter" && subStatus === "active"));
 
   async function handleSignOut() {
     closeMenu();
@@ -110,9 +169,55 @@ export default function SiteHeader() {
       </Link>
     );
 
+  function renderPlanBadge() {
+    if (!showPlanBadge || !billing) return null;
+    if (isTrialish) {
+      return (
+        <span
+          className={`${planBadgeBase} border-[#C9A96E]/55 bg-[#C9A96E]/12 text-[#C9A96E]`}
+          title="Essai"
+        >
+          Trial
+        </span>
+      );
+    }
+    if (plan === "pro") {
+      return (
+        <span
+          className={`${planBadgeBase} border-[#E8C77B] bg-[#C9A96E]/25 text-[#F0D9A8]`}
+          title="Plan Pro"
+        >
+          Pro
+        </span>
+      );
+    }
+    if (plan === "starter" && subStatus === "active") {
+      return (
+        <span
+          className={`${planBadgeBase} border-slate-500/45 bg-slate-500/15 text-slate-300`}
+          title="Plan Starter"
+        >
+          Starter
+        </span>
+      );
+    }
+    return null;
+  }
+
   const authDesktop = isAuthed ? (
-    <div className="inline-flex items-center gap-2 md:ml-8">
-      <span className="text-xs font-semibold tracking-wide text-[#C9A96E]">{firstName}</span>
+    <div className="inline-flex flex-wrap items-center gap-2 md:ml-8">
+      <Link
+        href="/profil"
+        className="cursor-pointer text-xs font-semibold tracking-wide text-[#C9A96E] hover:underline"
+      >
+        {firstName}
+      </Link>
+      {renderPlanBadge()}
+      {showOffers ? (
+        <Link href="/tarifs" className={offersButtonClass}>
+          Voir les offres
+        </Link>
+      ) : null}
       <button type="button" onClick={() => void handleSignOut()} className={signOutButtonClass}>
         Déconnexion
       </button>
@@ -125,7 +230,21 @@ export default function SiteHeader() {
 
   const authMobile = isAuthed ? (
     <div className="space-y-3 border-b border-[#C9A96E]/20 px-6 py-3">
-      <p className="text-center text-xs font-semibold tracking-wide text-[#C9A96E]">{firstName}</p>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Link
+          href="/profil"
+          onClick={closeMenu}
+          className="cursor-pointer text-center text-xs font-semibold tracking-wide text-[#C9A96E] hover:underline"
+        >
+          {firstName}
+        </Link>
+        {renderPlanBadge()}
+      </div>
+      {showOffers ? (
+        <Link href="/tarifs" onClick={closeMenu} className={`${offersButtonClass} w-full justify-center`}>
+          Voir les offres
+        </Link>
+      ) : null}
       <button type="button" onClick={() => void handleSignOut()} className={`${signOutButtonClass} w-full justify-center`}>
         Déconnexion
       </button>
@@ -175,6 +294,11 @@ export default function SiteHeader() {
           <Link href="/" className={desktopLinkClass}>
             Accueil
           </Link>
+          {!isAuthed ? (
+            <Link href="/tarifs" className={desktopLinkClass}>
+              Tarifs
+            </Link>
+          ) : null}
           {authDesktop}
         </nav>
       </div>
@@ -199,6 +323,11 @@ export default function SiteHeader() {
             <Link href="/" className={mobileLinkClass} onClick={closeMenu}>
               Accueil
             </Link>
+            {!isAuthed ? (
+              <Link href="/tarifs" className={mobileLinkClass} onClick={closeMenu}>
+                Tarifs
+              </Link>
+            ) : null}
             {authMobile}
           </nav>
         </div>
