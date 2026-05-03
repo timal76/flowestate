@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { sendTrialEndingEmail } from "@/lib/email";
 import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 
@@ -22,7 +23,53 @@ export async function POST(request: Request) {
 
   switch (event.type) {
     case "customer.subscription.trial_will_end": {
-      // Trial se termine dans 3 jours - on pourrait envoyer un email
+      const subscription = event.data.object as Stripe.Subscription;
+      const userId = subscription.metadata?.userId;
+      const customerId =
+        typeof subscription.customer === "string"
+          ? subscription.customer
+          : subscription.customer?.id;
+
+      let email: string | null = null;
+      let firstName = "";
+
+      if (userId) {
+        const { data } = await supabase
+          .from("users")
+          .select("email, first_name")
+          .eq("id", userId)
+          .maybeSingle();
+        if (data?.email) {
+          email = data.email;
+          firstName = typeof data.first_name === "string" ? data.first_name : "";
+        }
+      }
+
+      if (!email && customerId) {
+        const { data } = await supabase
+          .from("users")
+          .select("email, first_name")
+          .eq("stripe_customer_id", customerId)
+          .maybeSingle();
+        if (data?.email) {
+          email = data.email;
+          firstName = typeof data.first_name === "string" ? data.first_name : "";
+        }
+      }
+
+      const trialEnd = subscription.trial_end;
+      if (!email || !trialEnd) break;
+
+      const daysLeft = Math.max(
+        1,
+        Math.ceil((trialEnd * 1000 - Date.now()) / (1000 * 60 * 60 * 24))
+      );
+
+      try {
+        await sendTrialEndingEmail(email, firstName, daysLeft);
+      } catch (error) {
+        console.error("Erreur envoi email fin d'essai:", error);
+      }
       break;
     }
 

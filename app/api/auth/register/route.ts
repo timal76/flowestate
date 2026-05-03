@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
+import { sendWelcomeEmail } from "@/lib/email";
 import { supabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
@@ -25,6 +26,13 @@ export async function POST(request: Request) {
 
     if (error) {
       return NextResponse.json({ error: "Erreur lors de la création du compte." }, { status: 500 });
+    }
+
+    try {
+      await sendWelcomeEmail(email, firstName);
+    } catch (error) {
+      console.error("Erreur envoi email bienvenue:", error);
+      // Ne pas bloquer l'inscription si l'email échoue
     }
 
     return NextResponse.json({ success: true });

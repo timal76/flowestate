@@ -22,6 +22,8 @@ SaaS d'automatisation pour agents immobiliers.
   par prospect, pagination
 - Page Profil : photo, infos perso, logo agence, signature, 
   abonnement, stats globales, portail Stripe, déconnexion
+- Notifications email (Resend) : email bienvenue à l'inscription + 
+  email rappel trial qui expire dans 3 jours
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
 - Pages : login, register, forgot-password, 404, tarifs, profil
@@ -33,9 +35,10 @@ SaaS d'automatisation pour agents immobiliers.
 - Toutes variables d'environnement sur Vercel ✅ EN PRODUCTION
 
 ## ⏭️ Prochaine étape
-- Notifications email (Resend) : bienvenue + trial qui expire
+- Vérifier un domaine sur Resend pour envoyer à tous les emails
 - Page contact/support
 - Animations landing page
+- Ajouter RESEND_API_KEY sur Vercel
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
@@ -46,11 +49,12 @@ SaaS d'automatisation pour agents immobiliers.
 - Storage : Supabase Storage
 - API : Anthropic Claude (claude-sonnet-4-5)
 - Paiement : Stripe (test mode)
+- Email : Resend
 - PDF : html2canvas + jsPDF
 
 ## 📅 Roadmap post-MVP
 ### Phase 2
-- Notifications email (Resend), page contact, animations
+- Domaine vérifié Resend, page contact, animations
 
 ### Phase 3
 - CRM léger, relances programmées, score annonce, multi-langue
