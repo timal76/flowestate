@@ -81,33 +81,26 @@ export default function EmailsGeneratorPage() {
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) return;
 
-    let cancelled = false;
-    void (async () => {
-      const { data: userData } = await supabase
+    const loadProfile = async () => {
+      const { data } = await supabase
         .from("users")
         .select("agency_name, first_name, last_name, phone, email")
         .eq("id", session.user.id)
         .single();
 
-      if (cancelled || !userData) return;
-
-      const agentNameFromProfile = [userData.first_name, userData.last_name]
-        .filter((p): p is string => typeof p === "string" && p.trim().length > 0)
-        .join(" ")
-        .trim();
+      if (!data) return;
 
       setForm((prev) => ({
         ...prev,
-        agencyName: userData.agency_name ?? prev.agencyName,
-        agentName: agentNameFromProfile || prev.agentName,
-        agentPhone: userData.phone ?? prev.agentPhone,
-        agentEmail: userData.email ?? prev.agentEmail,
+        agentName:
+          data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : prev.agentName,
+        agencyName: data.agency_name || prev.agencyName,
+        agentPhone: data.phone || prev.agentPhone,
+        agentEmail: data.email || prev.agentEmail,
       }));
-    })();
-
-    return () => {
-      cancelled = true;
     };
+
+    void loadProfile();
   }, [sessionStatus, session?.user?.id]);
 
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
