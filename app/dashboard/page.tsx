@@ -199,7 +199,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     : null;
 
   const showTrialBanner =
-    userData?.subscription_status === "trial" &&
+    (userData?.subscription_status === "trialing" ||
+      userData?.subscription_status === "trial") &&
     trialDaysLeft !== null &&
     trialDaysLeft > 0;
 
@@ -280,9 +281,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             Bonjour, {prenom} <span aria-hidden>👋</span>
           </h1>
           {showTrialBanner && userData ? (
-            <div className="rounded-xl border border-[#C9A96E]/30 bg-[#C9A96E]/10 px-6 py-4 text-[#C9A96E]">
-              Essai gratuit — {trialDaysLeft} jour{trialDaysLeft > 1 ? "s" : ""} restant
-              {trialDaysLeft > 1 ? "s" : ""}. Votre plan{" "}
+            <div className="rounded-xl border border-[#C9A96E]/40 bg-[#C9A96E]/15 px-6 py-4 text-[#C9A96E] font-medium">
+              <span aria-hidden>⏱</span> Essai gratuit — {trialDaysLeft} jour
+              {trialDaysLeft > 1 ? "s" : ""} restant{trialDaysLeft > 1 ? "s" : ""}. Votre plan{" "}
               {userData.plan === "pro" ? "Pro" : "Starter"} sera activé automatiquement.
             </div>
           ) : null}

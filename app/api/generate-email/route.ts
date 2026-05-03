@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
+import { checkGenerationLimit } from "@/lib/check-generation-limit";
+
 async function recordGeneration(
   request: Request,
   type: "annonce" | "email" | "compte-rendu",
@@ -55,6 +57,14 @@ export async function POST(request: Request) {
         { error: "ANTHROPIC_API_KEY manquant dans les variables d'environnement." },
         { status: 500 }
       );
+    }
+
+    const userId = request.headers.get("x-user-id");
+    if (userId) {
+      const { allowed, reason } = await checkGenerationLimit(userId);
+      if (!allowed) {
+        return NextResponse.json({ error: reason }, { status: 403 });
+      }
     }
 
     const body = (await request.json()) as GenerateEmailPayload;

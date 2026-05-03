@@ -44,7 +44,7 @@ export default function TarifsPage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>50 générations/mois</span>
+                  <span>30 générations/mois</span>
                 </li>
               </ul>
 
