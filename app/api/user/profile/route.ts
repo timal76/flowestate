@@ -14,7 +14,7 @@ export async function GET() {
   const { data: user, error: userError } = await supabase
     .from("users")
     .select(
-      "id, email, first_name, last_name, phone, agency_name, avatar_url, logo_url, signature_url, plan, subscription_status, trial_ends_at"
+      "id, email, first_name, last_name, phone, agency_name, avatar_url, logo_url, signature_url, plan, subscription_status, trial_ends_at, stripe_customer_id"
     )
     .eq("id", userId)
     .single();

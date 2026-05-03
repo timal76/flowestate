@@ -21,6 +21,7 @@ type ProfileUser = {
   plan: string | null;
   subscription_status: string | null;
   trial_ends_at: string | null;
+  stripe_customer_id: string | null;
 };
 
 type ProfileStats = { annonces: number; emails: number; comptesRendus: number; total: number };
@@ -82,6 +83,7 @@ export default function ProfilPage() {
   const [uploadingKind, setUploadingKind] = useState<"avatar" | "logo" | "signature" | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -179,6 +181,24 @@ export default function ProfilPage() {
       setMessage({ type: "err", text: "Erreur réseau." });
     } finally {
       setUploadingKind(null);
+    }
+  }
+
+  async function handleOpenBillingPortal() {
+    setPortalLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        setMessage({ type: "err", text: data.error ?? "Impossible d'ouvrir le portail client." });
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setMessage({ type: "err", text: "Erreur réseau." });
+    } finally {
+      setPortalLoading(false);
     }
   }
 
@@ -407,11 +427,23 @@ export default function ProfilPage() {
               </span>
             ) : null}
           </div>
-          {user.plan === "starter" && !isTrialish ? (
-            <Link href="/tarifs" className="mt-4 inline-flex rounded-full border border-[#B8943F] bg-[#B8943F]/20 px-5 py-2 text-sm font-semibold text-[#E8D4A8] transition hover:bg-[#B8943F]/30">
-              Passer au Pro
-            </Link>
-          ) : null}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {user.stripe_customer_id ? (
+              <button
+                type="button"
+                onClick={() => void handleOpenBillingPortal()}
+                disabled={portalLoading}
+                className="inline-flex items-center justify-center rounded-full border border-[#C9A96E] bg-transparent px-5 py-2 text-sm font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-60"
+              >
+                {portalLoading ? "Redirection…" : "Gérer mon abonnement"}
+              </button>
+            ) : null}
+            {user.plan === "starter" && !isTrialish ? (
+              <Link href="/tarifs" className="inline-flex rounded-full border border-[#B8943F] bg-[#B8943F]/20 px-5 py-2 text-sm font-semibold text-[#E8D4A8] transition hover:bg-[#B8943F]/30">
+                Passer au Pro
+              </Link>
+            ) : null}
+          </div>
           {stats ? (
             <div className="mt-8 grid gap-4 border-t border-white/10 pt-8 sm:grid-cols-3">
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center">

@@ -255,6 +255,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     annoncesCeMois * 15 + emailsCeMois * 10 + comptesRendusCeMois * 20;
   const tempsEconomiseLabel = formatSavedTimeMinutes(minutesEconomisees);
 
+  const totalGenCeMois = annoncesCeMois + emailsCeMois + comptesRendusCeMois;
+  const generationsRestantes = Math.max(0, 30 - totalGenCeMois);
+  const showGenerationsRestantesCard =
+    userData?.plan === "starter" && userData?.subscription_status === "active";
+  const generationsRestantesColorClass =
+    generationsRestantes <= 5
+      ? "text-red-400"
+      : generationsRestantes <= 10
+        ? "text-orange-400"
+        : "text-[#B8965A]";
+
   const dateLabel = formatTodayFr();
   const prenom = greetingNameFromSessionName(session.user.name);
 
@@ -292,7 +303,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
         {/* Stats */}
         <section aria-label="Statistiques rapides">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div
+            className={`grid gap-4 sm:grid-cols-2 ${showGenerationsRestantesCard ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
+          >
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <span className="text-sm font-medium text-[#A0A0A0]">Annonces générées</span>
@@ -373,6 +386,36 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </p>
               <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
             </article>
+
+            {showGenerationsRestantesCard ? (
+              <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <span className="text-sm font-medium text-[#A0A0A0]">Générations restantes</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#C9A96E]/30 bg-[#C9A96E]/10 text-[#C9A96E]">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width={18}
+                      height={18}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                  </span>
+                </div>
+                <p
+                  className={`text-3xl font-semibold tracking-tight md:text-4xl ${generationsRestantesColorClass}`}
+                >
+                  {generationsRestantes}
+                </p>
+                <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
+              </article>
+            ) : null}
 
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6">
               <div className="mb-4 flex items-start justify-between gap-3">

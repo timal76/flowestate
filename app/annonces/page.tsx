@@ -2,10 +2,12 @@
 
 import ReactMarkdown from "react-markdown";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState, type ChangeEvent } from "react";
 
 import SiteHeader from "@/components/site-header";
+import { supabase } from "@/lib/supabase";
 
 type PropertyType = "Appartement" | "Maison" | "Studio" | "Loft" | "Villa";
 type ListingTone = "Professionnel" | "Chaleureux" | "Luxe";
@@ -64,6 +66,48 @@ export default function ListingsGeneratorPage() {
   const [generationError, setGenerationError] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [generationsUsed, setGenerationsUsed] = useState<number | null>(null);
+  const [userPlan, setUserPlan] = useState<string>("");
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>("");
+
+  useEffect(() => {
+    if (sessionStatus !== "authenticated" || !session?.user?.id) {
+      setGenerationsUsed(null);
+      setUserPlan("");
+      setSubscriptionStatus("");
+      return;
+    }
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const fromIso = startOfMonth.toISOString();
+
+    const loadProfile = async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("plan, subscription_status")
+        .eq("id", session.user.id)
+        .single();
+
+      if (!data) return;
+
+      setUserPlan(typeof data.plan === "string" ? data.plan : "");
+      setSubscriptionStatus(
+        typeof data.subscription_status === "string" ? data.subscription_status : ""
+      );
+
+      const { count } = await supabase
+        .from("generations")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", session.user.id)
+        .gte("created_at", fromIso);
+
+      setGenerationsUsed(count ?? 0);
+    };
+
+    void loadProfile();
+  }, [sessionStatus, session?.user?.id]);
 
   useEffect(() => {
     const urls = photoFiles.map((file) => URL.createObjectURL(file));
@@ -183,6 +227,32 @@ export default function ListingsGeneratorPage() {
               Décrivez le bien, FlowEstate rédige l'annonce.
             </p>
           </div>
+
+          {userPlan === "starter" && subscriptionStatus === "active" && generationsUsed !== null ? (
+            <div className="mb-8 max-w-3xl rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              <div className="mb-2 flex justify-between text-sm">
+                <span className="text-[#A0A0A0]">Générations utilisées ce mois</span>
+                <span className={generationsUsed >= 25 ? "text-red-400" : "text-[#C9A96E]"}>
+                  {generationsUsed}/30
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-white/10">
+                <div
+                  className={`h-2 rounded-full transition-all ${generationsUsed >= 25 ? "bg-red-400" : "bg-[#C9A96E]"}`}
+                  style={{ width: `${Math.min(100, (generationsUsed / 30) * 100)}%` }}
+                />
+              </div>
+              {generationsUsed >= 25 ? (
+                <p className="mt-2 text-xs text-red-400">
+                  Plus que {30 - generationsUsed} génération{30 - generationsUsed > 1 ? "s" : ""}{" "}
+                  restante{30 - generationsUsed > 1 ? "s" : ""} —
+                  <Link href="/tarifs" className="ml-1 underline">
+                    Passer au Pro
+                  </Link>
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
             <form
