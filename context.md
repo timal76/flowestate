@@ -16,28 +16,26 @@ SaaS d'automatisation pour agents immobiliers.
   signature, PDF, ton (toggle), API Claude, copier, 
   pré-remplissage logo/signature/infos depuis profil
 - 5 générations gratuites sans inscription (localStorage)
-- Dashboard pro : stats dynamiques Supabase, activité récente 
-  dynamique, bannière trial avec jours restants
+- Dashboard pro : stats dynamiques, activité récente dynamique, 
+  bannière trial avec jours restants, compteur générations restantes
 - Historique des générations : filtres par type, recherche 
   par prospect, pagination
 - Page Profil : photo, infos perso, logo agence, signature, 
-  abonnement, stats globales, déconnexion, suppression compte
+  abonnement, stats globales, portail Stripe, déconnexion
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
 - Pages : login, register, forgot-password, 404, tarifs, profil
-- Stripe intégré : checkout, plans Starter(30 gen)/Pro, 
-  essai 14 jours, webhooks
+- Stripe intégré : checkout, plans Starter(30 gen)/Pro(2 users), 
+  essai 14 jours, webhooks, portail client
 - Limite 30 générations/mois pour Starter
-- Table users : plan, subscription_status, trial_ends_at, 
-  stripe_customer_id, stripe_subscription_id, avatar_url, 
-  logo_url, signature_url, phone
+- Barre de progression générations dans les 3 outils
 - Supabase Storage : bucket profiles (photos, logos, signatures)
 - Toutes variables d'environnement sur Vercel ✅ EN PRODUCTION
 
 ## ⏭️ Prochaine étape
-- Page de contact / support
-- Notifications email (trial qui expire, bienvenue)
-- Tests et optimisations
+- Notifications email (Resend) : bienvenue + trial qui expire
+- Page contact/support
+- Animations landing page
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
@@ -52,7 +50,7 @@ SaaS d'automatisation pour agents immobiliers.
 
 ## 📅 Roadmap post-MVP
 ### Phase 2
-- Notifications email, page contact/support, optimisations
+- Notifications email (Resend), page contact, animations
 
 ### Phase 3
 - CRM léger, relances programmées, score annonce, multi-langue
