@@ -74,7 +74,7 @@ export default function TarifsPage() {
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>5 utilisateurs</span>
+                  <span>2 utilisateurs</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>

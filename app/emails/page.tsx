@@ -3,9 +3,10 @@
 import ReactMarkdown from "react-markdown";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import SiteHeader from "@/components/site-header";
+import { supabase } from "@/lib/supabase";
 
 type PropertyType = "Appartement" | "Maison" | "Studio" | "Loft" | "Villa";
 type ProspectSituation = "Premier achat" | "Investissement" | "Résidence secondaire";
@@ -76,6 +77,38 @@ export default function EmailsGeneratorPage() {
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [generationError, setGenerationError] = useState("");
+
+  useEffect(() => {
+    if (sessionStatus !== "authenticated" || !session?.user?.id) return;
+
+    let cancelled = false;
+    void (async () => {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("agency_name, first_name, last_name, phone, email")
+        .eq("id", session.user.id)
+        .single();
+
+      if (cancelled || !userData) return;
+
+      const agentNameFromProfile = [userData.first_name, userData.last_name]
+        .filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+        .join(" ")
+        .trim();
+
+      setForm((prev) => ({
+        ...prev,
+        agencyName: userData.agency_name ?? prev.agencyName,
+        agentName: agentNameFromProfile || prev.agentName,
+        agentPhone: userData.phone ?? prev.agentPhone,
+        agentEmail: userData.email ?? prev.agentEmail,
+      }));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionStatus, session?.user?.id]);
 
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

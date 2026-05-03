@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import SiteHeader from "@/components/site-header";
+import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import ReactMarkdown from "react-markdown";
@@ -10,6 +11,7 @@ import {
   FormEvent,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type CSSProperties,
@@ -86,6 +88,11 @@ function splitReportForPdf(lines: string[]) {
   return { page1: lines.slice(0, idx), page2: lines.slice(idx) };
 }
 
+function revokeIfBlob(url: string) {
+  if (!url || !url.startsWith("blob:")) return;
+  URL.revokeObjectURL(url);
+}
+
 function isLikelySectionHeading(line: string) {
   const t = line.trim();
   if (!t) return false;
@@ -150,35 +157,86 @@ export default function VisitReportPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [generationError, setGenerationError] = useState("");
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [profileLogoUrl, setProfileLogoUrl] = useState<string>("");
+  const [profileSignatureUrl, setProfileSignatureUrl] = useState<string>("");
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [signaturePreview, setSignaturePreview] = useState<string>("");
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const signatureFileInputRef = useRef<HTMLInputElement>(null);
+  const logoPreviewRef = useRef(logoPreview);
+  const signaturePreviewRef = useRef(signaturePreview);
+  logoPreviewRef.current = logoPreview;
+  signaturePreviewRef.current = signaturePreview;
+
+  const logoDisplayUrl = logoPreview || profileLogoUrl;
+  const signatureDisplayUrl = signaturePreview || profileSignatureUrl;
 
   useEffect(() => {
-    if (!logoFile) {
-      setLogoPreview("");
-      return;
-    }
-    const url = URL.createObjectURL(logoFile);
-    setLogoPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [logoFile]);
+    return () => {
+      revokeIfBlob(logoPreviewRef.current);
+      revokeIfBlob(signaturePreviewRef.current);
+    };
+  }, []);
 
   useEffect(() => {
-    if (!signatureFile) {
-      setSignaturePreview("");
-      return;
-    }
-    const url = URL.createObjectURL(signatureFile);
-    setSignaturePreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [signatureFile]);
+    if (sessionStatus !== "authenticated" || !session?.user?.id) return;
+
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("logo_url, signature_url, agency_name, first_name, last_name, phone, email")
+        .eq("id", session.user.id)
+        .single();
+
+      if (cancelled || !data) return;
+
+      if (data.logo_url) {
+        const url = String(data.logo_url).trim();
+        if (url) {
+          setProfileLogoUrl(url);
+          setLogoPreview((prev) => {
+            revokeIfBlob(prev);
+            return url;
+          });
+        }
+      }
+      if (data.signature_url) {
+        const url = String(data.signature_url).trim();
+        if (url) {
+          setProfileSignatureUrl(url);
+          setSignaturePreview((prev) => {
+            revokeIfBlob(prev);
+            return url;
+          });
+        }
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        agentName:
+          data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : prev.agentName,
+        agencyName: data.agency_name || prev.agencyName,
+        agentPhone: data.phone || prev.agentPhone,
+        agentEmail: data.email || prev.agentEmail,
+      }));
+    };
+
+    void loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionStatus, session?.user?.id]);
 
   function handleLogoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     if (file && file.type.startsWith("image/")) {
-      setLogoFile(file);
+      setLogoPreview((prev) => {
+        revokeIfBlob(prev);
+        return URL.createObjectURL(file);
+      });
     }
     event.target.value = "";
   }
@@ -186,9 +244,28 @@ export default function VisitReportPage() {
   function handleSignatureChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     if (file && file.type.startsWith("image/")) {
-      setSignatureFile(file);
+      setSignaturePreview((prev) => {
+        revokeIfBlob(prev);
+        return URL.createObjectURL(file);
+      });
     }
     event.target.value = "";
+  }
+
+  function handleRemoveLogo() {
+    setLogoPreview((prev) => {
+      revokeIfBlob(prev);
+      return "";
+    });
+    setProfileLogoUrl("");
+  }
+
+  function handleRemoveSignature() {
+    setSignaturePreview((prev) => {
+      revokeIfBlob(prev);
+      return "";
+    });
+    setProfileSignatureUrl("");
   }
 
   const { pdfPage1Lines, pdfPage2Lines } = useMemo(() => {
@@ -642,39 +719,99 @@ export default function VisitReportPage() {
                 </label>
 
                 <div className="grid gap-6 overflow-visible md:grid-cols-2">
-                  <label className="space-y-2">
-                    <span className="text-sm text-[#A0A0A0]">Logo de l'agence</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                      className="w-full cursor-pointer rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#C9A96E]/10 file:px-4 file:py-2 file:text-[#C9A96E] file:hover:opacity-90 focus:border-[#C9A96E]"
-                    />
-                    {logoPreview ? (
-                      <div className="w-fit overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-2">
-                        <img src={logoPreview} alt="Logo agence" className="h-16 w-16 object-contain" />
-                      </div>
-                    ) : null}
-                  </label>
-
-                  <label className="space-y-2">
-                    <span className="text-sm text-[#A0A0A0]">Signature électronique</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleSignatureChange}
-                      className="w-full cursor-pointer rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#C9A96E]/10 file:px-4 file:py-2 file:text-[#C9A96E] file:hover:opacity-90 focus:border-[#C9A96E]"
-                    />
-                    {signaturePreview ? (
-                      <div className="w-fit overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-2">
-                        <img
-                          src={signaturePreview}
-                          alt="Signature électronique"
-                          className="h-16 w-24 object-contain"
+                  <div className="space-y-2">
+                    <span className="block text-sm text-[#A0A0A0]">Logo de l&apos;agence</span>
+                    {logoDisplayUrl ? (
+                      <div className="space-y-2">
+                        <input
+                          ref={logoFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleLogoChange}
                         />
+                        <div className="w-fit overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-2">
+                          <img
+                            src={logoDisplayUrl}
+                            alt="Logo agence"
+                            className="h-16 w-16 object-contain"
+                            crossOrigin="anonymous"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => logoFileInputRef.current?.click()}
+                            className="text-xs font-medium text-[#C9A96E] underline-offset-2 hover:underline"
+                          >
+                            Changer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemoveLogo}
+                            className="text-lg leading-none text-[#A0A0A0] transition hover:text-white"
+                            aria-label="Retirer le logo"
+                          >
+                            ×
+                          </button>
+                        </div>
                       </div>
-                    ) : null}
-                  </label>
+                    ) : (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                        className="w-full cursor-pointer rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#C9A96E]/10 file:px-4 file:py-2 file:text-[#C9A96E] file:hover:opacity-90 focus:border-[#C9A96E]"
+                      />
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="block text-sm text-[#A0A0A0]">Signature électronique</span>
+                    {signatureDisplayUrl ? (
+                      <div className="space-y-2">
+                        <input
+                          ref={signatureFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleSignatureChange}
+                        />
+                        <div className="w-fit overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-2">
+                          <img
+                            src={signatureDisplayUrl}
+                            alt="Signature électronique"
+                            className="h-16 w-24 object-contain"
+                            crossOrigin="anonymous"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => signatureFileInputRef.current?.click()}
+                            className="text-xs font-medium text-[#C9A96E] underline-offset-2 hover:underline"
+                          >
+                            Changer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemoveSignature}
+                            className="text-lg leading-none text-[#A0A0A0] transition hover:text-white"
+                            aria-label="Retirer la signature"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleSignatureChange}
+                        className="w-full cursor-pointer rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#C9A96E]/10 file:px-4 file:py-2 file:text-[#C9A96E] file:hover:opacity-90 focus:border-[#C9A96E]"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -763,10 +900,11 @@ export default function VisitReportPage() {
             }}
           >
             <div style={{ width: "140px", minHeight: "44px", display: "flex", alignItems: "center" }}>
-              {logoPreview ? (
+              {logoDisplayUrl ? (
                 <img
-                  src={logoPreview}
+                  src={logoDisplayUrl}
                   alt=""
+                  crossOrigin="anonymous"
                   style={{ maxHeight: "44px", maxWidth: "140px", objectFit: "contain" }}
                 />
               ) : null}
@@ -898,10 +1036,11 @@ export default function VisitReportPage() {
                 <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
                   {form.agentEmail.trim() || "—"}
                 </div>
-                {signaturePreview ? (
+                {signatureDisplayUrl ? (
                   <img
-                    src={signaturePreview}
+                    src={signatureDisplayUrl}
                     alt=""
+                    crossOrigin="anonymous"
                     style={{
                       display: "block",
                       marginTop: "8px",
