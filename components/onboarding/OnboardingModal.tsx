@@ -524,31 +524,33 @@ export default function OnboardingModal({
 
             {step === 4 ? (
               <div className="py-2 text-center">
-                <span
-                  className="mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/10 text-[#C9A96E] transition-transform duration-[400ms] ease-out"
-                  style={{ transform: isStep4Popped ? "scale(1.1)" : "scale(1)" }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width={24}
-                    height={24}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
+                <div className="mb-5 flex flex-col items-center gap-3">
+                  <span
+                    className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/10 text-[#C9A96E] transition-transform duration-[400ms] ease-out"
+                    style={{ transform: isStep4Popped ? "scale(1.1)" : "scale(1)" }}
                   >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </span>
-                <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-[#C9A96E]/25 bg-[#C9A96E]/[0.08] px-[14px] py-[5px] text-xs text-[#C9A96E]">
-                  ✓{" "}
-                  {trialDaysLeft === 0
-                    ? "Dernier jour d'essai gratuit"
-                    : `${trialDaysLeft} jours d'essai gratuit restants`}
-                </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width={24}
+                      height={24}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C9A96E]/25 bg-[#C9A96E]/[0.08] px-[14px] py-[5px] text-xs text-[#C9A96E]">
+                    ✓{" "}
+                    {trialDaysLeft === 0
+                      ? "Dernier jour d'essai gratuit"
+                      : `${trialDaysLeft} jours d'essai gratuit restants`}
+                  </span>
+                </div>
                 <h2 className="mb-2 text-xl font-medium text-[#F5F5F0]">Votre espace est prêt !</h2>
                 <p className="mb-6 text-[14px] leading-relaxed text-[#A0A0A0]">
                   Commencez par générer votre première annonce. Ça prend moins d&apos;une minute et le
