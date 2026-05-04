@@ -1,7 +1,7 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
-import { supabase } from "@/lib/supabase";
 
 type TemplateType = "annonce" | "email" | "compte-rendu";
 
@@ -18,10 +18,42 @@ function isTemplateType(value: string): value is TemplateType {
   return value === "annonce" || value === "email" || value === "compte-rendu";
 }
 
+/** Valide que l'id session est un UUID (aligné sur public.users.id). */
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function createServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY manquant.");
+  }
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+  if (!isUuid(userId)) {
+    return NextResponse.json({ error: "Identifiant utilisateur invalide." }, { status: 400 });
+  }
+
+  let supabase;
+  try {
+    supabase = createServiceClient();
+  } catch (e) {
+    console.error("[templates] GET create client", e);
+    return NextResponse.json(
+      { error: "Configuration Supabase invalide (service role)." },
+      { status: 500 },
+    );
   }
 
   const url = new URL(request.url);
@@ -30,7 +62,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("templates")
     .select("id,user_id,type,name,content,created_at")
-    .eq("user_id", session.user.id)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   if (typeParam) {
@@ -43,8 +75,8 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    console.error("[templates] GET", error);
-    return NextResponse.json({ error: "Impossible de charger les templates." }, { status: 500 });
+    console.error("[templates] GET error complet:", JSON.stringify(error));
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({ templates: (data ?? []) as TemplateRow[] });
@@ -54,6 +86,22 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+  if (!isUuid(userId)) {
+    return NextResponse.json({ error: "Identifiant utilisateur invalide." }, { status: 400 });
+  }
+
+  let supabase;
+  try {
+    supabase = createServiceClient();
+  } catch (e) {
+    console.error("[templates] POST create client", e);
+    return NextResponse.json(
+      { error: "Configuration Supabase invalide (service role)." },
+      { status: 500 },
+    );
   }
 
   let body: { name?: string; type?: string; content?: string };
@@ -78,11 +126,11 @@ export async function POST(request: Request) {
   const { count, error: countError } = await supabase
     .from("templates")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", session.user.id);
+    .eq("user_id", userId);
 
   if (countError) {
-    console.error("[templates] POST count", countError);
-    return NextResponse.json({ error: "Impossible de vérifier la limite de templates." }, { status: 500 });
+    console.error("[templates] POST count error complet:", JSON.stringify(countError));
+    return NextResponse.json({ error: countError.message }, { status: 500 });
   }
 
   if ((count ?? 0) >= 10) {
@@ -92,7 +140,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("templates")
     .insert({
-      user_id: session.user.id,
+      user_id: userId,
       type: rawType,
       name,
       content,
@@ -100,8 +148,13 @@ export async function POST(request: Request) {
     .select("id,user_id,type,name,content,created_at")
     .single();
 
-  if (error || !data) {
-    console.error("[templates] POST insert", error);
+  if (error) {
+    console.error("[templates] POST error complet:", JSON.stringify(error));
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!data) {
+    console.error("[templates] POST insert: aucune ligne retournée après insert");
     return NextResponse.json({ error: "Impossible de sauvegarder le template." }, { status: 500 });
   }
 
