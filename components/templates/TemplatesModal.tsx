@@ -49,7 +49,8 @@ export default function TemplatesModal({
 }: TemplatesModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  /** Tous les templates du user (limite 10 au total sur tous les types). */
+  const [allTemplates, setAllTemplates] = useState<TemplateRow[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [inlineError, setInlineError] = useState("");
 
@@ -59,10 +60,10 @@ export default function TemplatesModal({
     async function load() {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/templates?type=${encodeURIComponent(type)}`);
+        const res = await fetch("/api/templates");
         const data = (await res.json()) as { templates?: TemplateRow[]; error?: string };
         if (!res.ok) throw new Error(data.error ?? "Impossible de charger les templates.");
-        setTemplates(data.templates ?? []);
+        setAllTemplates(data.templates ?? []);
       } catch {
         toast.error("Une erreur est survenue");
       } finally {
@@ -71,10 +72,15 @@ export default function TemplatesModal({
     }
 
     void load();
-  }, [open, type]);
+  }, [open]);
 
-  const templatesCount = templates.length;
-  const hasLimitReached = templatesCount >= 10;
+  const templatesForType = useMemo(
+    () => allTemplates.filter((tpl) => tpl.type === type),
+    [allTemplates, type],
+  );
+
+  const templatesTotalCount = allTemplates.length;
+  const hasLimitReached = templatesTotalCount >= 10;
   const preview = (initialContent ?? "").trim();
 
   const saveDisabled = useMemo(() => {
@@ -106,7 +112,7 @@ export default function TemplatesModal({
       if (!res.ok || !data.template) {
         throw new Error(data.error ?? "Impossible de sauvegarder le template.");
       }
-      setTemplates((prev) => [data.template as TemplateRow, ...prev]);
+      setAllTemplates((prev) => [data.template as TemplateRow, ...prev]);
       toast.success("Template sauvegardé");
       onClose();
     } catch (error) {
@@ -129,7 +135,7 @@ export default function TemplatesModal({
       if (!res.ok || !data.success) {
         throw new Error(data.error ?? "Impossible de supprimer le template.");
       }
-      setTemplates((prev) => prev.filter((tpl) => tpl.id !== id));
+      setAllTemplates((prev) => prev.filter((tpl) => tpl.id !== id));
       toast.success("Template supprimé");
     } catch {
       toast.error("Une erreur est survenue");
@@ -138,11 +144,11 @@ export default function TemplatesModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm transition-opacity duration-200 opacity-100"
+      className="templates-modal-overlay-enter fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-[#C9A96E]/20 bg-[#0A0A0A] transition-all duration-200 scale-100 opacity-100"
+        className="templates-modal-card-enter w-full max-w-md overflow-hidden rounded-2xl border border-[#C9A96E]/20 bg-[#0A0A0A]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="border-b border-[#C9A96E]/10 bg-[#060606] px-6 py-4">
@@ -212,12 +218,12 @@ export default function TemplatesModal({
           ) : (
             <div>
               <div className="mb-3 flex items-center justify-end">
-                <span className="text-xs text-[#555]">{templatesCount} / 10 templates</span>
+                <span className="text-xs text-[#555]">{templatesTotalCount} / 10 templates</span>
               </div>
 
               {isLoading ? (
                 <p className="py-8 text-center text-sm text-[#555]">Chargement...</p>
-              ) : templates.length === 0 ? (
+              ) : templatesForType.length === 0 ? (
                 <div className="py-8 text-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -239,7 +245,7 @@ export default function TemplatesModal({
                 </div>
               ) : (
                 <div className="max-h-96 overflow-y-auto pr-1">
-                  {templates.map((template) => (
+                  {templatesForType.map((template) => (
                     <div
                       key={template.id}
                       role="button"
@@ -255,7 +261,7 @@ export default function TemplatesModal({
                           onClose();
                         }
                       }}
-                      className="mb-2 block w-full cursor-pointer rounded-xl border border-white/10 px-4 py-3 text-left transition hover:border-[#C9A96E]/30 hover:bg-[#C9A96E]/[0.03]"
+                      className="mb-2 block w-full cursor-pointer rounded-xl border border-white/[0.07] px-4 py-3 text-left transition duration-150 hover:border-[#C9A96E]/30 hover:bg-[#C9A96E]/3"
                     >
                       <div className="flex items-start gap-2">
                         <p className="text-sm font-medium text-[#F5F5F0]">{template.name}</p>
@@ -268,10 +274,26 @@ export default function TemplatesModal({
                             event.stopPropagation();
                             void handleDelete(template.id);
                           }}
-                          className="ml-auto text-[#444] transition hover:text-red-400"
+                          className="ml-auto shrink-0 text-[#444] transition hover:text-red-400"
                           aria-label="Supprimer le template"
                         >
-                          🗑
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width={16}
+                            height={16}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={1.8}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path d="M10 11v6M14 11v6" />
+                          </svg>
                         </button>
                       </div>
                       <p className="mt-1 line-clamp-2 text-xs text-[#555]">{template.content}</p>
