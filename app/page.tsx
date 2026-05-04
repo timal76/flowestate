@@ -283,7 +283,18 @@ export default function HomePage() {
       {/* Footer minimaliste */}
       <footer className="border-t border-white/10 px-6 py-8 md:px-10">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 text-xs text-[#A0A0A0]">
-          <span>© {new Date().getFullYear()} FlowEstate</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>© {new Date().getFullYear()} FlowEstate</span>
+            <span className="text-white/20" aria-hidden>
+              ·
+            </span>
+            <Link
+              href="/cgu"
+              className="transition hover:text-[#C9A96E] hover:underline underline-offset-4"
+            >
+              CGU
+            </Link>
+          </div>
           <Link
             href="/contact"
             className="transition hover:text-[#C9A96E] hover:underline underline-offset-4"
