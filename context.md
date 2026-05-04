@@ -28,20 +28,25 @@ SaaS d'automatisation pour agents immobiliers.
 - CGU + Mentions légales
 - Animations landing page (Intersection Observer)
 - SEO meta tags sur toutes les pages
+- SEO meta tags corrigés (flowestate.fr au lieu de localhost)
+- Modale visiteur : s'affiche à la première visite via localStorage (flowestate_visited)
+- Modale onboarding : s'affiche à la première connexion (4 étapes : profil, outils, fonctionnement, c'est parti) — onboarding_completed en base Supabase
+- Suppression de toutes les mentions "IA" dans le projet → remplacé par "automatisation"
+- Templates sauvegardés : table Supabase, API CRUD complète, modale save/load, page /templates, intégration boutons dans annonces/emails/comptes-rendus
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
 - Stripe : checkout, plans Starter(30 gen)/Pro(2 users), 
   essai 14 jours, webhooks local + production, portail client
 - Limite 30 générations/mois pour Starter
 - Domaine flowestate.fr connecté à Vercel ✅
-- Resend domaine en attente de vérification DNS
+- Resend domaine flowestate.fr vérifié ✅
+- SUPABASE_SERVICE_ROLE_KEY ajouté sur Vercel et .env.local ✅
 - Toutes variables d'environnement sur Vercel ✅ EN PRODUCTION
 
 ## ⏭️ Prochaine étape
-- Vérifier domaine Resend (attendre propagation DNS)
-- Onboarding nouveaux utilisateurs
-- Templates sauvegardés
-- Export statistiques
+- Tester modale onboarding première connexion en prod
+- Export statistiques dashboard
+- Phase 2 : CRM léger, relances programmées, score annonce, multi-langue
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
@@ -58,7 +63,7 @@ SaaS d'automatisation pour agents immobiliers.
 
 ## 📅 Roadmap post-MVP
 ### Phase 2
-- Onboarding, templates sauvegardés, export stats
+- Export statistiques dashboard
 
 ### Phase 3
 - CRM léger, relances programmées, score annonce, multi-langue
@@ -67,4 +72,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Session du 4 mai 2026
+- Dernière mise à jour : Session du 4 mai 2026
