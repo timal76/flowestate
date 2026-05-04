@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendWelcomeEmail(to: string, firstName: string) {
   await resend.emails.send({
-    from: "FlowEstate <onboarding@resend.dev>",
+    from: "FlowEstate <contact@flowestate.fr>",
     to,
     subject: "Bienvenue sur FlowEstate ! 🏠",
     html: `
@@ -41,7 +41,7 @@ export async function sendWelcomeEmail(to: string, firstName: string) {
 
 export async function sendTrialEndingEmail(to: string, firstName: string, daysLeft: number) {
   await resend.emails.send({
-    from: "FlowEstate <onboarding@resend.dev>",
+    from: "FlowEstate <contact@flowestate.fr>",
     to,
     subject: `Votre essai gratuit se termine dans ${daysLeft} jours`,
     html: `
