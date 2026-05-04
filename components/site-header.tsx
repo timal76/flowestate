@@ -169,6 +169,28 @@ export default function SiteHeader() {
       </Link>
     );
 
+  const contactDesktop =
+    pathname === "/contact" ? (
+      <span className={desktopDashboardActiveClass} aria-current="page">
+        Contact
+      </span>
+    ) : (
+      <Link href="/contact" className={desktopLinkClass}>
+        Contact
+      </Link>
+    );
+
+  const contactMobile =
+    pathname === "/contact" ? (
+      <span className={mobileDashboardActiveClass} aria-current="page">
+        Contact
+      </span>
+    ) : (
+      <Link href="/contact" className={mobileLinkClass} onClick={closeMenu}>
+        Contact
+      </Link>
+    );
+
   function renderPlanBadge() {
     if (!showPlanBadge || !billing) return null;
     if (isTrialish) {
@@ -294,6 +316,7 @@ export default function SiteHeader() {
           <Link href="/" className={desktopLinkClass}>
             Accueil
           </Link>
+          {!isAuthed ? contactDesktop : null}
           {!isAuthed ? (
             <Link href="/tarifs" className={desktopLinkClass}>
               Tarifs
@@ -323,6 +346,7 @@ export default function SiteHeader() {
             <Link href="/" className={mobileLinkClass} onClick={closeMenu}>
               Accueil
             </Link>
+            {!isAuthed ? contactMobile : null}
             {!isAuthed ? (
               <Link href="/tarifs" className={mobileLinkClass} onClick={closeMenu}>
                 Tarifs

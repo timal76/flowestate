@@ -255,8 +255,14 @@ export default function HomePage() {
 
       {/* Footer minimaliste */}
       <footer className="border-t border-white/10 px-6 py-8 md:px-10">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between text-xs text-[#A0A0A0]">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 text-xs text-[#A0A0A0]">
           <span>© {new Date().getFullYear()} FlowEstate</span>
+          <Link
+            href="/contact"
+            className="transition hover:text-[#C9A96E] hover:underline underline-offset-4"
+          >
+            Contact
+          </Link>
           <span className="text-[#C9A96E]">Moins de tâches. Plus de ventes.</span>
         </div>
       </footer>
