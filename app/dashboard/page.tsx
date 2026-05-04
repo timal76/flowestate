@@ -14,12 +14,12 @@ const CANONICAL_PATH = "/dashboard";
 export const metadata: Metadata = {
   title: "Dashboard",
   description:
-    "Tableau de bord FlowEstate : activité récente, stats de génération, essai et accès rapide à vos outils IA.",
+    "Tableau de bord FlowEstate : activité récente, stats de génération, essai et accès rapide à vos outils.",
   alternates: { canonical: CANONICAL_PATH },
   openGraph: {
     title: "Dashboard | FlowEstate",
     description:
-      "Tableau de bord FlowEstate : activité récente, stats de génération, essai et accès rapide à vos outils IA.",
+      "Tableau de bord FlowEstate : activité récente, stats de génération, essai et accès rapide à vos outils.",
     url: absoluteUrl(CANONICAL_PATH),
   },
 };
@@ -631,8 +631,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </h2>
               <p className="mt-3 max-w-3xl leading-relaxed text-[#A0A0A0]">
                 En immobilier, la régularité bat l&apos;inspiration : fixez-vous trois créneaux par
-                semaine pour vos relances et vos compte-rendus. L&apos;IA ne remplace pas le
-                relationnel — elle vous aide à garder ce rythme sans sacrifier la qualité de vos
+                semaine pour vos relances et vos compte-rendus. L&apos;automatisation ne remplace pas
+                le relationnel — elle vous aide à garder ce rythme sans sacrifier la qualité de vos
                 échanges avec vendeurs et acquéreurs.
               </p>
             </div>

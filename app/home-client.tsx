@@ -196,7 +196,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Accès aux 3 outils IA</span>
+                  <span>Accès aux 3 outils</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
@@ -237,7 +237,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Accès aux 3 outils IA</span>
+                  <span>Accès aux 3 outils</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>

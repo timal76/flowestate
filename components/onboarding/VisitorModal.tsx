@@ -60,7 +60,7 @@ export default function VisitorModal() {
 
         <div className="px-8 py-7">
           <h2 className="mb-1.5 text-[20px] font-medium text-[#F5F5F0]">
-            L&apos;IA pensée pour les agents immobiliers
+            L&apos;automatisation pensée pour les agents immobiliers
           </h2>
           <p className="mb-6 text-[14px] leading-[1.6] text-[#A0A0A0]">
             FlowEstate automatise l&apos;opérationnel pour que vous vous concentriez sur ce qui compte :

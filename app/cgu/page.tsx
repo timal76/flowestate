@@ -90,7 +90,7 @@ export default function CguPage() {
             <section className="space-y-3">
               <h2 className="text-lg font-semibold text-[#F5F5F0]">6. Responsabilité</h2>
               <ul className="list-disc space-y-2 pl-5 leading-relaxed marker:text-[#C9A96E]">
-                <li>FlowEstate ne garantit pas l&apos;exactitude du contenu généré par IA</li>
+                <li>FlowEstate ne garantit pas l&apos;exactitude du contenu généré automatiquement</li>
                 <li>L&apos;utilisateur est responsable de la vérification du contenu</li>
               </ul>
             </section>
