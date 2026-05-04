@@ -31,10 +31,37 @@ const faqItems = [
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSent(true);
+    setSubmitError(null);
+    setSending(true);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const name = String(fd.get("name") ?? "").trim();
+    const email = String(fd.get("email") ?? "").trim();
+    const subject = String(fd.get("subject") ?? "").trim();
+    const message = String(fd.get("message") ?? "").trim();
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setSubmitError(typeof data.error === "string" ? data.error : "Erreur envoi");
+        return;
+      }
+      setSent(true);
+    } catch {
+      setSubmitError("Impossible d'envoyer le message. Réessayez plus tard.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -124,11 +151,17 @@ export default function ContactPage() {
                       placeholder="Décrivez votre demande..."
                     />
                   </div>
+                  {submitError ? (
+                    <p className="text-sm text-red-400" role="alert">
+                      {submitError}
+                    </p>
+                  ) : null}
                   <button
                     type="submit"
-                    className="inline-flex w-full items-center justify-center rounded-full bg-[#C9A96E] px-6 py-3.5 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#d4b882] md:w-auto md:min-w-[200px]"
+                    disabled={sending}
+                    className="inline-flex w-full items-center justify-center rounded-full bg-[#C9A96E] px-6 py-3.5 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#d4b882] enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 md:w-auto md:min-w-[200px]"
                   >
-                    Envoyer le message
+                    {sending ? "Envoi en cours…" : "Envoyer le message"}
                   </button>
                 </form>
               ) : (

@@ -17,6 +17,7 @@ import {
   type ChangeEvent,
   type CSSProperties,
 } from "react";
+import { toast } from "sonner";
 
 type PropertyType = "Appartement" | "Maison" | "Studio" | "Loft" | "Villa";
 type VisitDuration = "15 min" | "30 min" | "45 min" | "1h" | "1h30" | "2h";
@@ -157,7 +158,6 @@ export default function VisitReportPage() {
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
-  const [generationError, setGenerationError] = useState("");
   const [generationsUsed, setGenerationsUsed] = useState<number | null>(null);
   const [userPlan, setUserPlan] = useState<string>("");
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>("");
@@ -369,7 +369,6 @@ export default function VisitReportPage() {
 
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setGenerationError("");
     setCopied(false);
 
     if (sessionStatus === "loading") {
@@ -406,10 +405,11 @@ export default function VisitReportPage() {
       }
 
       setGeneratedReport(payload.compteRendu);
+      toast.success("Compte-rendu généré avec succès !");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
-      setGenerationError(message);
+      toast.error(message);
       setGeneratedReport("");
     } finally {
       setIsLoading(false);
@@ -420,6 +420,7 @@ export default function VisitReportPage() {
     if (!generatedReport) return;
     await navigator.clipboard.writeText(generatedReport);
     setCopied(true);
+    toast.success("Compte-rendu copié !");
   }
 
   async function handleDownloadPdf() {
@@ -463,7 +464,7 @@ export default function VisitReportPage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
-      setGenerationError(message);
+      toast.error(message);
     } finally {
       setIsPdfLoading(false);
     }
@@ -876,17 +877,32 @@ export default function VisitReportPage() {
                 disabled={isLoading}
                 className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90 disabled:opacity-50"
               >
-                {isLoading ? "Génération en cours..." : "Générer le compte-rendu"}
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-4 w-4 text-[#0A0A0A]"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    Génération en cours...
+                  </>
+                ) : (
+                  "Générer le compte-rendu"
+                )}
               </button>
             </form>
 
             <div className="rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8">
               <h2 className="text-xl font-semibold text-[#F5F5F0]">Votre compte-rendu</h2>
-              {generationError ? (
-                <p className="mt-6 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  {generationError}
-                </p>
-              ) : null}
               {generatedReport ? (
                 <div className="mt-6">
                   <div className="text-[#A0A0A0] [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-6">

@@ -4,6 +4,7 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import SiteHeader from "@/components/site-header";
 import { supabase } from "@/lib/supabase";
@@ -73,7 +74,6 @@ export default function ProfilPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -87,12 +87,11 @@ export default function ProfilPage() {
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
-    setMessage(null);
     try {
       const res = await fetch("/api/user/profile");
       const data = (await res.json()) as { user?: ProfileUser; stats?: ProfileStats; error?: string };
       if (!res.ok) {
-        setMessage({ type: "err", text: data.error ?? "Chargement impossible." });
+        toast.error(data.error ?? "Chargement impossible.");
         setUser(null);
         setStats(null);
         return;
@@ -106,7 +105,7 @@ export default function ProfilPage() {
       }
       if (data.stats) setStats(data.stats);
     } catch {
-      setMessage({ type: "err", text: "Erreur réseau." });
+      toast.error("Erreur réseau.");
     } finally {
       setLoading(false);
     }
@@ -119,7 +118,6 @@ export default function ProfilPage() {
 
   async function handleSave() {
     setSaving(true);
-    setMessage(null);
     try {
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
@@ -133,15 +131,15 @@ export default function ProfilPage() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setMessage({ type: "err", text: data.error ?? "Enregistrement impossible." });
+        toast.error(data.error ?? "Enregistrement impossible.");
         return;
       }
-      setMessage({ type: "ok", text: "Profil enregistré." });
+      toast.success("Profil sauvegardé !");
       await loadProfile();
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       if (fullName) await updateSession({ name: fullName });
     } catch {
-      setMessage({ type: "err", text: "Erreur réseau." });
+      toast.error("Erreur réseau.");
     } finally {
       setSaving(false);
     }
@@ -149,7 +147,6 @@ export default function ProfilPage() {
 
   async function uploadFile(kind: "avatar" | "logo" | "signature", file: File) {
     setUploadingKind(kind);
-    setMessage(null);
     try {
       const fd = new FormData();
       fd.set("kind", kind);
@@ -157,7 +154,7 @@ export default function ProfilPage() {
       const res = await fetch("/api/user/profile/upload", { method: "POST", body: fd });
       const data = (await res.json()) as { publicUrl?: string; error?: string };
       if (!res.ok) {
-        setMessage({ type: "err", text: data.error ?? "Upload impossible." });
+        toast.error(data.error ?? "Upload impossible.");
         return;
       }
       const publicUrl = data.publicUrl;
@@ -175,10 +172,10 @@ export default function ProfilPage() {
             : prev
         );
       }
-      setMessage({ type: "ok", text: kind === "avatar" ? "Photo mise à jour." : "Fichier enregistré." });
+      toast.success("Fichier uploadé avec succès !");
       await loadProfile();
     } catch {
-      setMessage({ type: "err", text: "Erreur réseau." });
+      toast.error("Erreur réseau.");
     } finally {
       setUploadingKind(null);
     }
@@ -186,17 +183,16 @@ export default function ProfilPage() {
 
   async function handleOpenBillingPortal() {
     setPortalLoading(true);
-    setMessage(null);
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
-        setMessage({ type: "err", text: data.error ?? "Impossible d'ouvrir le portail client." });
+        toast.error(data.error ?? "Impossible d'ouvrir le portail client.");
         return;
       }
       window.location.href = data.url;
     } catch {
-      setMessage({ type: "err", text: "Erreur réseau." });
+      toast.error("Erreur réseau.");
     } finally {
       setPortalLoading(false);
     }
@@ -204,19 +200,18 @@ export default function ProfilPage() {
 
   async function handleDeleteAccount() {
     setDeleting(true);
-    setMessage(null);
     try {
       const res = await fetch("/api/user/profile", { method: "DELETE" });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setMessage({ type: "err", text: data.error ?? "Suppression impossible." });
+        toast.error(data.error ?? "Suppression impossible.");
         setDeleting(false);
         return;
       }
       setDeleteModalOpen(false);
       await signOut({ callbackUrl: "/" });
     } catch {
-      setMessage({ type: "err", text: "Erreur réseau." });
+      toast.error("Erreur réseau.");
       setDeleting(false);
     }
   }
@@ -299,18 +294,6 @@ export default function ProfilPage() {
             </span>
           </div>
         </header>
-
-        {message ? (
-          <div
-            className={`rounded-xl border px-4 py-3 text-sm ${
-              message.type === "ok"
-                ? "border-green-500/35 bg-green-500/10 text-green-200"
-                : "border-red-500/35 bg-red-500/10 text-red-200"
-            }`}
-          >
-            {message.text}
-          </div>
-        ) : null}
 
         <section className={sectionClass} aria-labelledby="profil-info">
           <h2 id="profil-info" className="mb-6 text-lg font-semibold text-[#C9A96E]">

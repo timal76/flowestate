@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import SiteHeader from "@/components/site-header";
 import { supabase } from "@/lib/supabase";
@@ -77,7 +78,6 @@ export default function EmailsGeneratorPage() {
   const [generatedEmail, setGeneratedEmail] = useState("");
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [generationError, setGenerationError] = useState("");
   const [generationsUsed, setGenerationsUsed] = useState<number | null>(null);
   const [userPlan, setUserPlan] = useState<string>("");
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>("");
@@ -132,7 +132,6 @@ export default function EmailsGeneratorPage() {
 
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setGenerationError("");
     setCopied(false);
 
     if (sessionStatus === "loading") {
@@ -169,10 +168,11 @@ export default function EmailsGeneratorPage() {
       }
 
       setGeneratedEmail(payload.email);
+      toast.success("Email généré avec succès !");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
-      setGenerationError(message);
+      toast.error(message);
       setGeneratedEmail("");
     } finally {
       setIsLoading(false);
@@ -183,6 +183,7 @@ export default function EmailsGeneratorPage() {
     if (!generatedEmail) return;
     await navigator.clipboard.writeText(generatedEmail);
     setCopied(true);
+    toast.success("Email copié !");
   }
 
   return (
@@ -507,17 +508,32 @@ export default function EmailsGeneratorPage() {
                 disabled={isLoading}
                 className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90 disabled:opacity-50"
               >
-                {isLoading ? "Génération en cours..." : "Générer l'e-mail"}
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-4 w-4 text-[#0A0A0A]"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    Génération en cours...
+                  </>
+                ) : (
+                  "Générer l'e-mail"
+                )}
               </button>
             </form>
 
             <div className="rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8">
               <h2 className="text-xl font-semibold text-[#F5F5F0]">Votre e-mail</h2>
-              {generationError ? (
-                <p className="mt-6 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  {generationError}
-                </p>
-              ) : null}
 
               {generatedEmail ? (
                 <div className="mt-6">
