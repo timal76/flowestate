@@ -2,8 +2,9 @@
 
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import SiteHeader from "@/components/site-header";
+import TemplatesModal from "@/components/templates/TemplatesModal";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -153,6 +154,7 @@ const selectFieldClassName =
 export default function VisitReportPage() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [form, setForm] = useState<FormState>(initialForm);
   const [generatedReport, setGeneratedReport] = useState("");
   const [copied, setCopied] = useState(false);
@@ -165,6 +167,8 @@ export default function VisitReportPage() {
   const [profileSignatureUrl, setProfileSignatureUrl] = useState<string>("");
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [signaturePreview, setSignaturePreview] = useState<string>("");
+  const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
+  const [templatesModalMode, setTemplatesModalMode] = useState<"save" | "load">("load");
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const signatureFileInputRef = useRef<HTMLInputElement>(null);
   const logoPreviewRef = useRef(logoPreview);
@@ -259,6 +263,35 @@ export default function VisitReportPage() {
       cancelled = true;
     };
   }, [sessionStatus, session?.user?.id]);
+
+  useEffect(() => {
+    const templateId = searchParams.get("template");
+    if (!templateId) return;
+
+    let cancelled = false;
+
+    async function preloadTemplate() {
+      try {
+        const res = await fetch("/api/templates?type=compte-rendu");
+        const data = (await res.json()) as {
+          templates?: Array<{ id: string; content: string }>;
+          error?: string;
+        };
+        if (!res.ok) throw new Error(data.error ?? "Impossible de charger le template.");
+        const selected = (data.templates ?? []).find((template) => template.id === templateId);
+        if (!selected || cancelled) return;
+        setForm((prev) => ({ ...prev, personalInfo: selected.content }));
+        toast.success("Template chargé");
+      } catch {
+        if (!cancelled) toast.error("Une erreur est survenue");
+      }
+    }
+
+    void preloadTemplate();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
 
   function handleLogoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
@@ -485,13 +518,37 @@ export default function VisitReportPage() {
         />
 
         <div className="relative mx-auto w-full max-w-7xl">
-          <div className="mb-12 max-w-3xl space-y-4">
-            <h1 className="text-4xl font-semibold tracking-[0.02em] md:text-6xl">
-              Compte-rendu de visite
-            </h1>
-            <p className="text-lg text-[#A0A0A0] md:text-xl">
-              Décrivez la visite, FlowEstate rédige le compte-rendu.
-            </p>
+          <div className="mb-12 flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-3xl space-y-4">
+              <h1 className="text-4xl font-semibold tracking-[0.02em] md:text-6xl">
+                Compte-rendu de visite
+              </h1>
+              <p className="text-lg text-[#A0A0A0] md:text-xl">
+                Décrivez la visite, FlowEstate rédige le compte-rendu.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setTemplatesModalMode("load");
+                setTemplatesModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs text-[#A0A0A0] transition hover:border-[#C9A96E]/40 hover:text-[#C9A96E]"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={16}
+                height={16}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                aria-hidden
+              >
+                <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+              Mes templates
+            </button>
           </div>
 
           {userPlan === "starter" && subscriptionStatus === "active" && generationsUsed !== null ? (
@@ -908,21 +965,45 @@ export default function VisitReportPage() {
                   <div className="text-[#A0A0A0] [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-6">
                     <ReactMarkdown>{generatedReport}</ReactMarkdown>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className="mt-8 inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
-                  >
-                    {copied ? "Copié" : "Copier"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadPdf}
-                    disabled={isPdfLoading}
-                    className="mt-4 inline-flex items-center justify-center rounded-full border border-[#C9A96E] bg-[#C9A96E] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90 disabled:opacity-50"
-                  >
-                    {isPdfLoading ? "Génération du PDF..." : "Télécharger en PDF"}
-                  </button>
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+                    >
+                      {copied ? "Copié" : "Copier"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTemplatesModalMode("save");
+                        setTemplatesModalOpen(true);
+                      }}
+                      className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width={16}
+                        height={16}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={1.8}
+                        aria-hidden
+                      >
+                        <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                      </svg>
+                      Sauvegarder
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadPdf}
+                      disabled={isPdfLoading}
+                      className="inline-flex items-center justify-center rounded-full border border-[#C9A96E] bg-[#C9A96E] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90 disabled:opacity-50"
+                    >
+                      {isPdfLoading ? "Génération du PDF..." : "Télécharger en PDF"}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/20 px-6 py-12 text-center">
@@ -954,6 +1035,17 @@ export default function VisitReportPage() {
           </div>
         </div>
       </section>
+      <TemplatesModal
+        open={templatesModalOpen}
+        mode={templatesModalMode}
+        type="compte-rendu"
+        initialContent={generatedReport}
+        onClose={() => setTemplatesModalOpen(false)}
+        onLoad={(content) => {
+          setForm((prev) => ({ ...prev, personalInfo: content }));
+          toast.success("Template chargé");
+        }}
+      />
 
       <div
         id="pdf-content"
