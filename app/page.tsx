@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import VisitorModal from "@/components/onboarding/VisitorModal";
+
 import HomePage from "./home-client";
 
 export const metadata: Metadata = {
@@ -18,5 +20,10 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <HomePage />;
+  return (
+    <>
+      <HomePage />
+      <VisitorModal />
+    </>
+  );
 }

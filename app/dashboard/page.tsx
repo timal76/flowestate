@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
+import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import SiteHeader from "@/components/site-header";
 import { absoluteUrl } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
@@ -205,7 +206,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const { data: userData } = await supabase
     .from("users")
-    .select("plan, subscription_status, trial_ends_at")
+    .select(
+      "plan, subscription_status, trial_ends_at, created_at, onboarding_completed, first_name, last_name, agency_name, phone, logo_url"
+    )
     .eq("id", session.user.id)
     .single();
 
@@ -276,6 +279,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const generationsRestantes = Math.max(0, 30 - totalGenCeMois);
   const showGenerationsRestantesCard =
     userData?.plan === "starter" && userData?.subscription_status === "active";
+  const showOnboardingModal = userData?.onboarding_completed !== true;
   const generationsRestantesColorClass =
     generationsRestantes <= 5
       ? "text-red-400"
@@ -288,6 +292,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
+      {showOnboardingModal ? (
+        <OnboardingModal
+          firstName={userData?.first_name ?? null}
+          lastName={userData?.last_name ?? null}
+          agencyName={userData?.agency_name ?? null}
+          phone={userData?.phone ?? null}
+          logoUrl={userData?.logo_url ?? null}
+          createdAt={userData?.created_at ?? null}
+          trialEndsAt={userData?.trial_ends_at ?? null}
+        />
+      ) : null}
       <SiteHeader />
 
       <div
