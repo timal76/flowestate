@@ -1,5 +1,23 @@
+import type { Metadata } from "next";
+
 import SiteHeader from "@/components/site-header";
 import StripePlanCheckoutButton from "@/components/stripe-plan-checkout-button";
+import { absoluteUrl } from "@/lib/constants";
+
+const CANONICAL_PATH = "/tarifs";
+
+export const metadata: Metadata = {
+  title: "Tarifs",
+  description:
+    "Offres Starter et Pro FlowEstate : essai 14 jours, générations IA pour annonces, emails et comptes-rendus. Paiement sécurisé Stripe.",
+  alternates: { canonical: CANONICAL_PATH },
+  openGraph: {
+    title: "Tarifs | FlowEstate",
+    description:
+      "Offres Starter et Pro FlowEstate : essai 14 jours, générations IA pour annonces, emails et comptes-rendus. Paiement sécurisé Stripe.",
+    url: absoluteUrl(CANONICAL_PATH),
+  },
+};
 
 export default function TarifsPage() {
   return (

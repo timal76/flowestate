@@ -1,10 +1,27 @@
+import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
-import { supabase } from "@/lib/supabase";
 import SiteHeader from "@/components/site-header";
+import { absoluteUrl } from "@/lib/constants";
+import { supabase } from "@/lib/supabase";
+
+const CANONICAL_PATH = "/dashboard";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description:
+    "Tableau de bord FlowEstate : activité récente, stats de génération, essai et accès rapide à vos outils IA.",
+  alternates: { canonical: CANONICAL_PATH },
+  openGraph: {
+    title: "Dashboard | FlowEstate",
+    description:
+      "Tableau de bord FlowEstate : activité récente, stats de génération, essai et accès rapide à vos outils IA.",
+    url: absoluteUrl(CANONICAL_PATH),
+  },
+};
 
 export const dynamic = "force-dynamic";
 

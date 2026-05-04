@@ -1,6 +1,23 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import SiteHeader from "@/components/site-header";
+import { absoluteUrl } from "@/lib/constants";
+
+const CANONICAL_PATH = "/cgu";
+
+export const metadata: Metadata = {
+  title: "CGU",
+  description:
+    "Conditions générales d’utilisation du service SaaS FlowEstate pour agents immobiliers : accès, données, responsabilité.",
+  alternates: { canonical: CANONICAL_PATH },
+  openGraph: {
+    title: "CGU | FlowEstate",
+    description:
+      "Conditions générales d’utilisation du service SaaS FlowEstate pour agents immobiliers : accès, données, responsabilité.",
+    url: absoluteUrl(CANONICAL_PATH),
+  },
+};
 
 export default function CguPage() {
   return (

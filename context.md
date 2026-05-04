@@ -4,7 +4,7 @@
 SaaS d'automatisation pour agents immobiliers.
 
 ## ✅ Fait
-- Landing page complète avec essai gratuit 14 jours mis en avant
+- Landing page complète avec animations + essai gratuit 14 jours
 - Navigation complète : Dashboard, Historique, Annonces, Emails, 
   Comptes-rendus, Accueil, Prénom cliquable → Profil, Badge plan, Déconnexion
 - Menu hamburger responsive sur mobile (toutes les pages)
@@ -22,28 +22,32 @@ SaaS d'automatisation pour agents immobiliers.
   par prospect, pagination
 - Page Profil : photo, infos perso, logo agence, signature, 
   abonnement, stats globales, portail Stripe, déconnexion
-- Notifications email (Resend) : email bienvenue à l'inscription + 
-  email rappel trial qui expire dans 3 jours
+- Notifications email (Resend) : bienvenue + trial ending
+- Spinner génération + Toast notifications (sonner)
+- Page contact/support avec FAQ
+- CGU + Mentions légales
+- Animations landing page (Intersection Observer)
+- SEO meta tags sur toutes les pages
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
-- Pages : login, register, forgot-password, 404, tarifs, profil
-- Stripe intégré : checkout, plans Starter(30 gen)/Pro(2 users), 
-  essai 14 jours, webhooks, portail client
+- Stripe : checkout, plans Starter(30 gen)/Pro(2 users), 
+  essai 14 jours, webhooks local + production, portail client
 - Limite 30 générations/mois pour Starter
-- Barre de progression générations dans les 3 outils
-- Supabase Storage : bucket profiles (photos, logos, signatures)
+- Domaine flowestate.fr connecté à Vercel ✅
+- Resend domaine en attente de vérification DNS
 - Toutes variables d'environnement sur Vercel ✅ EN PRODUCTION
 
 ## ⏭️ Prochaine étape
-- Vérifier un domaine sur Resend pour envoyer à tous les emails
-- Page contact/support
-- Animations landing page
-- Ajouter RESEND_API_KEY sur Vercel
+- Vérifier domaine Resend (attendre propagation DNS)
+- Onboarding nouveaux utilisateurs
+- Templates sauvegardés
+- Export statistiques
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
 - GitHub : github.com/timal76/flowestate
 - Hébergement : Vercel
+- Domaine : flowestate.fr (Ionos)
 - Auth : NextAuth.js v5 beta
 - BDD : Supabase (PostgreSQL)
 - Storage : Supabase Storage
@@ -54,7 +58,7 @@ SaaS d'automatisation pour agents immobiliers.
 
 ## 📅 Roadmap post-MVP
 ### Phase 2
-- Domaine vérifié Resend, page contact, animations
+- Onboarding, templates sauvegardés, export stats
 
 ### Phase 3
 - CRM léger, relances programmées, score annonce, multi-langue
@@ -63,4 +67,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Session du 3 mai 2026
+- Session du 4 mai 2026
