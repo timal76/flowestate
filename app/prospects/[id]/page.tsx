@@ -102,6 +102,7 @@ export default function ProspectDetailPage() {
   }
 
   async function updateStatus(next: ProspectStatus) {
+    if (!prospect) return;
     const res = await fetch(`/api/prospects/${prospect.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
