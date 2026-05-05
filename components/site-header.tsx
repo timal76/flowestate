@@ -155,6 +155,17 @@ export default function SiteHeader() {
       </Link>
     );
 
+  const prospectsDesktop =
+    pathname === "/prospects" ? (
+      <span className={desktopDashboardActiveClass} aria-current="page">
+        Prospects
+      </span>
+    ) : (
+      <Link href="/prospects" className={desktopLinkClass}>
+        Prospects
+      </Link>
+    );
+
   const dashboardMobile =
     pathname === "/dashboard" ? (
       <span
@@ -188,6 +199,17 @@ export default function SiteHeader() {
     ) : (
       <Link href="/templates" className={mobileLinkClass} onClick={closeMenu}>
         Templates
+      </Link>
+    );
+
+  const prospectsMobile =
+    pathname === "/prospects" ? (
+      <span className={mobileDashboardActiveClass} aria-current="page">
+        Prospects
+      </span>
+    ) : (
+      <Link href="/prospects" className={mobileLinkClass} onClick={closeMenu}>
+        Prospects
       </Link>
     );
 
@@ -326,6 +348,7 @@ export default function SiteHeader() {
         <nav className={desktopNavClass} aria-label="Navigation principale">
           {dashboardDesktop}
           {historiqueDesktop}
+          {prospectsDesktop}
           {templatesDesktop}
           <Link href="/annonces" className={desktopLinkClass}>
             Annonces
@@ -357,6 +380,7 @@ export default function SiteHeader() {
           <nav className="w-full py-3" aria-label="Navigation principale mobile">
             {dashboardMobile}
             {historiqueMobile}
+            {prospectsMobile}
             {templatesMobile}
             <Link href="/annonces" className={mobileLinkClass} onClick={closeMenu}>
               Annonces

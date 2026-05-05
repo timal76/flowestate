@@ -85,6 +85,7 @@ export default function EmailsGeneratorPage() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>("");
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
   const [templatesModalMode, setTemplatesModalMode] = useState<"save" | "load">("load");
+  const [prospectId, setProspectId] = useState<string | null>(null);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -133,6 +134,40 @@ export default function EmailsGeneratorPage() {
 
     void loadProfile();
   }, [sessionStatus, session?.user?.id]);
+
+  useEffect(() => {
+    const pid = searchParams.get("prospect_id");
+    if (!pid) {
+      setProspectId(null);
+      return;
+    }
+    setProspectId(pid);
+
+    let cancelled = false;
+    async function preloadProspect() {
+      try {
+        const res = await fetch(`/api/prospects/${pid}`);
+        const data = (await res.json()) as {
+          prospect?: { nom?: string | null; email?: string | null };
+          error?: string;
+        };
+        if (!res.ok || !data.prospect) throw new Error(data.error ?? "Prospect introuvable.");
+        if (cancelled) return;
+        setForm((prev) => ({
+          ...prev,
+          prospectName: data.prospect?.nom?.trim() || prev.prospectName,
+          prospectEmail: data.prospect?.email?.trim() || prev.prospectEmail,
+        }));
+      } catch {
+        if (!cancelled) toast.error("Impossible de charger le prospect");
+      }
+    }
+
+    void preloadProspect();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
 
   useEffect(() => {
     const templateId = searchParams.get("template");
@@ -192,7 +227,7 @@ export default function EmailsGeneratorPage() {
       const response = await fetch("/api/generate-email", {
         method: "POST",
         headers,
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, prospectId }),
       });
 
       const payload = (await response.json()) as { email?: string; error?: string };

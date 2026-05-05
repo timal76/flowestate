@@ -7,7 +7,8 @@ async function recordGeneration(
   request: Request,
   type: "annonce" | "email" | "compte-rendu",
   description: string,
-  prospectName: string | null
+  prospectName: string | null,
+  prospectId: string | null,
 ) {
   const userId = request.headers.get("x-user-id")?.trim();
   if (!userId) return;
@@ -22,6 +23,7 @@ async function recordGeneration(
     user_id: userId,
     description,
     prospect_name: prospectName,
+    prospect_id: prospectId,
   });
   if (error) {
     console.error("[generations] insert", error);
@@ -47,6 +49,7 @@ type GenerateEmailPayload = {
   personalInfo?: string;
   tone?: string;
   length?: string;
+  prospectId?: string;
 };
 
 export async function POST(request: Request) {
@@ -173,7 +176,13 @@ Consignes :
 
     const prospectName = body.prospectName?.trim() || null;
 
-    await recordGeneration(request, "email", generationDescription, prospectName);
+    await recordGeneration(
+      request,
+      "email",
+      generationDescription,
+      prospectName,
+      body.prospectId?.trim() || null,
+    );
 
     return NextResponse.json({ email });
   } catch {

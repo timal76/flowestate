@@ -73,6 +73,8 @@ export default function ListingsGeneratorPage() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>("");
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
   const [templatesModalMode, setTemplatesModalMode] = useState<"save" | "load">("load");
+  const [prospectId, setProspectId] = useState<string | null>(null);
+  const [prospectName, setProspectName] = useState("");
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -120,6 +122,41 @@ export default function ListingsGeneratorPage() {
       urls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [photoFiles]);
+
+  useEffect(() => {
+    const pid = searchParams.get("prospect_id");
+    if (!pid) {
+      setProspectId(null);
+      setProspectName("");
+      return;
+    }
+    setProspectId(pid);
+
+    let cancelled = false;
+    async function preloadProspect() {
+      try {
+        const res = await fetch(`/api/prospects/${pid}`);
+        const data = (await res.json()) as { prospect?: { nom?: string | null }; error?: string };
+        if (!res.ok || !data.prospect) throw new Error(data.error ?? "Prospect introuvable.");
+        if (cancelled) return;
+        const name = data.prospect?.nom?.trim() || "";
+        setProspectName(name);
+        if (name) {
+          setForm((prev) => ({
+            ...prev,
+            highlights: prev.highlights ? `${prev.highlights}\nProspect: ${name}` : `Prospect: ${name}`,
+          }));
+        }
+      } catch {
+        if (!cancelled) toast.error("Impossible de charger le prospect");
+      }
+    }
+
+    void preloadProspect();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
 
   useEffect(() => {
     const templateId = searchParams.get("template");
@@ -210,7 +247,7 @@ export default function ListingsGeneratorPage() {
       const response = await fetch("/api/generate-annonce", {
         method: "POST",
         headers,
-        body: JSON.stringify({ ...form, images }),
+        body: JSON.stringify({ ...form, images, prospectId, prospectName: prospectName || null }),
       });
 
       const payload = (await response.json()) as { annonce?: string; error?: string };

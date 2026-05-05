@@ -7,7 +7,8 @@ async function recordGeneration(
   request: Request,
   type: "annonce" | "email" | "compte-rendu",
   description: string,
-  prospectName: string | null
+  prospectName: string | null,
+  prospectId: string | null,
 ) {
   const userId = request.headers.get("x-user-id")?.trim();
   if (!userId) return;
@@ -22,6 +23,7 @@ async function recordGeneration(
     user_id: userId,
     description,
     prospect_name: prospectName,
+    prospect_id: prospectId,
   });
   if (error) {
     console.error("[generations] insert", error);
@@ -44,6 +46,8 @@ type GenerateAnnoncePayload = {
   highlights?: string;
   tone?: string;
   length?: string;
+  prospectId?: string;
+  prospectName?: string;
   images?: Array<{
     data?: string;
     mediaType?: string;
@@ -183,7 +187,13 @@ Consignes :
       .replace(/\s+/g, " ")
       .trim();
 
-    await recordGeneration(request, "annonce", generationDescription, null);
+    await recordGeneration(
+      request,
+      "annonce",
+      generationDescription,
+      body.prospectName?.trim() || null,
+      body.prospectId?.trim() || null,
+    );
 
     return NextResponse.json({ annonce });
   } catch {

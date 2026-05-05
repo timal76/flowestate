@@ -13,7 +13,8 @@ export default auth((req) => {
     req.nextUrl.pathname.startsWith("/dashboard") ||
     req.nextUrl.pathname.startsWith("/historique") ||
     req.nextUrl.pathname.startsWith("/profil") ||
-    req.nextUrl.pathname.startsWith("/templates");
+    req.nextUrl.pathname.startsWith("/templates") ||
+    req.nextUrl.pathname.startsWith("/prospects");
 
   if (isProtectedRoute && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", req.url));
