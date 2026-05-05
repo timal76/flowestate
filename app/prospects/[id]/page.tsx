@@ -118,6 +118,7 @@ export default function ProspectDetailPage() {
   }
 
   async function removeProspect() {
+    if (!prospect) return;
     const res = await fetch(`/api/prospects/${prospect.id}`, { method: "DELETE" });
     const data = (await res.json()) as { success?: boolean; error?: string };
     if (!res.ok || !data.success) {
