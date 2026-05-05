@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
+import ExportStatsButton from "@/components/export/ExportStatsButton";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import SiteHeader from "@/components/site-header";
 import { absoluteUrl } from "@/lib/constants";
@@ -320,9 +321,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         ) : null}
         <header className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-            Bonjour, {prenom} <span aria-hidden>👋</span>
-          </h1>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              Bonjour, {prenom} <span aria-hidden>👋</span>
+            </h1>
+            <ExportStatsButton />
+          </div>
           {showTrialBanner && userData ? (
             <div className="rounded-xl border border-[#C9A96E]/40 bg-[#C9A96E]/15 px-6 py-4 text-[#C9A96E] font-medium">
               <span aria-hidden>⏱</span> Essai gratuit — {trialDaysLeft} jour
