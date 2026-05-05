@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import SiteHeader from "@/components/site-header";
@@ -72,7 +72,7 @@ const initialForm: FormState = {
 const selectFieldClassName =
   "w-full overflow-visible rounded-xl border border-white/15 bg-[#121212] pl-4 pr-10 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]";
 
-export default function EmailsGeneratorPage() {
+function EmailsContent() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -713,5 +713,13 @@ export default function EmailsGeneratorPage() {
         }}
       />
     </main>
+  );
+}
+
+export default function EmailsGeneratorPage() {
+  return (
+    <Suspense fallback={null}>
+      <EmailsContent />
+    </Suspense>
   );
 }
