@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import ProspectModal, { type ProspectInput, type ProspectStatus } from "@/components/prospects/ProspectModal";
 import SiteHeader from "@/components/site-header";
 
+type ProspectTemperature = "chaud" | "tiède" | "froid";
+
 type Prospect = ProspectInput & {
   id: string;
   created_at: string;
@@ -15,6 +17,8 @@ type Prospect = ProspectInput & {
 
 type StatusFilter = "Tous" | ProspectStatus;
 const statuses: StatusFilter[] = ["Tous", "Nouveau", "Contacté", "Visite planifiée", "Offre faite", "Signé", "Perdu"];
+type TemperatureFilter = "Tous" | ProspectTemperature;
+const temperatures: TemperatureFilter[] = ["Tous", "chaud", "tiède", "froid"];
 
 function initials(name: string) {
   return name
@@ -34,17 +38,37 @@ function statusClass(status: ProspectStatus) {
   return "bg-red-500/10 text-red-400/60 border-red-500/20";
 }
 
+function temperatureClass(temperature: ProspectTemperature) {
+  if (temperature === "chaud") return "bg-red-500/10 text-red-400 border-red-500/20";
+  if (temperature === "tiède") return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+  return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+}
+
+function temperatureLabel(temperature: ProspectTemperature) {
+  if (temperature === "chaud") return "🔴 Chaud";
+  if (temperature === "tiède") return "🟡 Tiède";
+  return "🔵 Froid";
+}
+
+function formatBudget(budget: string) {
+  const num = parseInt(budget.replace(/\D/g, ""));
+  if (isNaN(num)) return budget;
+  return new Intl.NumberFormat("fr-FR").format(num) + " €";
+}
+
 export default function ProspectsPage() {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("Tous");
+  const [temperature, setTemperature] = useState<TemperatureFilter>("Tous");
   const [modalOpen, setModalOpen] = useState(false);
 
   async function loadProspects() {
     setLoading(true);
     const params = new URLSearchParams();
     if (status !== "Tous") params.set("statut", status);
+    if (temperature !== "Tous") params.set("temperature", temperature);
     if (search.trim()) params.set("search", search.trim());
     const res = await fetch(`/api/prospects${params.size ? `?${params.toString()}` : ""}`);
     const data = (await res.json()) as { prospects?: Prospect[] };
@@ -54,7 +78,7 @@ export default function ProspectsPage() {
 
   useEffect(() => {
     void loadProspects();
-  }, [status]);
+  }, [status, temperature]);
 
   useEffect(() => {
     const t = setTimeout(() => void loadProspects(), 250);
@@ -83,6 +107,19 @@ export default function ProspectsPage() {
               className={`rounded-full border px-3 py-1 text-xs transition ${status === s ? "border-[#C9A96E]/40 bg-[#C9A96E]/15 text-[#C9A96E]" : "border-white/10 text-[#A0A0A0]"}`}
             >
               {s}
+            </button>
+          ))}
+        </div>
+
+        <div className="mb-4 flex flex-wrap gap-2">
+          {temperatures.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTemperature(t)}
+              className={`rounded-full border px-3 py-1 text-xs transition ${temperature === t ? "border-[#C9A96E]/40 bg-[#C9A96E]/15 text-[#C9A96E]" : "border-white/10 text-[#A0A0A0]"}`}
+            >
+              {t === "Tous" ? "Tous" : temperatureLabel(t)}
             </button>
           ))}
         </div>
@@ -117,8 +154,11 @@ export default function ProspectsPage() {
                       <p className="truncate text-base font-medium text-[#F5F5F0]">{prospect.nom}</p>
                       <span className={`ml-auto rounded-full border px-2 py-0.5 text-[10px] ${statusClass(prospect.statut)}`}>{prospect.statut}</span>
                     </div>
+                    <div className="mt-1">
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] ${temperatureClass(prospect.temperature)}`}>{temperatureLabel(prospect.temperature)}</span>
+                    </div>
                     <p className="mt-1 text-xs text-[#A0A0A0]">{prospect.email || "—"} {prospect.telephone ? `• ${prospect.telephone}` : ""}</p>
-                    <p className="mt-1 text-xs text-[#A0A0A0]">{prospect.type_bien || "Type non renseigné"} {prospect.budget ? `• ${prospect.budget}` : ""}</p>
+                    <p className="mt-1 text-xs text-[#A0A0A0]">{prospect.type_bien || "Type non renseigné"} {prospect.budget ? `• ${formatBudget(prospect.budget)}` : ""}</p>
                     <p className="mt-2 line-clamp-2 text-xs text-[#555]">{prospect.notes || "Aucune note"}</p>
                     <div className="mt-3 flex items-center justify-between text-xs text-[#444]">
                       <span>Ajouté le {new Date(prospect.created_at).toLocaleDateString("fr-FR")}</span>

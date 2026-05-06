@@ -12,10 +12,24 @@ type Relance = {
   titre: string;
   message: string | null;
   scheduled_at: string;
+  sent_at?: string | null;
   statut: "planifiée" | "envoyée" | "annulée";
   type: "email" | "rappel" | "les deux";
   prospect?: { id: string; nom: string } | null;
 };
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr)
+    .toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(":", "h")
+    .replace(" à", " à");
+}
 
 function statusClass(status: Relance["statut"]) {
   if (status === "planifiée") return "bg-blue-500/10 text-blue-400 border-blue-500/20";
@@ -110,7 +124,9 @@ export default function RelancesPage() {
                   </div>
                   <div className="ml-auto text-right">
                     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${statusClass(r.statut)}`}>{r.statut}</span>
-                    <p className="mt-1 text-xs text-[#A0A0A0]">{new Date(r.scheduled_at).toLocaleString("fr-FR")}</p>
+                    <p className="mt-1 text-xs text-[#A0A0A0]">
+                      {r.statut === "envoyée" && r.sent_at ? `Envoyée le ${formatDate(r.sent_at)}` : formatDate(r.scheduled_at)}
+                    </p>
                     <div className="mt-2 flex justify-end gap-2">
                       {r.statut === "planifiée" ? (
                         <button

@@ -59,6 +59,37 @@ function relanceStatusClass(status: Relance["statut"]) {
   return "bg-red-500/10 text-red-400 border-red-500/20";
 }
 
+function temperatureClass(temperature: "chaud" | "tiède" | "froid") {
+  if (temperature === "chaud") return "bg-red-500/10 text-red-400 border-red-500/20";
+  if (temperature === "tiède") return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+  return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+}
+
+function temperatureLabel(temperature: "chaud" | "tiède" | "froid") {
+  if (temperature === "chaud") return "🔴 Chaud";
+  if (temperature === "tiède") return "🟡 Tiède";
+  return "🔵 Froid";
+}
+
+function formatBudget(budget: string) {
+  const num = parseInt(budget.replace(/\D/g, ""));
+  if (isNaN(num)) return budget;
+  return new Intl.NumberFormat("fr-FR").format(num) + " €";
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr)
+    .toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(":", "h")
+    .replace(" à", " à");
+}
+
 export default function ProspectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -103,6 +134,7 @@ export default function ProspectDetailPage() {
       budget: prospect.budget,
       type_bien: prospect.type_bien,
       notes: prospect.notes,
+      temperature: prospect.temperature,
     };
   }, [prospect]);
 
@@ -163,6 +195,7 @@ export default function ProspectDetailPage() {
               <div>
                 <h1 className="text-2xl font-semibold">{prospect.nom}</h1>
                 <span className={`mt-1 inline-flex rounded-full border px-2.5 py-0.5 text-xs ${statusClass(prospect.statut)}`}>{prospect.statut}</span>
+                <span className={`ml-2 mt-1 inline-flex rounded-full border px-2.5 py-0.5 text-xs ${temperatureClass(prospect.temperature)}`}>{temperatureLabel(prospect.temperature)}</span>
               </div>
             </div>
           </div>
@@ -181,7 +214,7 @@ export default function ProspectDetailPage() {
           {[
             ["Email", prospect.email || "—"],
             ["Téléphone", prospect.telephone || "—"],
-            ["Budget", prospect.budget || "—"],
+            ["Budget", prospect.budget ? formatBudget(prospect.budget) : "—"],
             ["Type de bien", prospect.type_bien || "—"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
@@ -244,12 +277,12 @@ export default function ProspectDetailPage() {
                 <li key={r.id} className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm text-[#A0A0A0]">{new Date(r.scheduled_at).toLocaleString("fr-FR")}</p>
+                      <p className="text-sm text-[#A0A0A0]">{formatDate(r.scheduled_at)}</p>
                       <p className="mt-1 text-sm text-[#F5F5F0]">{r.titre}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${relanceStatusClass(r.statut)}`}>{r.statut}</span>
-                      {r.statut !== "annulée" ? (
+                      {r.statut === "planifiée" ? (
                         <button
                           type="button"
                           onClick={() =>

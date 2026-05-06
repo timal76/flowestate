@@ -4,12 +4,14 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
+export type ProspectTemperature = "chaud" | "tiède" | "froid";
 
 export type ProspectInput = {
   nom: string;
   telephone: string;
   email: string;
   statut: ProspectStatus;
+  temperature: ProspectTemperature;
   budget: string;
   type_bien: string;
   notes: string;
@@ -37,6 +39,7 @@ const emptyForm: ProspectInput = {
   telephone: "",
   email: "",
   statut: "Nouveau",
+  temperature: "tiède",
   budget: "",
   type_bien: "",
   notes: "",
@@ -121,6 +124,26 @@ export default function ProspectModal({ open, mode, initialValue, onClose, onSav
               {statuses.map((status) => <option key={status}>{status}</option>)}
             </select>
           </label>
+
+          <div className="space-y-1">
+            <span className="text-xs text-[#666]">Température</span>
+            <div className="flex flex-wrap gap-2">
+              {([
+                ["chaud", "🔴 Chaud"],
+                ["tiède", "🟡 Tiède"],
+                ["froid", "🔵 Froid"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, temperature: key }))}
+                  className={`rounded-full border px-3 py-1 text-xs ${form.temperature === key ? "border-[#C9A96E]/40 bg-[#C9A96E]/15 text-[#C9A96E]" : "border-white/10 bg-white/[0.03] text-[#A0A0A0]"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <label className="block space-y-1">
             <span className="text-xs text-[#666]">Budget</span>

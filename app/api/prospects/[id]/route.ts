@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 
 type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
+type ProspectTemperature = "chaud" | "tiède" | "froid";
 
 type ProspectRow = {
   id: string;
@@ -15,6 +16,7 @@ type ProspectRow = {
   budget: string | null;
   type_bien: string | null;
   notes: string | null;
+  temperature: ProspectTemperature;
   created_at: string;
   updated_at: string;
 };
@@ -37,8 +39,14 @@ const statuses: ProspectStatus[] = [
   "Perdu",
 ];
 
+const temperatures: ProspectTemperature[] = ["chaud", "tiède", "froid"];
+
 function isStatus(value: string): value is ProspectStatus {
   return statuses.includes(value as ProspectStatus);
+}
+
+function isTemperature(value: string): value is ProspectTemperature {
+  return temperatures.includes(value as ProspectTemperature);
 }
 
 function isUuid(value: string): boolean {
@@ -58,7 +66,7 @@ type Context = { params: Promise<{ id: string }> };
 async function getOwnedProspect(supabase: ReturnType<typeof createServiceClient>, userId: string, id: string) {
   const { data, error } = await supabase
     .from("prospects")
-    .select("id,user_id,nom,telephone,email,statut,budget,type_bien,notes,created_at,updated_at")
+    .select("id,user_id,nom,telephone,email,statut,temperature,budget,type_bien,notes,created_at,updated_at")
     .eq("id", id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -119,6 +127,7 @@ export async function PATCH(request: Request, context: Context) {
     telephone?: string;
     email?: string;
     statut?: string;
+    temperature?: string;
     budget?: string;
     type_bien?: string;
     notes?: string;
@@ -137,6 +146,11 @@ export async function PATCH(request: Request, context: Context) {
   if (typeof body.budget === "string") payload.budget = body.budget.trim() || null;
   if (typeof body.type_bien === "string") payload.type_bien = body.type_bien.trim() || null;
   if (typeof body.notes === "string") payload.notes = body.notes.trim() || null;
+  if (typeof body.temperature === "string") {
+    const t = body.temperature.trim();
+    if (!isTemperature(t)) return NextResponse.json({ error: "Température invalide." }, { status: 400 });
+    payload.temperature = t;
+  }
 
   if (typeof body.statut === "string") {
     const s = body.statut.trim();
@@ -151,7 +165,7 @@ export async function PATCH(request: Request, context: Context) {
     .update(payload)
     .eq("id", id)
     .eq("user_id", session.user.id)
-    .select("id,user_id,nom,telephone,email,statut,budget,type_bien,notes,created_at,updated_at")
+    .select("id,user_id,nom,telephone,email,statut,temperature,budget,type_bien,notes,created_at,updated_at")
     .single();
 
   if (updateErr || !data) {

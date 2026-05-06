@@ -34,7 +34,7 @@ export default function UpcomingRelancesBanner() {
           <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
           <path d="M9 17a3 3 0 0 0 6 0" />
         </svg>
-        <p className="text-sm font-medium">Vous avez {soonCount} relance(s) prévue(s) aujourd&apos;hui</p>
+        <p className="text-sm font-medium">Vous avez {soonCount} relance(s) qui seront envoyées automatiquement aujourd&apos;hui</p>
       </div>
       <Link href="/relances" className="mt-2 inline-flex text-sm text-[#C9A96E] hover:underline">Voir les relances →</Link>
     </div>

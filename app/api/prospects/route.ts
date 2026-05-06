@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 
 type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
+type ProspectTemperature = "chaud" | "tiède" | "froid";
 
 type ProspectRow = {
   id: string;
@@ -15,6 +16,7 @@ type ProspectRow = {
   budget: string | null;
   type_bien: string | null;
   notes: string | null;
+  temperature: ProspectTemperature;
   created_at: string;
   updated_at: string;
 };
@@ -28,8 +30,14 @@ const statuses: ProspectStatus[] = [
   "Perdu",
 ];
 
+const temperatures: ProspectTemperature[] = ["chaud", "tiède", "froid"];
+
 function isStatus(value: string): value is ProspectStatus {
   return statuses.includes(value as ProspectStatus);
+}
+
+function isTemperature(value: string): value is ProspectTemperature {
+  return temperatures.includes(value as ProspectTemperature);
 }
 
 function isUuid(value: string): boolean {
@@ -53,16 +61,21 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const statut = (url.searchParams.get("statut") ?? "").trim();
   const search = (url.searchParams.get("search") ?? "").trim();
+  const temperature = (url.searchParams.get("temperature") ?? "").trim();
 
   let query = supabase
     .from("prospects")
-    .select("id,user_id,nom,telephone,email,statut,budget,type_bien,notes,created_at,updated_at")
+    .select("id,user_id,nom,telephone,email,statut,temperature,budget,type_bien,notes,created_at,updated_at")
     .eq("user_id", session.user.id)
     .order("created_at", { ascending: false });
 
   if (statut) {
     if (!isStatus(statut)) return NextResponse.json({ error: "Statut invalide." }, { status: 400 });
     query = query.eq("statut", statut);
+  }
+  if (temperature) {
+    if (!isTemperature(temperature)) return NextResponse.json({ error: "Température invalide." }, { status: 400 });
+    query = query.eq("temperature", temperature);
   }
   if (search) query = query.ilike("nom", `%${search}%`);
 
@@ -85,6 +98,7 @@ export async function POST(request: Request) {
     telephone?: string;
     email?: string;
     statut?: string;
+    temperature?: string;
     budget?: string;
     type_bien?: string;
     notes?: string;
@@ -101,6 +115,8 @@ export async function POST(request: Request) {
 
   const statut = (body.statut ?? "Nouveau").trim();
   if (!isStatus(statut)) return NextResponse.json({ error: "Statut invalide." }, { status: 400 });
+  const temperature = (body.temperature ?? "tiède").trim();
+  if (!isTemperature(temperature)) return NextResponse.json({ error: "Température invalide." }, { status: 400 });
 
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -111,11 +127,12 @@ export async function POST(request: Request) {
       telephone: body.telephone?.trim() || null,
       email: body.email?.trim() || null,
       statut,
+      temperature,
       budget: body.budget?.trim() || null,
       type_bien: body.type_bien?.trim() || null,
       notes: body.notes?.trim() || null,
     })
-    .select("id,user_id,nom,telephone,email,statut,budget,type_bien,notes,created_at,updated_at")
+    .select("id,user_id,nom,telephone,email,statut,temperature,budget,type_bien,notes,created_at,updated_at")
     .single();
 
   if (error || !data) {
