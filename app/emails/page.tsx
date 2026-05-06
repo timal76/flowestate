@@ -86,6 +86,10 @@ function EmailsContent() {
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
   const [templatesModalMode, setTemplatesModalMode] = useState<"save" | "load">("load");
   const [prospectId, setProspectId] = useState<string | null>(null);
+  const [smtpConfigured, setSmtpConfigured] = useState(false);
+  const [sendTo, setSendTo] = useState("");
+  const [sendSubject, setSendSubject] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -130,6 +134,10 @@ function EmailsContent() {
         agentPhone: data.phone || prev.agentPhone,
         agentEmail: data.email || prev.agentEmail,
       }));
+
+      const smtpRes = await fetch("/api/user/smtp");
+      const smtpData = (await smtpRes.json()) as { smtp?: { smtp_configured?: boolean } };
+      setSmtpConfigured(Boolean(smtpData.smtp?.smtp_configured));
     };
 
     void loadProfile();
@@ -158,6 +166,7 @@ function EmailsContent() {
           prospectName: data.prospect?.nom?.trim() || prev.prospectName,
           prospectEmail: data.prospect?.email?.trim() || prev.prospectEmail,
         }));
+        if (data.prospect?.email?.trim()) setSendTo(data.prospect.email.trim());
       } catch {
         if (!cancelled) toast.error("Impossible de charger le prospect");
       }
@@ -246,6 +255,9 @@ function EmailsContent() {
       }
 
       setGeneratedEmail(payload.email);
+      setSendTo((prev) => prev || form.prospectEmail || "");
+      const firstLine = payload.email.split("\n").find((line) => line.trim())?.trim() || "";
+      setSendSubject(firstLine.replace(/^objet\s*:\s*/i, "").slice(0, 120) || "Suite à notre échange concernant votre projet");
       toast.success("Email généré avec succès !");
     } catch {
       toast.error("Une erreur est survenue. Réessayez.");
@@ -260,6 +272,29 @@ function EmailsContent() {
     await navigator.clipboard.writeText(generatedEmail);
     setCopied(true);
     toast.success("Email copié !");
+  }
+
+  async function handleSendEmail() {
+    if (!generatedEmail) return;
+    setSending(true);
+    try {
+      const cleanedBody = generatedEmail.replace(/^objet\s*:.*\n?/i, "").trim();
+      const res = await fetch("/api/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: sendTo, subject: sendSubject, body: cleanedBody }),
+      });
+      const data = (await res.json()) as { success?: boolean; error?: string };
+      if (!res.ok || !data.success) {
+        toast.error(data.error ?? "Une erreur est survenue.");
+        return;
+      }
+      toast.success("✓ Email envoyé");
+    } catch {
+      toast.error("Une erreur est survenue.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -678,6 +713,29 @@ function EmailsContent() {
                       Sauvegarder
                     </button>
                   </div>
+                  {smtpConfigured ? (
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+                      <p className="mb-3 text-sm font-medium text-[#F5F5F0]">Envoyer directement</p>
+                      <div className="space-y-3">
+                        <label className="block space-y-1">
+                          <span className="text-xs text-[#A0A0A0]">Destinataire</span>
+                          <input type="email" value={sendTo} onChange={(e) => setSendTo(e.target.value)} placeholder="email@prospect.com" className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]" />
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-xs text-[#A0A0A0]">Objet</span>
+                          <input value={sendSubject} onChange={(e) => setSendSubject(e.target.value)} placeholder="Ex: Suite à notre échange concernant votre projet" className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]" />
+                        </label>
+                        <button type="button" onClick={() => void handleSendEmail()} disabled={sending} className="rounded-full border border-[#C9A96E] px-5 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:opacity-50">
+                          {sending ? "Envoi..." : "Envoyer →"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-[#A0A0A0]">
+                      Connectez votre boîte mail dans votre profil pour envoyer des emails directement.{" "}
+                      <Link href="/profil" className="text-[#C9A96E] hover:underline">Configurer →</Link>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/20 px-6 py-12 text-center">

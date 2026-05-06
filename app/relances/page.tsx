@@ -112,6 +112,24 @@ export default function RelancesPage() {
                     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${statusClass(r.statut)}`}>{r.statut}</span>
                     <p className="mt-1 text-xs text-[#A0A0A0]">{new Date(r.scheduled_at).toLocaleString("fr-FR")}</p>
                     <div className="mt-2 flex justify-end gap-2">
+                      {r.statut === "planifiée" ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void (async () => {
+                              await fetch("/api/relances/send", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ id: r.id }),
+                              });
+                              await load();
+                            })()
+                          }
+                          className="rounded-full border border-[#C9A96E]/40 px-2.5 py-1 text-xs text-[#C9A96E] hover:bg-[#C9A96E]/10"
+                        >
+                          Envoyer maintenant
+                        </button>
+                      ) : null}
                       <button type="button" onClick={() => { setEditing(r); setOpen(true); }} className="text-[#A0A0A0] hover:text-[#C9A96E]" aria-label="Modifier">✎</button>
                       <button type="button" onClick={() => void (async () => { await fetch(`/api/relances/${r.id}`, { method: "DELETE" }); await load(); })()} className="text-[#A0A0A0] hover:text-red-400" aria-label="Supprimer">🗑</button>
                     </div>
