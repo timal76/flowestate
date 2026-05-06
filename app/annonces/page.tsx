@@ -7,8 +7,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 
+import ScoreAnnonce from "@/components/annonces/ScoreAnnonce";
 import SiteHeader from "@/components/site-header";
 import TemplatesModal from "@/components/templates/TemplatesModal";
+import { scoreAnnonce, type ScoreResult } from "@/lib/scoreAnnonce";
 import { supabase } from "@/lib/supabase";
 
 type PropertyType = "Appartement" | "Maison" | "Studio" | "Loft" | "Villa";
@@ -75,6 +77,7 @@ function AnnoncesContent() {
   const [templatesModalMode, setTemplatesModalMode] = useState<"save" | "load">("load");
   const [prospectId, setProspectId] = useState<string | null>(null);
   const [prospectName, setProspectName] = useState("");
+  const [score, setScore] = useState<ScoreResult | null>(null);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -215,6 +218,7 @@ function AnnoncesContent() {
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setCopied(false);
+    setScore(null);
 
     if (sessionStatus === "loading") {
       return;
@@ -268,10 +272,12 @@ function AnnoncesContent() {
       }
 
       setGeneratedListing(payload.annonce);
+      setScore(scoreAnnonce(payload.annonce));
       toast.success("Annonce générée avec succès !");
     } catch {
       toast.error("Une erreur est survenue. Réessayez.");
       setGeneratedListing("");
+      setScore(null);
     } finally {
       setIsLoading(false);
     }
@@ -673,6 +679,11 @@ function AnnoncesContent() {
                   <div className="text-[#A0A0A0] [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6">
                     <ReactMarkdown>{generatedListing}</ReactMarkdown>
                   </div>
+                  {score ? (
+                    <div className="animate-[fadeInUp_300ms_ease-out_forwards] opacity-0">
+                      <ScoreAnnonce score={score} />
+                    </div>
+                  ) : null}
                   <div className="mt-8 flex flex-wrap gap-3">
                     <button
                       type="button"
