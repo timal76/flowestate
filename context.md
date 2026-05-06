@@ -42,11 +42,19 @@ SaaS d'automatisation pour agents immobiliers.
 - Resend domaine flowestate.fr vérifié ✅
 - SUPABASE_SERVICE_ROLE_KEY ajouté sur Vercel et .env.local ✅
 - Toutes variables d'environnement sur Vercel ✅ EN PRODUCTION
+- Score annonce automatique /10 basé sur 7 critères objectifs (longueur, type de bien, surface, localisation, prix, accroche, appel à l'action)
+- Retry automatique API Claude en cas d'erreur overloaded (1 retry après 2 secondes)
+- CRM prospects amélioré : badge température chaud/tiède/froid, formatage budget "400 000 €"
+- Envoi d'emails via SMTP : configuration dans le profil, guide Gmail/Outlook, envoi direct depuis la page Emails
+- Relances programmées avec envoi automatique via Vercel Cron (toutes les minutes en prod)
 
 ## ⏭️ Prochaine étape
-- Tester modale onboarding première connexion en prod
-- Export statistiques dashboard
-- Phase 2 : CRM léger, relances programmées, score annonce, multi-langue
+- Fix fuseau horaire Europe/Paris pour l'affichage des dates de relances (à revoir)
+- Score annonce : vérifier l'affichage après génération
+- OAuth Gmail pour simplifier la connexion email (v2)
+- Intégration copier pour SeLoger/LeBonCoin (formatage adapté)
+- Passer Stripe en mode live avant le lancement
+- Créer des données de démo réalistes pour les démarchages
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
@@ -72,4 +80,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : Session du 4 mai 2026
+- Dernière mise à jour : Session du 6 mai 2026

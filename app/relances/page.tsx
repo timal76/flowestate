@@ -19,16 +19,14 @@ type Relance = {
 };
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr)
-    .toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-    .replace(":", "h")
-    .replace(" à", " à");
+  return new Date(dateStr).toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function statusClass(status: Relance["statut"]) {
