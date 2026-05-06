@@ -230,17 +230,25 @@ function EmailsContent() {
         body: JSON.stringify({ ...form, prospectId }),
       });
 
-      const payload = (await response.json()) as { email?: string; error?: string };
-      if (!response.ok || !payload.email) {
-        throw new Error(payload.error || "Erreur lors de la génération de l'e-mail.");
+      const payload = (await response.json()) as { email?: string; error?: string; message?: string };
+      if (!response.ok) {
+        const errorText = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
+        if (response.status === 529 || errorText.includes("overloaded")) {
+          toast.error("Le service est momentanément surchargé. Réessayez dans quelques secondes.");
+        } else {
+          toast.error("Une erreur est survenue. Réessayez.");
+        }
+        return;
+      }
+      if (!payload.email) {
+        toast.error("Une erreur est survenue. Réessayez.");
+        return;
       }
 
       setGeneratedEmail(payload.email);
       toast.success("Email généré avec succès !");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
-      toast.error(message);
+    } catch {
+      toast.error("Une erreur est survenue. Réessayez.");
       setGeneratedEmail("");
     } finally {
       setIsLoading(false);

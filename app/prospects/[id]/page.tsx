@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ProspectModal, { type ProspectInput, type ProspectStatus } from "@/components/prospects/ProspectModal";
+import RelanceModal from "@/components/relances/RelanceModal";
 import SiteHeader from "@/components/site-header";
 
 type Generation = {
@@ -19,6 +20,17 @@ type Prospect = ProspectInput & {
   id: string;
   created_at: string;
   updated_at: string;
+};
+
+type Relance = {
+  id: string;
+  titre: string;
+  scheduled_at: string;
+  statut: "planifiée" | "envoyée" | "annulée";
+  prospect_id: string | null;
+  prospect_email: string | null;
+  message: string | null;
+  type: "email" | "rappel" | "les deux";
 };
 
 const statuses: ProspectStatus[] = ["Nouveau", "Contacté", "Visite planifiée", "Offre faite", "Signé", "Perdu"];
@@ -41,6 +53,12 @@ function initials(name: string) {
     .join("");
 }
 
+function relanceStatusClass(status: Relance["statut"]) {
+  if (status === "planifiée") return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+  if (status === "envoyée") return "bg-green-500/10 text-green-400 border-green-500/20";
+  return "bg-red-500/10 text-red-400 border-red-500/20";
+}
+
 export default function ProspectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -49,6 +67,8 @@ export default function ProspectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [relanceOpen, setRelanceOpen] = useState(false);
+  const [relances, setRelances] = useState<Relance[]>([]);
 
   async function load() {
     if (!params?.id) return;
@@ -57,6 +77,9 @@ export default function ProspectDetailPage() {
     const data = (await res.json()) as { prospect?: Prospect; generations?: Generation[] };
     setProspect(data.prospect ?? null);
     setGenerations(data.generations ?? []);
+    const relanceRes = await fetch(`/api/relances?prospect_id=${params.id}`);
+    const relanceData = (await relanceRes.json()) as { relances?: Relance[] };
+    setRelances(relanceData.relances ?? []);
     setLoading(false);
   }
 
@@ -204,6 +227,53 @@ export default function ProspectDetailPage() {
             <Link href={`/emails?prospect_id=${prospect.id}`} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">Générer un email pour ce prospect</Link>
           </div>
         </section>
+
+        <section className="mt-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">Relances</h2>
+            <button type="button" onClick={() => setRelanceOpen(true)} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">
+              Programmer une relance
+            </button>
+          </div>
+
+          {relances.length === 0 ? (
+            <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-8 text-center text-sm text-[#A0A0A0]">Aucune relance liée à ce prospect</p>
+          ) : (
+            <ul className="space-y-3">
+              {relances.map((r) => (
+                <li key={r.id} className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-[#A0A0A0]">{new Date(r.scheduled_at).toLocaleString("fr-FR")}</p>
+                      <p className="mt-1 text-sm text-[#F5F5F0]">{r.titre}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${relanceStatusClass(r.statut)}`}>{r.statut}</span>
+                      {r.statut !== "annulée" ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void (async () => {
+                              await fetch(`/api/relances/${r.id}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ statut: "annulée" }),
+                              });
+                              void load();
+                            })()
+                          }
+                          className="rounded-full border border-white/10 px-3 py-1 text-xs text-[#A0A0A0] transition hover:border-red-500/40 hover:text-red-300"
+                        >
+                          Annuler
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
 
       <ProspectModal
@@ -215,6 +285,22 @@ export default function ProspectDetailPage() {
           setProspect(updated as Prospect);
           void load();
         }}
+      />
+      <RelanceModal
+        open={relanceOpen}
+        mode="create"
+        defaultProspectId={prospect.id}
+        initialValue={{
+          id: "",
+          titre: "",
+          message: "",
+          type: "email",
+          prospect_id: prospect.id,
+          prospect_email: prospect.email ?? "",
+          scheduled_at: "",
+        }}
+        onClose={() => setRelanceOpen(false)}
+        onSaved={() => void load()}
       />
     </main>
   );

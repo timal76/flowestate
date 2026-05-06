@@ -433,17 +433,25 @@ function ComptesRendusContent() {
         body: JSON.stringify(form),
       });
 
-      const payload = (await response.json()) as { compteRendu?: string; error?: string };
-      if (!response.ok || !payload.compteRendu) {
-        throw new Error(payload.error || "Erreur lors de la génération du compte-rendu.");
+      const payload = (await response.json()) as { compteRendu?: string; error?: string; message?: string };
+      if (!response.ok) {
+        const errorText = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
+        if (response.status === 529 || errorText.includes("overloaded")) {
+          toast.error("Le service est momentanément surchargé. Réessayez dans quelques secondes.");
+        } else {
+          toast.error("Une erreur est survenue. Réessayez.");
+        }
+        return;
+      }
+      if (!payload.compteRendu) {
+        toast.error("Une erreur est survenue. Réessayez.");
+        return;
       }
 
       setGeneratedReport(payload.compteRendu);
       toast.success("Compte-rendu généré avec succès !");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
-      toast.error(message);
+    } catch {
+      toast.error("Une erreur est survenue. Réessayez.");
       setGeneratedReport("");
     } finally {
       setIsLoading(false);

@@ -150,10 +150,13 @@ Consignes :
     };
 
     if (!anthropicResponse.ok) {
+      const anthropicMessage = anthropicJson.error?.message || "";
+      if (anthropicMessage.toLowerCase().includes("overloaded")) {
+        return NextResponse.json({ error: "overloaded" }, { status: 529 });
+      }
       return NextResponse.json(
         {
-          error:
-            anthropicJson.error?.message || "Erreur lors de l'appel à l'API Anthropic.",
+          error: anthropicMessage || "Erreur lors de l'appel à l'API Anthropic.",
         },
         { status: anthropicResponse.status }
       );

@@ -250,18 +250,27 @@ function AnnoncesContent() {
         body: JSON.stringify({ ...form, images, prospectId, prospectName: prospectName || null }),
       });
 
-      const payload = (await response.json()) as { annonce?: string; error?: string };
+      const payload = (await response.json()) as { annonce?: string; error?: string; message?: string };
 
-      if (!response.ok || !payload.annonce) {
-        throw new Error(payload.error || "Erreur lors de la génération de l'annonce.");
+      if (!response.ok) {
+        const errorText = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
+        if (response.status === 529 || errorText.includes("overloaded")) {
+          toast.error("Le service est momentanément surchargé. Réessayez dans quelques secondes.");
+        } else {
+          toast.error("Une erreur est survenue. Réessayez.");
+        }
+        return;
+      }
+
+      if (!payload.annonce) {
+        toast.error("Une erreur est survenue. Réessayez.");
+        return;
       }
 
       setGeneratedListing(payload.annonce);
       toast.success("Annonce générée avec succès !");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
-      toast.error(message);
+    } catch {
+      toast.error("Une erreur est survenue. Réessayez.");
       setGeneratedListing("");
     } finally {
       setIsLoading(false);

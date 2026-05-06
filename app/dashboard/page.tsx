@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 import ExportStatsButton from "@/components/export/ExportStatsButton";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
+import UpcomingRelancesBanner from "@/components/relances/UpcomingRelancesBanner";
 import SiteHeader from "@/components/site-header";
 import { absoluteUrl } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
@@ -320,6 +321,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             {subscriptionSuccessMessage(planParam)}
           </div>
         ) : null}
+        <UpcomingRelancesBanner />
         <header className="space-y-2">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">

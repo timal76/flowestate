@@ -7,13 +7,10 @@ import { useCallback, useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 
-const desktopNavClass =
-  "hidden md:flex md:flex-wrap md:items-center md:gap-x-8 md:gap-y-2 text-sm font-medium text-[#A0A0A0]";
-
-const desktopLinkClass = "transition hover:text-[#F5F5F0]";
-
-const desktopDashboardActiveClass =
-  "font-semibold text-[#C9A96E] underline decoration-[#C9A96E] decoration-2 underline-offset-4";
+const desktopToolLinkClass = "text-sm text-[#A0A0A0] transition hover:text-[#F5F5F0]";
+const desktopToolActiveClass = "text-sm font-medium text-[#C9A96E]";
+const desktopSubnavLinkClass = "text-xs text-[#A0A0A0] transition hover:text-[#F5F5F0]";
+const desktopSubnavActiveClass = "text-xs font-medium text-[#C9A96E]";
 
 const mobileLinkClass =
   "block w-full border-b border-[#C9A96E]/20 px-6 py-3 text-sm font-medium text-[#A0A0A0] transition hover:bg-white/[0.03] hover:text-[#F5F5F0]";
@@ -121,48 +118,56 @@ export default function SiteHeader() {
 
   const dashboardDesktop =
     pathname === "/dashboard" ? (
-      <span
-        className={desktopDashboardActiveClass}
-        aria-current="page"
-      >
+      <span className={desktopSubnavActiveClass} aria-current="page">
         Dashboard
       </span>
     ) : (
-      <Link href="/dashboard" className={desktopLinkClass}>
+      <Link href="/dashboard" className={desktopSubnavLinkClass}>
         Dashboard
       </Link>
     );
 
   const historiqueDesktop =
     pathname === "/historique" ? (
-      <span className={desktopDashboardActiveClass} aria-current="page">
+      <span className={desktopSubnavActiveClass} aria-current="page">
         Historique
       </span>
     ) : (
-      <Link href="/historique" className={desktopLinkClass}>
+      <Link href="/historique" className={desktopSubnavLinkClass}>
         Historique
       </Link>
     );
 
   const templatesDesktop =
     pathname === "/templates" ? (
-      <span className={desktopDashboardActiveClass} aria-current="page">
+      <span className={desktopSubnavActiveClass} aria-current="page">
         Templates
       </span>
     ) : (
-      <Link href="/templates" className={desktopLinkClass}>
+      <Link href="/templates" className={desktopSubnavLinkClass}>
         Templates
       </Link>
     );
 
   const prospectsDesktop =
     pathname === "/prospects" ? (
-      <span className={desktopDashboardActiveClass} aria-current="page">
+      <span className={desktopSubnavActiveClass} aria-current="page">
         Prospects
       </span>
     ) : (
-      <Link href="/prospects" className={desktopLinkClass}>
+      <Link href="/prospects" className={desktopSubnavLinkClass}>
         Prospects
+      </Link>
+    );
+
+  const relancesDesktop =
+    pathname === "/relances" ? (
+      <span className={desktopSubnavActiveClass} aria-current="page">
+        Relances
+      </span>
+    ) : (
+      <Link href="/relances" className={desktopSubnavLinkClass}>
+        Relances
       </Link>
     );
 
@@ -213,14 +218,14 @@ export default function SiteHeader() {
       </Link>
     );
 
-  const contactDesktop =
-    pathname === "/contact" ? (
-      <span className={desktopDashboardActiveClass} aria-current="page">
-        Contact
+  const relancesMobile =
+    pathname === "/relances" ? (
+      <span className={mobileDashboardActiveClass} aria-current="page">
+        Relances
       </span>
     ) : (
-      <Link href="/contact" className={desktopLinkClass}>
-        Contact
+      <Link href="/relances" className={mobileLinkClass} onClick={closeMenu}>
+        Relances
       </Link>
     );
 
@@ -271,7 +276,7 @@ export default function SiteHeader() {
   }
 
   const authDesktop = isAuthed ? (
-    <div className="inline-flex flex-wrap items-center gap-2 md:ml-8">
+    <div className="hidden items-center gap-2 md:inline-flex">
       <Link
         href="/profil"
         className="cursor-pointer text-xs font-semibold tracking-wide text-[#C9A96E] hover:underline"
@@ -279,17 +284,12 @@ export default function SiteHeader() {
         {firstName}
       </Link>
       {renderPlanBadge()}
-      {showOffers ? (
-        <Link href="/tarifs" className={offersButtonClass}>
-          Voir les offres
-        </Link>
-      ) : null}
       <button type="button" onClick={() => void handleSignOut()} className={signOutButtonClass}>
         Déconnexion
       </button>
     </div>
   ) : (
-    <Link href="/login" className={`${connexionLinkClass} md:ml-8`}>
+    <Link href="/login" className="hidden md:inline-flex md:items-center md:rounded-full md:border md:border-[#C9A96E] md:bg-transparent md:px-4 md:py-2 md:text-xs md:font-semibold md:text-[#C9A96E] md:transition md:hover:bg-[#C9A96E] md:hover:text-[#0A0A0A]">
       Connexion
     </Link>
   );
@@ -329,7 +329,7 @@ export default function SiteHeader() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-[#0A0A0A]/85 backdrop-blur-md">
-      <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-6 md:px-10">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-6 md:px-10">
         <Link href="/" className="text-xl font-semibold tracking-wide text-[#C9A96E]">
           FlowEstate
         </Link>
@@ -345,30 +345,32 @@ export default function SiteHeader() {
           <span aria-hidden>{menuOpen ? "✕" : "☰"}</span>
         </button>
 
-        <nav className={desktopNavClass} aria-label="Navigation principale">
-          {dashboardDesktop}
-          {historiqueDesktop}
-          {prospectsDesktop}
-          {templatesDesktop}
-          <Link href="/annonces" className={desktopLinkClass}>
+        <nav className="hidden items-center justify-center gap-8 md:flex" aria-label="Navigation outils">
+          <Link href="/annonces" className={pathname === "/annonces" ? desktopToolActiveClass : desktopToolLinkClass}>
             Annonces
           </Link>
-          <Link href="/emails" className={desktopLinkClass}>
+          <Link href="/emails" className={pathname === "/emails" ? desktopToolActiveClass : desktopToolLinkClass}>
             Emails
           </Link>
-          <Link href="/comptes-rendus" className={desktopLinkClass}>
+          <Link href="/comptes-rendus" className={pathname === "/comptes-rendus" ? desktopToolActiveClass : desktopToolLinkClass}>
             Comptes-rendus
           </Link>
-          <Link href="/" className={desktopLinkClass}>
-            Accueil
-          </Link>
-          {!isAuthed ? contactDesktop : null}
-          {!isAuthed ? (
-            <Link href="/tarifs" className={desktopLinkClass}>
-              Tarifs
-            </Link>
-          ) : null}
-          {authDesktop}
+        </nav>
+
+        <div className="hidden items-center justify-end md:flex">{authDesktop}</div>
+      </div>
+
+      <div className="hidden h-9 border-b border-white/5 bg-[#0A0A0A] md:block">
+        <nav className="mx-auto flex h-full w-full max-w-7xl items-center justify-center gap-6 px-6 md:px-10" aria-label="Navigation secondaire">
+          {dashboardDesktop}
+          <span className="text-xs text-white/20" aria-hidden>·</span>
+          {historiqueDesktop}
+          <span className="text-xs text-white/20" aria-hidden>·</span>
+          {prospectsDesktop}
+          <span className="text-xs text-white/20" aria-hidden>·</span>
+          {relancesDesktop}
+          <span className="text-xs text-white/20" aria-hidden>·</span>
+          {templatesDesktop}
         </nav>
       </div>
 
@@ -381,6 +383,7 @@ export default function SiteHeader() {
             {dashboardMobile}
             {historiqueMobile}
             {prospectsMobile}
+            {relancesMobile}
             {templatesMobile}
             <Link href="/annonces" className={mobileLinkClass} onClick={closeMenu}>
               Annonces
@@ -405,7 +408,6 @@ export default function SiteHeader() {
         </div>
       ) : null}
 
-      <div className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-[#C9A96E] to-transparent" />
     </header>
   );
 }
