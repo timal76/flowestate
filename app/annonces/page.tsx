@@ -679,11 +679,7 @@ function AnnoncesContent() {
                   <div className="text-[#A0A0A0] [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6">
                     <ReactMarkdown>{generatedListing}</ReactMarkdown>
                   </div>
-                  {score ? (
-                    <div className="animate-[fadeInUp_300ms_ease-out_forwards] opacity-0">
-                      <ScoreAnnonce score={score} />
-                    </div>
-                  ) : null}
+                  {score && <ScoreAnnonce score={score} />}
                   <div className="mt-8 flex flex-wrap gap-3">
                     <button
                       type="button"

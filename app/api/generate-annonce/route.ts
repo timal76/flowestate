@@ -3,6 +3,38 @@ import { NextResponse } from "next/server";
 
 import { checkGenerationLimit } from "@/lib/check-generation-limit";
 
+async function callAnthropicWithRetry(apiKey: string, params: Record<string, unknown>) {
+  const callOnce = async () => {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(params),
+    });
+    const json = (await response.json()) as {
+      content?: Array<{ type?: string; text?: string }>;
+      error?: { message?: string; type?: string };
+      message?: string;
+    };
+    return { response, json };
+  };
+
+  const first = await callOnce();
+  const firstMessage = `${first.json?.error?.message ?? ""} ${first.json?.message ?? ""}`.toLowerCase();
+  const isOverloaded =
+    first.response.status === 529 ||
+    firstMessage.includes("overloaded") ||
+    first.json?.error?.type === "overloaded_error";
+
+  if (!isOverloaded) return first;
+
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  return callOnce();
+}
+
 async function recordGeneration(
   request: Request,
   type: "annonce" | "email" | "compte-rendu",
@@ -130,33 +162,17 @@ Consignes :
           },
         })) ?? [];
 
-    const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5",
-        max_tokens: 800,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: userPrompt },
-              ...imageContents,
-            ],
-          },
-        ],
-      }),
+    const { response: anthropicResponse, json: anthropicJson } = await callAnthropicWithRetry(apiKey, {
+      model: "claude-sonnet-4-5",
+      max_tokens: 800,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: [{ type: "text", text: userPrompt }, ...imageContents],
+        },
+      ],
     });
-
-    const anthropicJson = (await anthropicResponse.json()) as {
-      content?: Array<{ type?: string; text?: string }>;
-      error?: { message?: string };
-    };
 
     if (!anthropicResponse.ok) {
       const anthropicMessage = anthropicJson.error?.message || "";
