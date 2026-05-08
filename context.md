@@ -47,14 +47,15 @@ SaaS d'automatisation pour agents immobiliers.
 - CRM prospects amélioré : badge température chaud/tiède/froid, formatage budget "400 000 €"
 - Envoi d'emails via SMTP : configuration dans le profil, guide Gmail/Outlook, envoi direct depuis la page Emails
 - Relances programmées avec envoi automatique via Vercel Cron (toutes les minutes en prod)
+- Fix fuseau horaire Europe/Paris pour l'affichage des dates de relances ✅
 
 ## ⏭️ Prochaine étape
-- Fix fuseau horaire Europe/Paris pour l'affichage des dates de relances (à revoir)
+- Passer Stripe en mode live avant le lancement
+- Créer des données de démo réalistes pour les démarchages (prospects, annonces, emails fictifs mais réalistes)
 - Score annonce : vérifier l'affichage après génération
+- Tester le cron relances en prod
 - OAuth Gmail pour simplifier la connexion email (v2)
 - Intégration copier pour SeLoger/LeBonCoin (formatage adapté)
-- Passer Stripe en mode live avant le lancement
-- Créer des données de démo réalistes pour les démarchages
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
@@ -80,4 +81,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : Session du 6 mai 2026
+- Dernière mise à jour : Session du 7 mai 2026
