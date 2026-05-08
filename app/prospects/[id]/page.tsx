@@ -78,14 +78,17 @@ function formatBudget(budget: string) {
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleString("fr-FR", {
-    timeZone: "Europe/Paris",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const date = new Date(dateStr);
+  return date
+    .toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+    })
+    .replace(":", "h");
 }
 
 export default function ProspectDetailPage() {
