@@ -26,13 +26,15 @@ type ProfileUser = {
 };
 
 type ProfileStats = { annonces: number; emails: number; comptesRendus: number; total: number };
-type SmtpProvider = "gmail" | "outlook" | "yahoo" | "orange" | "sfr" | "other";
 type SmtpState = {
   smtp_host: string;
   smtp_port: number;
   smtp_email: string;
   smtp_configured: boolean;
 };
+
+const GMAIL_SMTP_HOST = "smtp.gmail.com";
+const GMAIL_SMTP_PORT = 587;
 
 function initialsFromUser(user: ProfileUser | null) {
   const a = (user?.first_name?.trim()?.[0] ?? "").toUpperCase();
@@ -92,15 +94,11 @@ export default function ProfilPage() {
   const [deleting, setDeleting] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [smtp, setSmtp] = useState<SmtpState | null>(null);
-  const [smtpProvider, setSmtpProvider] = useState<SmtpProvider>("gmail");
-  const [smtpHost, setSmtpHost] = useState("smtp.gmail.com");
-  const [smtpPort, setSmtpPort] = useState(587);
   const [smtpEmail, setSmtpEmail] = useState("");
   const [smtpPassword, setSmtpPassword] = useState("");
   const [smtpSaving, setSmtpSaving] = useState(false);
   const [smtpEditMode, setSmtpEditMode] = useState(false);
   const [smtpGuideOpen, setSmtpGuideOpen] = useState(false);
-  const [smtpGuideTab, setSmtpGuideTab] = useState<"gmail" | "outlook">("gmail");
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -127,8 +125,6 @@ export default function ProfilPage() {
       if (smtpRes.ok && smtpData.smtp) {
         setSmtp(smtpData.smtp);
         setSmtpEmail(smtpData.smtp.smtp_email ?? "");
-        setSmtpHost(smtpData.smtp.smtp_host ?? "smtp.gmail.com");
-        setSmtpPort(smtpData.smtp.smtp_port ?? 587);
       }
     } catch {
       toast.error("Erreur réseau.");
@@ -249,8 +245,8 @@ export default function ProfilPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          smtp_host: smtpHost,
-          smtp_port: smtpPort,
+          smtp_host: GMAIL_SMTP_HOST,
+          smtp_port: GMAIL_SMTP_PORT,
           smtp_email: smtpEmail,
           smtp_password: smtpPassword,
         }),
@@ -557,29 +553,20 @@ export default function ProfilPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <label className="block space-y-1">
-                <span className="text-xs text-[#A0A0A0]">Fournisseur</span>
-                <select
-                  value={smtpProvider}
-                  onChange={(e) => {
-                    const provider = e.target.value as SmtpProvider;
-                    setSmtpProvider(provider);
-                    if (provider === "gmail") { setSmtpHost("smtp.gmail.com"); setSmtpPort(587); }
-                    if (provider === "outlook") { setSmtpHost("smtp-mail.outlook.com"); setSmtpPort(587); }
-                    if (provider === "yahoo") { setSmtpHost("smtp.mail.yahoo.com"); setSmtpPort(587); }
-                    if (provider === "orange") { setSmtpHost("smtp.orange.fr"); setSmtpPort(587); }
-                    if (provider === "sfr") { setSmtpHost("smtp.sfr.fr"); setSmtpPort(587); }
-                  }}
-                  className={inputClass}
-                >
-                  <option value="gmail">Gmail</option>
-                  <option value="outlook">Outlook</option>
-                  <option value="yahoo">Yahoo</option>
-                  <option value="orange">Orange</option>
-                  <option value="sfr">SFR</option>
-                  <option value="other">Autre</option>
-                </select>
-              </label>
+              <div className="rounded-xl border border-white/10 bg-[#0A0A0A] px-4 py-3">
+                <p className="mb-1 text-xs text-[#A0A0A0]">Fournisseur</p>
+                <div className="flex items-center gap-2 text-sm font-medium text-[#F5F5F0]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d="M4 6h16v12H4z" fill="#fff" opacity="0.92" />
+                    <path d="M4 7.5 12 13l8-5.5" stroke="#EA4335" strokeWidth={2} strokeLinejoin="round" />
+                    <path d="M4 6v12h4V9.3L4 6Z" fill="#34A853" />
+                    <path d="M20 6v12h-4V9.3L20 6Z" fill="#4285F4" />
+                    <path d="M4 6l8 6 8-6" stroke="#FBBC05" strokeWidth={2} strokeLinejoin="round" />
+                  </svg>
+                  Gmail
+                </div>
+                <p className="mt-1 text-xs text-[#555]">{GMAIL_SMTP_HOST} · port {GMAIL_SMTP_PORT}</p>
+              </div>
 
               <label className="block space-y-1">
                 <span className="text-xs text-[#A0A0A0]">Adresse email</span>
@@ -590,21 +577,7 @@ export default function ProfilPage() {
                 <span className="text-xs text-[#A0A0A0]">Mot de passe d'application</span>
                 <input type="password" className={inputClass} value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} />
                 <p className="text-xs text-[#555]">Pour Gmail : activez la validation en 2 étapes puis créez un mot de passe d'application sur myaccount.google.com</p>
-                <p className="text-xs text-[#555]">Pour Outlook : utilisez votre mot de passe habituel ou un mot de passe d'application</p>
               </label>
-
-              {smtpProvider === "other" ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block space-y-1">
-                    <span className="text-xs text-[#A0A0A0]">Serveur SMTP</span>
-                    <input className={inputClass} placeholder="smtp.votredomaine.com" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} />
-                  </label>
-                  <label className="block space-y-1">
-                    <span className="text-xs text-[#A0A0A0]">Port</span>
-                    <input type="number" className={inputClass} value={smtpPort} onChange={(e) => setSmtpPort(Number(e.target.value || 587))} />
-                  </label>
-                </div>
-              ) : null}
 
               <p className="text-xs text-[#555]">Votre mot de passe est chiffré et stocké de manière sécurisée.</p>
               <button type="button" onClick={() => void handleSaveSmtp()} disabled={smtpSaving} className="inline-flex items-center rounded-full border border-[#C9A96E] px-5 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:opacity-50">
@@ -634,107 +607,46 @@ export default function ProfilPage() {
 
             {smtpGuideOpen ? (
               <div className="mt-4">
-                <div className="mb-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSmtpGuideTab("gmail")}
-                    className={`rounded-full border px-3 py-1 text-xs ${smtpGuideTab === "gmail" ? "border-[#C9A96E]/40 bg-[#C9A96E]/15 text-[#C9A96E]" : "border-white/10 bg-white/[0.03] text-[#A0A0A0]"}`}
-                  >
-                    Gmail
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSmtpGuideTab("outlook")}
-                    className={`rounded-full border px-3 py-1 text-xs ${smtpGuideTab === "outlook" ? "border-[#C9A96E]/40 bg-[#C9A96E]/15 text-[#C9A96E]" : "border-white/10 bg-white/[0.03] text-[#A0A0A0]"}`}
-                  >
-                    Outlook
-                  </button>
+                <div>
+                  <div className="mb-3 border-b border-white/5 pb-3">
+                    <div className="flex gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">1</span>
+                      <div>
+                        <p className="text-sm font-medium text-[#F5F5F0]">Activez la validation en 2 étapes</p>
+                        <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Allez sur myaccount.google.com → Sécurité → Validation en 2 étapes</p>
+                        <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#C9A96E] hover:underline">Ouvrir Google Account →</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mb-3 border-b border-white/5 pb-3">
+                    <div className="flex gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">2</span>
+                      <div>
+                        <p className="text-sm font-medium text-[#F5F5F0]">Créez un mot de passe d'application</p>
+                        <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Dans Sécurité → cherchez 'Mots de passe des applications' → Créer → nommez-le 'FlowEstate'</p>
+                        <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#C9A96E] hover:underline">Créer un mot de passe →</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mb-3 border-b border-white/5 pb-3">
+                    <div className="flex gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">3</span>
+                      <div>
+                        <p className="text-sm font-medium text-[#F5F5F0]">Copiez le mot de passe généré</p>
+                        <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Google génère un mot de passe de 16 caractères. Copiez-le — vous ne pourrez plus le voir après.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">4</span>
+                      <div>
+                        <p className="text-sm font-medium text-[#F5F5F0]">Entrez vos identifiants ci-dessus</p>
+                        <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Entrez votre adresse Gmail et collez le mot de passe de 16 caractères.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
-                {smtpGuideTab === "gmail" ? (
-                  <div>
-                    <div className="mb-3 border-b border-white/5 pb-3">
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">1</span>
-                        <div>
-                          <p className="text-sm font-medium text-[#F5F5F0]">Activez la validation en 2 étapes</p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Allez sur myaccount.google.com → Sécurité → Validation en 2 étapes</p>
-                          <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#C9A96E] hover:underline">Ouvrir Google Account →</a>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mb-3 border-b border-white/5 pb-3">
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">2</span>
-                        <div>
-                          <p className="text-sm font-medium text-[#F5F5F0]">Créez un mot de passe d'application</p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Dans Sécurité → cherchez 'Mots de passe des applications' → Créer → nommez-le 'FlowEstate'</p>
-                          <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#C9A96E] hover:underline">Créer un mot de passe →</a>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mb-3 border-b border-white/5 pb-3">
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">3</span>
-                        <div>
-                          <p className="text-sm font-medium text-[#F5F5F0]">Copiez le mot de passe généré</p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Google génère un mot de passe de 16 caractères. Copiez-le — vous ne pourrez plus le voir après.</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">4</span>
-                        <div>
-                          <p className="text-sm font-medium text-[#F5F5F0]">Entrez vos identifiants ci-dessus</p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Sélectionnez Gmail, entrez votre adresse email et collez le mot de passe de 16 caractères.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="mb-3 border-b border-white/5 pb-3">
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">1</span>
-                        <div>
-                          <p className="text-sm font-medium text-[#F5F5F0]">Activez la validation en 2 étapes</p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Allez sur account.microsoft.com → Sécurité → Options de sécurité avancées</p>
-                          <a href="https://account.microsoft.com/security" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#C9A96E] hover:underline">Ouvrir Microsoft Account →</a>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mb-3 border-b border-white/5 pb-3">
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">2</span>
-                        <div>
-                          <p className="text-sm font-medium text-[#F5F5F0]">Activez l'accès SMTP</p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Dans Outlook.com → Paramètres → Courrier → Synchronisation → activez 'Accès SMTP authentifié'</p>
-                          <a href="https://outlook.live.com/mail/0/options/mail/pop" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#C9A96E] hover:underline">Ouvrir Paramètres Outlook →</a>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mb-3 border-b border-white/5 pb-3">
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">3</span>
-                        <div>
-                          <p className="text-sm font-medium text-[#F5F5F0]">Créez un mot de passe d'application</p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Retournez dans account.microsoft.com → Sécurité → Mot de passe d'application → Créer</p>
-                          <a href="https://account.microsoft.com/security/app-passwords" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-[#C9A96E] hover:underline">Créer un mot de passe →</a>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/15 text-xs font-medium text-[#C9A96E]">4</span>
-                        <div>
-                          <p className="text-sm font-medium text-[#F5F5F0]">Entrez vos identifiants ci-dessus</p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#A0A0A0]">Sélectionnez Outlook, entrez votre adresse email et le mot de passe d'application.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             ) : null}
           </div>

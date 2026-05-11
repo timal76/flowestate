@@ -239,31 +239,6 @@ export default function ProspectDetailPage() {
 
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">Historique des générations</h2>
-            <span className="text-sm text-[#A0A0A0]">{generations.length}</span>
-          </div>
-
-          {generations.length === 0 ? (
-            <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-10 text-center text-sm text-[#A0A0A0]">Aucune génération liée à ce prospect</p>
-          ) : (
-            <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.02]">
-              {generations.map((g) => (
-                <li key={g.id} className="px-5 py-4">
-                  <p className="text-xs text-[#A0A0A0]">{new Date(g.created_at).toLocaleDateString("fr-FR")} • {g.type}</p>
-                  <p className="mt-1 text-sm text-[#F5F5F0]">{(g.description || "Génération").slice(0, 80)}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href={`/annonces?prospect_id=${prospect.id}`} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">Générer une annonce pour ce prospect</Link>
-            <Link href={`/emails?prospect_id=${prospect.id}`} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">Générer un email pour ce prospect</Link>
-          </div>
-        </section>
-
-        <section className="mt-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">Relances</h2>
             <button type="button" onClick={() => setRelanceOpen(true)} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">
               Programmer une relance
@@ -307,6 +282,31 @@ export default function ProspectDetailPage() {
               ))}
             </ul>
           )}
+        </section>
+
+        <section className="mt-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">Historique des générations</h2>
+            <span className="text-sm text-[#A0A0A0]">{generations.length}</span>
+          </div>
+
+          {generations.length === 0 ? (
+            <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-10 text-center text-sm text-[#A0A0A0]">Aucune génération liée à ce prospect</p>
+          ) : (
+            <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.02]">
+              {generations.map((g) => (
+                <li key={g.id} className="px-5 py-4">
+                  <p className="text-xs text-[#A0A0A0]">{new Date(g.created_at).toLocaleDateString("fr-FR")} • {g.type}</p>
+                  <p className="mt-1 text-sm text-[#F5F5F0]">{(g.description || "Génération").slice(0, 80)}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href={`/comptes-rendus?prospect_id=${prospect.id}`} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">Générer un compte-rendu pour ce prospect</Link>
+            <Link href={`/emails?prospect_id=${prospect.id}`} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">Générer un email pour ce prospect</Link>
+          </div>
         </section>
       </div>
 

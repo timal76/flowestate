@@ -10,6 +10,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const successMessage = searchParams.get("message");
 
@@ -101,14 +102,36 @@ function LoginForm() {
 
             <label className="block space-y-2">
               <span className="text-sm text-[#A0A0A0]">Mot de passe</span>
-              <input
-                type="password"
-                name="password"
-                autoComplete="current-password"
-                placeholder="••••••••"
-                className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition focus:border-[#B8965A]/70"
-                disabled={isSubmitting}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 pr-11 text-[#F5F5F0] outline-none transition focus:border-[#B8965A]/70"
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] transition hover:text-[#A0A0A0]"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                      <path d="M3 3l18 18" />
+                      <path d="M10.6 10.6A2 2 0 0 0 12 14a2 2 0 0 0 1.4-.6" />
+                      <path d="M9.9 4.2A10.8 10.8 0 0 1 12 4c6 0 10 8 10 8a18 18 0 0 1-3.1 4.3" />
+                      <path d="M6.1 6.1C3.5 7.8 2 12 2 12s4 8 10 8a10.6 10.6 0 0 0 5.9-1.9" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                      <path d="M2 12s4-8 10-8 10 8 10 8-4 8-10 8S2 12 2 12Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </label>
 
             <div className="flex justify-end">

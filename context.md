@@ -48,10 +48,17 @@ SaaS d'automatisation pour agents immobiliers.
 - Envoi d'emails via SMTP : configuration dans le profil, guide Gmail/Outlook, envoi direct depuis la page Emails
 - Relances programmées avec envoi automatique via Vercel Cron (toutes les minutes en prod)
 - Fix fuseau horaire Europe/Paris pour l'affichage des dates de relances ✅
+- Stripe passé en mode live — clés, produits et webhook configurés en production ✅
+- Compte de démo créé avec profil complet (Thomas Marchand, Orpi Paris 11e)
+- Gmail connecté en SMTP sur le compte démo
+- Fix SMTP : Gmail uniquement dans le profil, guide simplifié
+- Fix login/register : bouton afficher/masquer mot de passe
+- Fix prospect : température chaud/tiède/froid dans le modal de création
+- Fix page détail prospect : "Générer un compte-rendu" à la place de "Générer une annonce", section Relances déplacée avant l'historique
 
 ## ⏭️ Prochaine étape
-- Passer Stripe en mode live avant le lancement
-- Créer des données de démo réalistes pour les démarchages (prospects, annonces, emails fictifs mais réalistes)
+- Finir les données de démo (prospects, annonces, emails, relances réalistes)
+- Mettre à jour le guide SMTP Outlook (OAuth2 — non supporté pour l'instant)
 - Score annonce : vérifier l'affichage après génération
 - Tester le cron relances en prod
 - OAuth Gmail pour simplifier la connexion email (v2)
@@ -81,4 +88,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : Session du 7 mai 2026
+- Dernière mise à jour : Session du 11 mai 2026
