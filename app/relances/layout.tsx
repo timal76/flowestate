@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import { absoluteUrl } from "@/lib/constants";
 
 const CANONICAL_PATH = "/relances";
+const PAGE_TITLE = "Relances | FlowEstate";
 
 export const metadata: Metadata = {
-  title: { absolute: "Relances | FlowEstate" },
+  title: { absolute: PAGE_TITLE },
   description: "Gérez vos relances programmées",
   alternates: { canonical: CANONICAL_PATH },
   openGraph: {
-    title: "Relances | FlowEstate",
+    title: PAGE_TITLE,
     description: "Gérez vos relances programmées",
     url: absoluteUrl(CANONICAL_PATH),
   },

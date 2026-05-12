@@ -683,8 +683,12 @@ function AnnoncesContent() {
             <div className="flex h-full min-h-[20rem] flex-col rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8 lg:min-h-0">
               <h2 className="text-xl font-semibold text-[#F5F5F0]">Votre annonce</h2>
               {generationError ? (
-                <div className="mt-8 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
-                  <span aria-hidden>⚠️</span> {generationError}
+                <div
+                  role="alert"
+                  className="mt-8 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200"
+                >
+                  <span aria-hidden>⚠️</span>
+                  <span>{generationError}</span>
                 </div>
               ) : generatedListing ? (
                 <div className="mt-6 flex flex-1 flex-col">

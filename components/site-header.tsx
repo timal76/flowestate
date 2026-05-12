@@ -300,7 +300,7 @@ export default function SiteHeader() {
         <span className="text-center text-xs font-semibold tracking-wide text-[#C9A96E]">{firstName}</span>
         {renderPlanBadge()}
       </div>
-      <Link href="/profil" onClick={closeMenu} className={`${offersButtonClass} w-full justify-center`}>
+      <Link href="/profil" onClick={closeMenu} className={`${connexionLinkClass} w-full justify-center`}>
         Mon profil
       </Link>
       <button type="button" onClick={() => void handleSignOut()} className={`${signOutButtonClass} w-full justify-center`}>

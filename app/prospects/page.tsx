@@ -132,10 +132,15 @@ export default function ProspectsPage() {
         />
 
         {loading ? (
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" aria-label="Chargement des prospects">
+          <div
+            className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+            aria-busy="true"
+            aria-label="Chargement des prospects"
+          >
             {[0, 1, 2].map((item) => (
               <div
                 key={item}
+                aria-hidden="true"
                 className="h-32 animate-pulse rounded-2xl border border-white/10 bg-white/[0.02]"
               />
             ))}
