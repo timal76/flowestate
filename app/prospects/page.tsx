@@ -131,7 +131,16 @@ export default function ProspectsPage() {
           className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-[#F5F5F0] outline-none"
         />
 
-        {loading ? <p className="mt-6 text-sm text-[#A0A0A0]">Chargement...</p> : null}
+        {loading ? (
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" aria-label="Chargement des prospects">
+            {[0, 1, 2].map((item) => (
+              <div
+                key={item}
+                className="h-32 animate-pulse rounded-2xl border border-white/10 bg-white/[0.02]"
+              />
+            ))}
+          </div>
+        ) : null}
 
         {empty ? (
           <div className="mt-10 text-center">

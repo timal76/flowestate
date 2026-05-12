@@ -78,6 +78,7 @@ function AnnoncesContent() {
   const [prospectId, setProspectId] = useState<string | null>(null);
   const [prospectName, setProspectName] = useState("");
   const [score, setScore] = useState<ScoreResult | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -219,6 +220,7 @@ function AnnoncesContent() {
     event.preventDefault();
     setCopied(false);
     setScore(null);
+    setGenerationError(null);
 
     if (sessionStatus === "loading") {
       return;
@@ -259,22 +261,28 @@ function AnnoncesContent() {
       if (!response.ok) {
         const errorText = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
         if (response.status === 529 || errorText.includes("overloaded")) {
-          toast.error("Le service est momentanément surchargé. Réessayez dans quelques secondes.");
+          const message = "Le service est momentanément surchargé. Réessayez dans quelques secondes.";
+          setGenerationError(message);
+          toast.error(message);
         } else {
+          setGenerationError("Une erreur est survenue. Veuillez réessayer.");
           toast.error("Une erreur est survenue. Réessayez.");
         }
         return;
       }
 
       if (!payload.annonce) {
+        setGenerationError("Une erreur est survenue. Veuillez réessayer.");
         toast.error("Une erreur est survenue. Réessayez.");
         return;
       }
 
       setGeneratedListing(payload.annonce);
       setScore(scoreAnnonce(payload.annonce));
+      setGenerationError(null);
       toast.success("Annonce générée avec succès !");
     } catch {
+      setGenerationError("Une erreur est survenue. Veuillez réessayer.");
       toast.error("Une erreur est survenue. Réessayez.");
       setGeneratedListing("");
       setScore(null);
@@ -674,7 +682,11 @@ function AnnoncesContent() {
 
             <div className="flex h-full min-h-[20rem] flex-col rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8 lg:min-h-0">
               <h2 className="text-xl font-semibold text-[#F5F5F0]">Votre annonce</h2>
-              {generatedListing ? (
+              {generationError ? (
+                <div className="mt-8 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                  <span aria-hidden>⚠️</span> {generationError}
+                </div>
+              ) : generatedListing ? (
                 <div className="mt-6 flex flex-1 flex-col">
                   <div className="text-[#A0A0A0] [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6">
                     <ReactMarkdown>{generatedListing}</ReactMarkdown>

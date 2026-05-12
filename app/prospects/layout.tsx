@@ -5,7 +5,7 @@ import { absoluteUrl } from "@/lib/constants";
 const CANONICAL_PATH = "/prospects";
 
 export const metadata: Metadata = {
-  title: "Prospects | FlowEstate",
+  title: { absolute: "Prospects | FlowEstate" },
   description: "Gérez vos prospects immobiliers",
   alternates: { canonical: CANONICAL_PATH },
   openGraph: {

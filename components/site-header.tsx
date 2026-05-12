@@ -297,20 +297,12 @@ export default function SiteHeader() {
   const authMobile = isAuthed ? (
     <div className="space-y-3 border-b border-[#C9A96E]/20 px-6 py-3">
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Link
-          href="/profil"
-          onClick={closeMenu}
-          className="cursor-pointer text-center text-xs font-semibold tracking-wide text-[#C9A96E] hover:underline"
-        >
-          {firstName}
-        </Link>
+        <span className="text-center text-xs font-semibold tracking-wide text-[#C9A96E]">{firstName}</span>
         {renderPlanBadge()}
       </div>
-      {showOffers ? (
-        <Link href="/tarifs" onClick={closeMenu} className={`${offersButtonClass} w-full justify-center`}>
-          Voir les offres
-        </Link>
-      ) : null}
+      <Link href="/profil" onClick={closeMenu} className={`${offersButtonClass} w-full justify-center`}>
+        Mon profil
+      </Link>
       <button type="button" onClick={() => void handleSignOut()} className={`${signOutButtonClass} w-full justify-center`}>
         Déconnexion
       </button>
