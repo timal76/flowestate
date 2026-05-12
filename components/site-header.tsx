@@ -391,8 +391,8 @@ export default function SiteHeader() {
             </Link>
             {!isAuthed ? contactMobile : null}
             {!isAuthed ? (
-              <Link href="/tarifs" className={mobileLinkClass} onClick={closeMenu}>
-                Tarifs
+              <Link href="/profil" className={mobileLinkClass} onClick={closeMenu}>
+                Mon profil
               </Link>
             ) : null}
             {authMobile}
