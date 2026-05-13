@@ -16,6 +16,7 @@ export type ProspectInput = {
   categorie: ProspectCategorie;
   budget: string;
   type_bien: string;
+  adresse: string;
   notes: string;
 };
 
@@ -47,6 +48,7 @@ const emptyForm: ProspectInput = {
   categorie: "acheteur",
   budget: "",
   type_bien: "",
+  adresse: "",
   notes: "",
 };
 
@@ -61,6 +63,7 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
     setForm({
       ...next,
       categorie: next.categorie === "vendeur" ? "vendeur" : "acheteur",
+      adresse: typeof next.adresse === "string" ? next.adresse : "",
     });
     setTemperature(
       next.temperature === "chaud" || next.temperature === "tiède" || next.temperature === "froid"
@@ -100,9 +103,10 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
         statut: form.statut,
         temperature,
         categorie: form.categorie,
-        budget: form.budget.trim(),
-        type_bien: form.type_bien.trim(),
-        notes: form.notes.trim(),
+        budget: form.budget.trim() || null,
+        type_bien: form.type_bien.trim() || null,
+        adresse: form.categorie === "vendeur" ? form.adresse.trim() || null : null,
+        notes: form.notes.trim() || null,
       };
 
       const res = await fetch(endpoint, {
@@ -204,15 +208,61 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
             </div>
           </div>
 
-          <label className="block space-y-1">
-            <span className="text-xs text-[#666]">Budget</span>
-            <input placeholder="Ex: 350 000 €" value={form.budget} onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))} className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50" />
-          </label>
+          {form.categorie === "acheteur" ? (
+            <>
+              <label className="block space-y-1">
+                <span className="text-xs text-[#666]">Budget</span>
+                <input
+                  placeholder="Ex: 350 000 €"
+                  value={form.budget}
+                  onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50"
+                />
+              </label>
 
-          <label className="block space-y-1">
-            <span className="text-xs text-[#666]">Type de bien recherché</span>
-            <input placeholder="Ex: Appartement 3 pièces Paris" value={form.type_bien} onChange={(e) => setForm((p) => ({ ...p, type_bien: e.target.value }))} className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50" />
-          </label>
+              <label className="block space-y-1">
+                <span className="text-xs text-[#666]">Type de bien recherché</span>
+                <input
+                  placeholder="Ex: Appartement 3 pièces Paris"
+                  value={form.type_bien}
+                  onChange={(e) => setForm((p) => ({ ...p, type_bien: e.target.value }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50"
+                />
+              </label>
+            </>
+          ) : (
+            <>
+              <label className="block space-y-1">
+                <span className="text-xs text-[#666]">Adresse du bien</span>
+                <input
+                  placeholder="Ex: 12 rue de la Paix, Paris 75001"
+                  value={form.adresse}
+                  onChange={(e) => setForm((p) => ({ ...p, adresse: e.target.value }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-xs text-[#666]">Prix de vente souhaité</span>
+                <input
+                  placeholder="Ex: 450 000 €"
+                  value={form.budget}
+                  onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-xs text-[#666]">Type de bien à vendre</span>
+                <input
+                  placeholder="Ex: Appartement 3 pièces"
+                  value={form.type_bien}
+                  onChange={(e) => setForm((p) => ({ ...p, type_bien: e.target.value }))}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50"
+                />
+              </label>
+            </>
+          )}
 
           <label className="block space-y-1">
             <span className="text-xs text-[#666]">Notes</span>

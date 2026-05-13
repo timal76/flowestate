@@ -16,6 +16,7 @@ type ProspectRow = {
   statut: ProspectStatus;
   budget: string | null;
   type_bien: string | null;
+  adresse: string | null;
   notes: string | null;
   temperature: ProspectTemperature;
   categorie: ProspectCategorie;
@@ -62,7 +63,7 @@ function createServiceClient() {
 type Context = { params: Promise<{ id: string }> };
 
 const PROSPECT_COLUMNS =
-  "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, categorie, created_at, updated_at";
+  "id, user_id, nom, telephone, email, statut, budget, type_bien, adresse, notes, temperature, categorie, created_at, updated_at";
 
 async function getOwnedProspect(supabase: ReturnType<typeof createServiceClient>, userId: string, id: string) {
   const { data, error } = await supabase.from("prospects").select(PROSPECT_COLUMNS).eq("id", id).eq("user_id", userId).maybeSingle();
@@ -113,6 +114,7 @@ export async function PATCH(request: Request, context: Context) {
     budget?: string;
     type_bien?: string;
     notes?: string;
+    adresse?: string;
   };
 
   try {
@@ -127,6 +129,10 @@ export async function PATCH(request: Request, context: Context) {
   if (typeof body.email === "string") payload.email = body.email.trim() || null;
   if (typeof body.budget === "string") payload.budget = body.budget.trim() || null;
   if (typeof body.type_bien === "string") payload.type_bien = body.type_bien.trim() || null;
+  if ("adresse" in body) {
+    if (body.adresse === null || body.adresse === undefined) payload.adresse = null;
+    else if (typeof body.adresse === "string") payload.adresse = body.adresse.trim() || null;
+  }
   if (typeof body.notes === "string") payload.notes = body.notes.trim() || null;
   if (typeof body.temperature === "string") {
     const t = body.temperature.trim();

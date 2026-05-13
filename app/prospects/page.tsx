@@ -86,6 +86,12 @@ export default function ProspectsPage() {
         ...p,
         temperature: normalizeProspectTemperature(p.temperature as string | null | undefined),
         categorie: normalizeProspectCategorie((p as { categorie?: string }).categorie),
+        telephone: p.telephone ?? "",
+        email: p.email ?? "",
+        budget: p.budget ?? "",
+        type_bien: p.type_bien ?? "",
+        adresse: (p as { adresse?: string | null }).adresse ?? "",
+        notes: p.notes ?? "",
       })),
     );
     setLoading(false);
@@ -221,7 +227,20 @@ export default function ProspectsPage() {
                       ) : null}
                     </div>
                     <p className="mt-1 text-xs text-[#A0A0A0]">{prospect.email || "—"} {prospect.telephone ? `• ${prospect.telephone}` : ""}</p>
-                    <p className="mt-1 text-xs text-[#A0A0A0]">{prospect.type_bien || "Type non renseigné"} {prospect.budget ? `• ${formatBudget(prospect.budget)}` : ""}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-[#A0A0A0]">
+                      {normalizeProspectCategorie(prospect.categorie) === "vendeur" ? (
+                        <>
+                          {prospect.adresse || "Adresse non renseignée"}
+                          {prospect.type_bien ? ` • ${prospect.type_bien}` : ""}
+                          {prospect.budget ? ` • ${formatBudget(prospect.budget)}` : ""}
+                        </>
+                      ) : (
+                        <>
+                          {prospect.type_bien || "Type non renseigné"}
+                          {prospect.budget ? ` • ${formatBudget(prospect.budget)}` : ""}
+                        </>
+                      )}
+                    </p>
                     <p className="mt-2 line-clamp-2 text-xs text-[#555]">{prospect.notes || "Aucune note"}</p>
                     <div className="mt-3 flex items-center justify-between text-xs text-[#444]">
                       <span>Ajouté le {new Date(prospect.created_at).toLocaleDateString("fr-FR")}</span>

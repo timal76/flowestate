@@ -16,6 +16,7 @@ type ProspectRow = {
   statut: ProspectStatus;
   budget: string | null;
   type_bien: string | null;
+  adresse: string | null;
   notes: string | null;
   temperature: ProspectTemperature;
   categorie: ProspectCategorie;
@@ -60,7 +61,7 @@ function createServiceClient() {
 }
 
 const PROSPECT_COLUMNS =
-  "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, categorie, created_at, updated_at";
+  "id, user_id, nom, telephone, email, statut, budget, type_bien, adresse, notes, temperature, categorie, created_at, updated_at";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -118,6 +119,7 @@ export async function POST(request: Request) {
     type_bien?: string;
     notes?: string;
     categorie?: string;
+    adresse?: string;
   };
 
   try {
@@ -149,6 +151,7 @@ export async function POST(request: Request) {
       categorie,
       budget: body.budget?.trim() || null,
       type_bien: body.type_bien?.trim() || null,
+      adresse: categorie === "vendeur" ? body.adresse?.trim() || null : null,
       notes: body.notes?.trim() || null,
     })
     .select(PROSPECT_COLUMNS)

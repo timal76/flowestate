@@ -142,7 +142,19 @@ export default function ProspectDetailPage() {
       fetch(`/api/relances?prospect_id=${params.id}`),
     ]);
     const data = (await res.json()) as { prospect?: Prospect; error?: string };
-    setProspect(data.prospect ?? null);
+    setProspect(
+      data.prospect
+        ? {
+            ...data.prospect,
+            telephone: data.prospect.telephone ?? "",
+            email: data.prospect.email ?? "",
+            budget: data.prospect.budget ?? "",
+            type_bien: data.prospect.type_bien ?? "",
+            adresse: (data.prospect as { adresse?: string | null }).adresse ?? "",
+            notes: data.prospect.notes ?? "",
+          }
+        : null,
+    );
 
     const emailData = (await emailRes.json()) as { generations?: ProspectGenRow[]; error?: string };
     const crData = (await crRes.json()) as { generations?: ProspectGenRow[]; error?: string };
@@ -171,8 +183,9 @@ export default function ProspectDetailPage() {
       telephone: prospect.telephone,
       email: prospect.email,
       statut: prospect.statut,
-      budget: prospect.budget,
-      type_bien: prospect.type_bien,
+      budget: prospect.budget ?? "",
+      type_bien: prospect.type_bien ?? "",
+      adresse: prospect.adresse ?? "",
       notes: prospect.notes,
       categorie: normalizeCategorie(prospect.categorie),
       temperature:
@@ -260,12 +273,21 @@ export default function ProspectDetailPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {[
-            ["Email", prospect.email || "—"],
-            ["Téléphone", prospect.telephone || "—"],
-            ["Budget", prospect.budget ? formatBudget(prospect.budget) : "—"],
-            ["Type de bien", prospect.type_bien || "—"],
-          ].map(([label, value]) => (
+          {(normalizeCategorie(prospect.categorie) === "vendeur"
+            ? [
+                ["Email", prospect.email || "—"],
+                ["Téléphone", prospect.telephone || "—"],
+                ["Adresse du bien", prospect.adresse || "—"],
+                ["Prix de vente souhaité", prospect.budget ? formatBudget(prospect.budget) : "—"],
+                ["Type de bien à vendre", prospect.type_bien || "—"],
+              ]
+            : [
+                ["Email", prospect.email || "—"],
+                ["Téléphone", prospect.telephone || "—"],
+                ["Budget", prospect.budget ? formatBudget(prospect.budget) : "—"],
+                ["Type de bien recherché", prospect.type_bien || "—"],
+              ]
+          ).map(([label, value]) => (
             <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
               <p className="text-xs uppercase tracking-wider text-[#555]">{label}</p>
               <p className="mt-1 text-sm text-[#F5F5F0]">{value}</p>
@@ -433,7 +455,16 @@ export default function ProspectDetailPage() {
         initialValue={editInitial}
         onClose={() => setEditOpen(false)}
         onSaved={(updated) => {
-          setProspect(updated as Prospect);
+          const u = updated as Prospect;
+          setProspect({
+            ...u,
+            telephone: u.telephone ?? "",
+            email: u.email ?? "",
+            budget: u.budget ?? "",
+            type_bien: u.type_bien ?? "",
+            adresse: u.adresse ?? "",
+            notes: u.notes ?? "",
+          });
           void load();
         }}
       />
