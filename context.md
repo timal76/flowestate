@@ -44,7 +44,7 @@ SaaS d'automatisation pour agents immobiliers.
 - Toutes variables d'environnement sur Vercel ✅ EN PRODUCTION
 - Score annonce automatique /10 basé sur 7 critères objectifs (longueur, type de bien, surface, localisation, prix, accroche, appel à l'action)
 - Retry automatique API Claude en cas d'erreur overloaded (1 retry après 2 secondes)
-- CRM prospects amélioré : badge température chaud/tiède/froid, formatage budget "400 000 €"
+- CRM prospects : formatage budget « 400 000 € »
 - Envoi d'emails via SMTP : configuration dans le profil, guide Gmail/Outlook, envoi direct depuis la page Emails
 - Relances programmées avec envoi automatique via Vercel Cron (toutes les minutes en prod)
 - Fix fuseau horaire Europe/Paris pour l'affichage des dates de relances ✅
@@ -55,9 +55,22 @@ SaaS d'automatisation pour agents immobiliers.
 - Fix login/register : bouton afficher/masquer mot de passe
 - Fix prospect : température chaud/tiède/froid dans le modal de création
 - Fix page détail prospect : "Générer un compte-rendu" à la place de "Générer une annonce", section Relances déplacée avant l'historique
+- Courbe d'activité 30 jours sur le dashboard (graphique Recharts avec barres Annonces / Emails / Comptes-rendus)
+- Catégories Vendeur / Acheteur dans les prospects
+- Badges température (🔴 Chaud / 🟡 Tiède / 🔵 Froid) sur les cards prospects
+- Formulaire prospect adapté selon catégorie (champs différents vendeur vs acheteur)
+- Fiche prospect complète : sections Emails générés, Comptes-rendus, Relances
+- Historique et dashboard cliquables (modal contenu)
+- 4 prospects de démo créés (Sophie Martin, Marc Dubois, Jean-Pierre Moreau, Isabelle Lefebvre)
+- Données de démo : annonce, email, compte-rendu, 2 relances programmées
+- Agence démo mise à jour en « Orpi Paris 11e »
+- Fix modal prospect scroll (bouton Enregistrer visible)
 
 ## ⏭️ Prochaine étape
-- Finir les données de démo (prospects, annonces, emails, relances réalistes)
+- BUG PRIORITAIRE : générations non enregistrées dans la table `generations` pour le compte démo → historique vide et activité récente vide
+- Vérifier en Supabase : table `generations`, `user_id` du compte démo
+- Relances non liées aux prospects (n'apparaissent pas dans la fiche prospect)
+- Tester historique cliquable une fois le bug générations résolu
 - Mettre à jour le guide SMTP Outlook (OAuth2 — non supporté pour l'instant)
 - Score annonce : vérifier l'affichage après génération
 - Tester le cron relances en prod
@@ -88,4 +101,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : Session du 11 mai 2026
+- Dernière mise à jour : Session du 13 mai 2026
