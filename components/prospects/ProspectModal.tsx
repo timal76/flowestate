@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
@@ -21,6 +21,8 @@ type ProspectModalProps = {
   open: boolean;
   mode: "create" | "edit";
   initialValue?: ProspectInput;
+  /** Obligatoire en mode `edit` pour PATCH /api/prospects/:id */
+  prospectId?: string;
   onClose: () => void;
   onSaved: (prospect: unknown) => void;
 };
@@ -45,13 +47,20 @@ const emptyForm: ProspectInput = {
   notes: "",
 };
 
-export default function ProspectModal({ open, mode, initialValue, onClose, onSaved }: ProspectModalProps) {
+export default function ProspectModal({ open, mode, initialValue, prospectId, onClose, onSaved }: ProspectModalProps) {
   const [form, setForm] = useState<ProspectInput>(initialValue ?? emptyForm);
+  const [temperature, setTemperature] = useState<ProspectTemperature>("tiède");
   const [saving, setSaving] = useState(false);
 
-  useMemo(() => {
+  useEffect(() => {
     if (!open) return;
-    setForm(initialValue ?? emptyForm);
+    const next = initialValue ?? emptyForm;
+    setForm(next);
+    setTemperature(
+      next.temperature === "chaud" || next.temperature === "tiède" || next.temperature === "froid"
+        ? next.temperature
+        : "tiède",
+    );
   }, [initialValue, open]);
 
   if (!open) return null;
@@ -68,15 +77,31 @@ export default function ProspectModal({ open, mode, initialValue, onClose, onSav
       return;
     }
 
+    if (mode === "edit" && !prospectId) {
+      toast.error("Identifiant prospect manquant");
+      return;
+    }
+
     setSaving(true);
     try {
-      const endpoint = mode === "create" ? "/api/prospects" : `/api/prospects/${(initialValue as any)?.id}`;
+      const endpoint = mode === "create" ? "/api/prospects" : `/api/prospects/${prospectId}`;
       const method = mode === "create" ? "POST" : "PATCH";
+
+      const payload = {
+        nom: form.nom.trim(),
+        telephone: form.telephone.trim(),
+        email: form.email.trim(),
+        statut: form.statut,
+        temperature,
+        budget: form.budget.trim(),
+        type_bien: form.type_bien.trim(),
+        notes: form.notes.trim(),
+      };
 
       const res = await fetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json()) as { prospect?: unknown; error?: string };
       if (!res.ok || !data.prospect) throw new Error(data.error ?? "Erreur lors de l'enregistrement.");
@@ -125,21 +150,28 @@ export default function ProspectModal({ open, mode, initialValue, onClose, onSav
             </select>
           </label>
 
-          <div className="space-y-1">
-            <span className="text-xs text-[#666]">Température</span>
-            <div className="flex flex-wrap gap-2">
-              {([
-                ["chaud", "🔴 Chaud"],
-                ["tiède", "🟡 Tiède"],
-                ["froid", "🔵 Froid"],
-              ] as const).map(([key, label]) => (
+          <div>
+            <label className="mb-2 block text-xs uppercase tracking-wider text-[#666]">Température</label>
+            <div className="flex gap-2">
+              {(["chaud", "tiède", "froid"] as const).map((temp) => (
                 <button
-                  key={key}
+                  key={temp}
                   type="button"
-                  onClick={() => setForm((p) => ({ ...p, temperature: key }))}
-                  className={`rounded-full border px-3 py-1 text-xs ${form.temperature === key ? "border-[#C9A96E]/40 bg-[#C9A96E]/15 text-[#C9A96E]" : "border-white/10 bg-white/[0.03] text-[#A0A0A0]"}`}
+                  onClick={() => {
+                    setTemperature(temp);
+                    setForm((p) => ({ ...p, temperature: temp }));
+                  }}
+                  className={`flex-1 rounded-full border px-3 py-2 text-xs font-medium transition ${
+                    temperature === temp
+                      ? temp === "chaud"
+                        ? "border-red-500/50 bg-red-500/20 text-red-400"
+                        : temp === "froid"
+                          ? "border-blue-500/50 bg-blue-500/20 text-blue-400"
+                          : "border-yellow-500/50 bg-yellow-500/20 text-yellow-400"
+                      : "border-white/10 bg-white/[0.03] text-[#A0A0A0]"
+                  }`}
                 >
-                  {label}
+                  {temp === "chaud" ? "🔴 Chaud" : temp === "froid" ? "🔵 Froid" : "🟡 Tiède"}
                 </button>
               ))}
             </div>

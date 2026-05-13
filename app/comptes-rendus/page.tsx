@@ -41,27 +41,50 @@ function toCapitalizedWords(input: string) {
     .join(" ");
 }
 
-const pdfBaseStyle: CSSProperties = {
+function pdfFieldHasValue(v: string | null | undefined): boolean {
+  const s = (v ?? "").trim();
+  return s.length > 0 && s !== "—";
+}
+
+const pdfRootStyle: CSSProperties = {
   width: "794px",
-  padding: "50px",
-  fontFamily: "Arial, sans-serif",
+  padding: "48px",
+  fontFamily: "Arial, Helvetica, sans-serif",
   fontSize: "11px",
-  lineHeight: 1.5,
+  lineHeight: 1.6,
   color: "#111",
   backgroundColor: "#ffffff",
   boxSizing: "border-box",
 };
 
-const pdfSectionTitleStyle: CSSProperties = {
-  fontSize: "12px",
+/** Titre de section type Word (BIEN VISITÉ, PROSPECT, …) */
+const pdfSectionHeadingStyle: CSSProperties = {
+  fontSize: "11px",
   fontWeight: "bold",
-  marginTop: "14px",
-  marginBottom: "5px",
+  textTransform: "uppercase",
+  borderBottom: "1px solid #333",
+  paddingBottom: "3px",
+  marginTop: "20px",
+  marginBottom: "8px",
+  color: "#111",
 };
 
-/** Titres de section du corps (markdown / numérotation) — rendu unifié dans le PDF. */
-const pdfMarkdownSectionHeadingStyle =
-  "font-weight:bold;font-size:11px;margin-top:10px;margin-bottom:4px;color:#111;";
+const pdfSectionBodyStyle: CSSProperties = {
+  fontSize: "10.5px",
+  lineHeight: 1.6,
+  color: "#111",
+};
+
+/** Styles inline du markdown PDF (pas de feuille externe pour html2canvas). */
+const PDF_MD_SECTION =
+  "font-size:11px;font-weight:bold;margin-top:14px;margin-bottom:4px;color:#111;";
+const PDF_MD_SUBSECTION =
+  "font-size:10.5px;font-weight:bold;margin-top:10px;margin-bottom:3px;color:#111;";
+const PDF_MD_P =
+  "font-size:10.5px;line-height:1.6;margin:0 0 6px 0;color:#111;";
+const PDF_MD_UL =
+  "margin:0 0 4px 0;padding-left:16px;font-size:10.5px;line-height:1.6;color:#111;list-style-type:disc;";
+const PDF_MD_LI = "margin:0 0 2px 0;";
 
 function formatVisitDateFr(iso: string) {
   if (!iso) return "—";
@@ -95,56 +118,66 @@ function markdownToPdfHtml(markdown: string) {
     }
   };
 
-  const sectionHeadingOpen = `<h3 style="${pdfMarkdownSectionHeadingStyle}">`;
-  const sectionHeadingClose = "</h3>";
+  const isSubtitleColonLine = (trimmed: string) => {
+    if (trimmed.length < 3 || trimmed.length > 90) return false;
+    if (/^#+\s/.test(trimmed) || /^\d+\.\s/.test(trimmed) || /^[\-\*]\s/.test(trimmed)) return false;
+    return /^[^:\n]{2,70}:\s*$/.test(trimmed);
+  };
 
   for (const raw of rawLines) {
     const line = raw.trimEnd();
-    if (line.trim() === "") {
+    const trimmed = line.trim();
+
+    if (!trimmed) {
       closeList();
-      parts.push("<br/>");
+      parts.push('<div style="height:4px"></div>');
       continue;
     }
 
-    const listMatch = /^[\-\*]\s+(.+)$/.exec(line);
+    const listMatch = /^[\-\*]\s+(.+)$/.exec(trimmed);
     if (listMatch) {
       if (!listOpen) {
-        parts.push('<ul style="margin:6px 0;padding-left:20px;">');
+        parts.push(`<ul style="${PDF_MD_UL}">`);
         listOpen = true;
       }
-      parts.push(`<li style="margin:2px 0;">${applyInlineBold(listMatch[1].trim())}</li>`);
+      parts.push(`<li style="${PDF_MD_LI}">${applyInlineBold(listMatch[1].trim())}</li>`);
       continue;
     }
 
     closeList();
 
-    const numberedTitle = /^(\d+)\.\s+(.+)$/.exec(line);
+    const numberedTitle = /^(\d+)\.\s+(.+)$/.exec(trimmed);
     if (numberedTitle) {
       parts.push(
-        `${sectionHeadingOpen}${applyInlineBold(numberedTitle[2].trim())}${sectionHeadingClose}`,
+        `<div style="${PDF_MD_SECTION}">${applyInlineBold(numberedTitle[2].trim())}</div>`,
       );
       continue;
     }
 
-    if (/^###(?!#)\s+/.test(line)) {
-      const content = line.replace(/^###\s+/, "").trim();
-      parts.push(`${sectionHeadingOpen}${applyInlineBold(content)}${sectionHeadingClose}`);
+    if (/^###(?!#)\s+/.test(trimmed)) {
+      const content = trimmed.replace(/^###\s+/, "").trim();
+      parts.push(`<div style="${PDF_MD_SUBSECTION}">${applyInlineBold(content)}</div>`);
       continue;
     }
 
-    if (/^##(?!#)\s+/.test(line)) {
-      const content = line.replace(/^##\s+/, "").trim();
-      parts.push(`${sectionHeadingOpen}${applyInlineBold(content)}${sectionHeadingClose}`);
+    if (/^##(?!#)\s+/.test(trimmed)) {
+      const content = trimmed.replace(/^##\s+/, "").trim();
+      parts.push(`<div style="${PDF_MD_SECTION}">${applyInlineBold(content)}</div>`);
       continue;
     }
 
-    if (/^#(?!#)\s+/.test(line)) {
-      const content = line.replace(/^#\s+/, "").trim();
-      parts.push(`${sectionHeadingOpen}${applyInlineBold(content)}${sectionHeadingClose}`);
+    if (/^#(?!#)\s+/.test(trimmed)) {
+      const content = trimmed.replace(/^#\s+/, "").trim();
+      parts.push(`<div style="${PDF_MD_SECTION}">${applyInlineBold(content)}</div>`);
       continue;
     }
 
-    parts.push(`<p style="margin:0 0 6px 0;font-size:11px;line-height:1.5;color:#111;">${applyInlineBold(line.trim())}</p>`);
+    if (isSubtitleColonLine(trimmed)) {
+      parts.push(`<div style="${PDF_MD_SUBSECTION}">${applyInlineBold(trimmed)}</div>`);
+      continue;
+    }
+
+    parts.push(`<p style="${PDF_MD_P}">${applyInlineBold(trimmed)}</p>`);
   }
 
   closeList();
@@ -444,12 +477,18 @@ function ComptesRendusContent() {
     return [raw];
   }, [form.personalInfo]);
 
-  const contactAgentLine = useMemo(() => {
-    const name = toCapitalizedWords(form.agentName).trim() || "—";
-    const phone = form.agentPhone.trim() || "—";
-    const email = form.agentEmail.trim() || "—";
-    return `${name} — ${phone} — ${email}`;
-  }, [form.agentName, form.agentPhone, form.agentEmail]);
+  const pdfAgentContactParts = useMemo(() => {
+    const parts: string[] = [];
+    const name = toCapitalizedWords(form.agentName).trim();
+    const agency = toCapitalizedWords(form.agencyName).trim();
+    const phone = form.agentPhone.trim();
+    const email = form.agentEmail.trim();
+    if (pdfFieldHasValue(name)) parts.push(name);
+    if (pdfFieldHasValue(agency)) parts.push(agency);
+    if (pdfFieldHasValue(phone)) parts.push(phone);
+    if (pdfFieldHasValue(email)) parts.push(email);
+    return parts;
+  }, [form.agentName, form.agencyName, form.agentPhone, form.agentEmail]);
 
   const propertyPriceDisplay = useMemo(() => {
     if (!form.propertyPrice) return "—";
@@ -537,18 +576,29 @@ function ComptesRendusContent() {
       };
 
       const canvas = await html2canvas(captureRoot as HTMLElement, canvasOpts);
-      const pdf = new jsPDF("p", "mm", "a4");
-      /** Hauteur d’une tranche « page A4 » en pixels canvas (largeur canvas ↔ 210 mm). */
-      const pageHeight = (canvas.width * 297) / 210;
-      let position = 0;
       const imgW = 210;
-      const imgH = (canvas.height * imgW) / canvas.width;
+      /** Hauteur d’une page A4 (297 mm) exprimée en pixels canvas (largeur canvas ↔ 210 mm). */
+      const pageH = (canvas.width * 297) / 210;
+      const pdf = new jsPDF("p", "mm", "a4");
+      let position = 0;
 
       while (position < canvas.height) {
         if (position > 0) pdf.addPage();
-        const yMm = (-position * 210) / canvas.width;
-        pdf.addImage(canvas, "PNG", 0, yMm, imgW, imgH, "", "FAST");
-        position += pageHeight;
+        const remainingH = canvas.height - position;
+        const sliceH = Math.min(pageH, remainingH);
+        const sliceHmm = (sliceH * imgW) / canvas.width;
+
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceH;
+        const ctx = sliceCanvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas 2D indisponible.");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+        ctx.drawImage(canvas, 0, position, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+
+        pdf.addImage(sliceCanvas, "PNG", 0, 0, imgW, sliceHmm, "", "FAST");
+        position += sliceH;
       }
 
       pdf.save("compte-rendu-visite.pdf");
@@ -1111,140 +1161,160 @@ function ComptesRendusContent() {
         style={{ width: "794px" }}
         aria-hidden
       >
-        <div id="pdf-capture" style={pdfBaseStyle}>
-          <div
+        <div id="pdf-capture" style={pdfRootStyle}>
+          <header
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: "12px",
-              paddingBottom: "10px",
+              gap: "16px",
+              marginBottom: "0",
             }}
           >
-            <div style={{ width: "140px", minHeight: "44px", display: "flex", alignItems: "center" }}>
+            <div style={{ width: "140px", display: "flex", alignItems: "center", flexShrink: 0 }}>
               {logoDisplayUrl ? (
                 <img
                   src={logoDisplayUrl}
                   alt=""
                   crossOrigin="anonymous"
-                  style={{ maxHeight: "44px", maxWidth: "140px", objectFit: "contain" }}
+                  style={{ maxHeight: "40px", maxWidth: "140px", objectFit: "contain" }}
                 />
               ) : null}
             </div>
-            <div style={{ flex: 1, textAlign: "center" }}>
-              <div style={{ fontSize: "16px", fontWeight: "bold", color: "#111" }}>
+            <div style={{ flex: 1, textAlign: "center", minWidth: 0 }}>
+              <div style={{ fontSize: "16px", fontWeight: "bold", color: "#111", letterSpacing: "0.02em" }}>
                 COMPTE-RENDU DE VISITE
               </div>
             </div>
-            <div style={{ width: "140px", textAlign: "right", fontSize: "10px", color: "#111" }}>
+            <div style={{ width: "140px", textAlign: "right", fontSize: "10.5px", color: "#111", flexShrink: 0 }}>
               {new Date().toLocaleDateString("fr-FR")}
             </div>
-          </div>
-          <div style={{ borderBottom: "1px solid #cccccc", marginBottom: "10px" }} />
-          <div
-            style={{
-              textAlign: "center",
-              fontSize: "11px",
-              fontWeight: "bold",
-              color: "#111",
-              marginBottom: "8px",
-            }}
-          >
-            {toCapitalizedWords(form.agencyName).trim() || "—"}
-          </div>
+          </header>
+          <div style={{ borderBottom: "1px solid #333", marginTop: "12px", marginBottom: "20px" }} />
 
-          <div style={{ lineHeight: 1.5, color: "#111", marginBottom: "4px" }}>
-            <div>Date de visite : {formatVisitDateFr(form.visitDate)}</div>
-            <div>Durée : {form.visitDuration}</div>
-            <div>Contact de l'agent : {contactAgentLine}</div>
-          </div>
-
-          <div style={pdfSectionTitleStyle}>BIEN VISITÉ</div>
-          <div style={{ lineHeight: 1.5, color: "#111" }}>
-            <div>Type : {form.propertyType}</div>
-            <div>Adresse : {form.propertyAddress.trim() || "—"}</div>
-            <div>Prix : {propertyPriceDisplay}</div>
-          </div>
-
-          <div style={pdfSectionTitleStyle}>PROSPECT</div>
-          <div style={{ lineHeight: 1.5, color: "#111" }}>
-            <div>Nom : {form.prospectName.trim() || "—"}</div>
-            <div>Téléphone : {form.prospectPhone.trim() || "—"}</div>
-            <div>E-mail : {form.prospectEmail.trim() || "—"}</div>
-          </div>
-
-          <div style={{ ...pdfSectionTitleStyle, fontStyle: "italic" }}>Profil :</div>
-          {profilBullets.length ? (
-            <div style={{ lineHeight: 1.5, color: "#111" }}>
-              {profilBullets.map((item, idx) => (
-                <p key={`profil-${idx}`} style={{ margin: "0 0 4px 0" }}>
-                  - {item}
-                </p>
-              ))}
+          {pdfFieldHasValue(form.agencyName.trim()) ? (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "10.5px",
+                fontWeight: "bold",
+                color: "#111",
+                marginBottom: "12px",
+              }}
+            >
+              {toCapitalizedWords(form.agencyName).trim()}
             </div>
-          ) : (
-            <div style={{ lineHeight: 1.5, color: "#111" }}>—</div>
-          )}
+          ) : null}
 
-          <div style={pdfSectionTitleStyle}>DÉROULEMENT DE LA VISITE</div>
-          <div
-            style={{ fontSize: "11px", lineHeight: 1.5, color: "#111" }}
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{
-              __html: pdfReportBodyHtml || "<p style=\"margin:0;font-size:11px;line-height:1.5;color:#111;\">—</p>",
-            }}
-          />
-
-          <div style={pdfSectionTitleStyle}>SUITE À DONNER (prochaine étape)</div>
-          <div
-            style={{
-              fontSize: "11px",
-              lineHeight: 1.5,
-              color: "#111",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-            }}
-          >
-            {form.nextStep}
+          <div style={{ ...pdfSectionBodyStyle, marginBottom: "8px" }}>
+            {pdfFieldHasValue(form.visitDate) ? (
+              <div>Date de visite : {formatVisitDateFr(form.visitDate)}</div>
+            ) : null}
+            <div>Durée : {form.visitDuration}</div>
+            {pdfAgentContactParts.length > 0 ? (
+              <div>Contact de l&apos;agent : {pdfAgentContactParts.join(" — ")}</div>
+            ) : null}
           </div>
 
-          <div style={{ marginTop: "20px" }}>
-            <div style={{ fontSize: "11px", lineHeight: 1.5, color: "#111", marginBottom: "10px" }}>
+          <div style={pdfSectionHeadingStyle}>Bien visité</div>
+          <div style={pdfSectionBodyStyle}>
+            <div>Type : {form.propertyType}</div>
+            {pdfFieldHasValue(form.propertyAddress.trim()) ? (
+              <div>Adresse : {form.propertyAddress.trim()}</div>
+            ) : null}
+            {form.propertyPrice.trim() && propertyPriceDisplay !== "—" ? (
+              <div>Prix : {propertyPriceDisplay}</div>
+            ) : null}
+          </div>
+
+          {pdfFieldHasValue(form.prospectName.trim()) ||
+          pdfFieldHasValue(form.prospectPhone.trim()) ||
+          pdfFieldHasValue(form.prospectEmail.trim()) ? (
+            <>
+              <div style={pdfSectionHeadingStyle}>Prospect</div>
+              <div style={pdfSectionBodyStyle}>
+                {pdfFieldHasValue(form.prospectName.trim()) ? <div>Nom : {form.prospectName.trim()}</div> : null}
+                {pdfFieldHasValue(form.prospectPhone.trim()) ? (
+                  <div>Téléphone : {form.prospectPhone.trim()}</div>
+                ) : null}
+                {pdfFieldHasValue(form.prospectEmail.trim()) ? <div>E-mail : {form.prospectEmail.trim()}</div> : null}
+              </div>
+            </>
+          ) : null}
+
+          {profilBullets.length > 0 ? (
+            <>
+              <div style={{ ...pdfSectionHeadingStyle, fontStyle: "normal" }}>Profil</div>
+              <div style={pdfSectionBodyStyle}>
+                {profilBullets.map((item, idx) => (
+                  <div key={`profil-${idx}`} style={{ marginBottom: "4px" }}>
+                    • {item}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          <div style={pdfSectionHeadingStyle}>Déroulement de la visite</div>
+          {pdfReportBodyHtml ? (
+            <div
+              style={{ ...pdfSectionBodyStyle, marginTop: "0" }}
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{ __html: pdfReportBodyHtml }}
+            />
+          ) : null}
+
+          {pdfFieldHasValue(form.nextStep) ? (
+            <>
+              <div style={pdfSectionHeadingStyle}>Suite à donner (prochaine étape)</div>
+              <div style={{ ...pdfSectionBodyStyle, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                {form.nextStep}
+              </div>
+            </>
+          ) : null}
+
+          <footer
+            style={{
+              borderTop: "1px solid #333",
+              marginTop: "24px",
+              paddingTop: "12px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: "20px",
+            }}
+          >
+            <div style={{ fontSize: "9px", lineHeight: 1.6, color: "#111", flex: "1 1 auto" }}>
               Compte-rendu établi le {new Date().toLocaleDateString("fr-FR")}
             </div>
-            <div style={{ borderTop: "1px solid #dddddd", marginBottom: "12px" }} />
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
-              <div style={{ textAlign: "right", maxWidth: "280px" }}>
-                <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
-                  {toCapitalizedWords(form.agentName).trim() || "—"}
-                </div>
-                <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
-                  {toCapitalizedWords(form.agencyName).trim() || "—"}
-                </div>
-                <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
-                  {form.agentPhone.trim() || "—"}
-                </div>
-                <div style={{ fontSize: "10px", lineHeight: 1.5, color: "#111" }}>
-                  {form.agentEmail.trim() || "—"}
-                </div>
-                {signatureDisplayUrl ? (
+            <div style={{ textAlign: "right", fontSize: "9px", lineHeight: 1.6, color: "#111", flex: "0 1 52%" }}>
+              {pdfFieldHasValue(toCapitalizedWords(form.agentName).trim()) ? (
+                <div>{toCapitalizedWords(form.agentName).trim()}</div>
+              ) : null}
+              {pdfFieldHasValue(toCapitalizedWords(form.agencyName).trim()) ? (
+                <div>{toCapitalizedWords(form.agencyName).trim()}</div>
+              ) : null}
+              {pdfFieldHasValue(form.agentPhone.trim()) ? <div>{form.agentPhone.trim()}</div> : null}
+              {pdfFieldHasValue(form.agentEmail.trim()) ? <div>{form.agentEmail.trim()}</div> : null}
+              {signatureDisplayUrl ? (
+                <div style={{ marginTop: "8px" }}>
+                  <div style={{ fontStyle: "italic", marginBottom: "4px" }}>Signature</div>
                   <img
                     src={signatureDisplayUrl}
                     alt=""
                     crossOrigin="anonymous"
                     style={{
                       display: "block",
-                      marginTop: "8px",
                       marginLeft: "auto",
-                      maxHeight: "72px",
-                      maxWidth: "200px",
+                      maxHeight: "64px",
+                      maxWidth: "180px",
                       objectFit: "contain",
                     }}
                   />
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </div>
-          </div>
+          </footer>
         </div>
       </div>
 

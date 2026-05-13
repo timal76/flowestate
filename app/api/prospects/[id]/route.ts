@@ -66,7 +66,9 @@ type Context = { params: Promise<{ id: string }> };
 async function getOwnedProspect(supabase: ReturnType<typeof createServiceClient>, userId: string, id: string) {
   const { data, error } = await supabase
     .from("prospects")
-    .select("id,user_id,nom,telephone,email,statut,temperature,budget,type_bien,notes,created_at,updated_at")
+    .select(
+      "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, created_at, updated_at",
+    )
     .eq("id", id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -165,7 +167,9 @@ export async function PATCH(request: Request, context: Context) {
     .update(payload)
     .eq("id", id)
     .eq("user_id", session.user.id)
-    .select("id,user_id,nom,telephone,email,statut,temperature,budget,type_bien,notes,created_at,updated_at")
+    .select(
+      "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, created_at, updated_at",
+    )
     .single();
 
   if (updateErr || !data) {

@@ -135,7 +135,12 @@ export default function ProspectDetailPage() {
       budget: prospect.budget,
       type_bien: prospect.type_bien,
       notes: prospect.notes,
-      temperature: prospect.temperature,
+      temperature:
+        prospect.temperature === "chaud" ||
+        prospect.temperature === "tiède" ||
+        prospect.temperature === "froid"
+          ? prospect.temperature
+          : "tiède",
     };
   }, [prospect]);
 
@@ -313,6 +318,7 @@ export default function ProspectDetailPage() {
       <ProspectModal
         open={editOpen}
         mode="edit"
+        prospectId={prospect.id}
         initialValue={editInitial}
         onClose={() => setEditOpen(false)}
         onSaved={(updated) => {

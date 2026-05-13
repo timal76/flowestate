@@ -30,18 +30,17 @@ function initials(name: string) {
 }
 
 function statusClass(status: ProspectStatus) {
-  if (status === "Nouveau") return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-  if (status === "Contacté") return "bg-[#C9A96E]/10 text-[#C9A96E] border-[#C9A96E]/20";
-  if (status === "Visite planifiée") return "bg-purple-500/10 text-purple-400 border-purple-500/20";
-  if (status === "Offre faite") return "bg-orange-500/10 text-orange-400 border-orange-500/20";
-  if (status === "Signé") return "bg-green-500/10 text-green-400 border-green-500/20";
-  return "bg-red-500/10 text-red-400/60 border-red-500/20";
+  if (status === "Nouveau") return "bg-blue-500/10 text-blue-400 border border-blue-500/20";
+  if (status === "Contacté") return "bg-[#C9A96E]/10 text-[#C9A96E] border border-[#C9A96E]/20";
+  if (status === "Visite planifiée") return "bg-purple-500/10 text-purple-400 border border-purple-500/20";
+  if (status === "Offre faite") return "bg-orange-500/10 text-orange-400 border border-orange-500/20";
+  if (status === "Signé") return "bg-green-500/10 text-green-400 border border-green-500/20";
+  return "bg-red-500/10 text-red-400/60 border border-red-500/20";
 }
 
-function temperatureClass(temperature: ProspectTemperature) {
-  if (temperature === "chaud") return "bg-red-500/10 text-red-400 border-red-500/20";
-  if (temperature === "tiède") return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
-  return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+function normalizeProspectTemperature(value: string | null | undefined): ProspectTemperature {
+  if (value === "chaud" || value === "tiède" || value === "froid") return value;
+  return "tiède";
 }
 
 function temperatureLabel(temperature: ProspectTemperature) {
@@ -72,7 +71,13 @@ export default function ProspectsPage() {
     if (search.trim()) params.set("search", search.trim());
     const res = await fetch(`/api/prospects${params.size ? `?${params.toString()}` : ""}`);
     const data = (await res.json()) as { prospects?: Prospect[] };
-    setProspects(data.prospects ?? []);
+    const raw = data.prospects ?? [];
+    setProspects(
+      raw.map((p) => ({
+        ...p,
+        temperature: normalizeProspectTemperature(p.temperature as string | null | undefined),
+      })),
+    );
     setLoading(false);
   }
 
@@ -164,12 +169,28 @@ export default function ProspectsPage() {
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C9A96E]/15 text-sm font-medium text-[#C9A96E]">{initials(prospect.nom)}</div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-base font-medium text-[#F5F5F0]">{prospect.nom}</p>
-                      <span className={`ml-auto rounded-full border px-2 py-0.5 text-[10px] ${statusClass(prospect.statut)}`}>{prospect.statut}</span>
-                    </div>
-                    <div className="mt-1">
-                      <span className={`rounded-full border px-2 py-0.5 text-[10px] ${temperatureClass(prospect.temperature)}`}>{temperatureLabel(prospect.temperature)}</span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <p className="min-w-0 flex-1 truncate text-base font-medium text-[#F5F5F0]">{prospect.nom}</p>
+                      <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${statusClass(prospect.statut)}`}>
+                        {prospect.statut}
+                      </span>
+                      {prospect.temperature ? (
+                        <span
+                          className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${
+                            prospect.temperature === "chaud"
+                              ? "bg-red-500/10 text-red-400 border-red-500/20"
+                              : prospect.temperature === "froid"
+                                ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                          }`}
+                        >
+                          {prospect.temperature === "chaud"
+                            ? "🔴 Chaud"
+                            : prospect.temperature === "froid"
+                              ? "🔵 Froid"
+                              : "🟡 Tiède"}
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-1 text-xs text-[#A0A0A0]">{prospect.email || "—"} {prospect.telephone ? `• ${prospect.telephone}` : ""}</p>
                     <p className="mt-1 text-xs text-[#A0A0A0]">{prospect.type_bien || "Type non renseigné"} {prospect.budget ? `• ${formatBudget(prospect.budget)}` : ""}</p>

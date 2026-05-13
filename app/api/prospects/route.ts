@@ -52,6 +52,9 @@ function createServiceClient() {
   );
 }
 
+const PROSPECT_COLUMNS =
+  "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, created_at, updated_at";
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
@@ -65,7 +68,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from("prospects")
-    .select("id,user_id,nom,telephone,email,statut,temperature,budget,type_bien,notes,created_at,updated_at")
+    .select(PROSPECT_COLUMNS)
     .eq("user_id", session.user.id)
     .order("created_at", { ascending: false });
 
@@ -132,7 +135,7 @@ export async function POST(request: Request) {
       type_bien: body.type_bien?.trim() || null,
       notes: body.notes?.trim() || null,
     })
-    .select("id,user_id,nom,telephone,email,statut,temperature,budget,type_bien,notes,created_at,updated_at")
+    .select(PROSPECT_COLUMNS)
     .single();
 
   if (error || !data) {
