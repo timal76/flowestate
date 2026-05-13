@@ -5,6 +5,7 @@ import { auth } from "@/app/api/auth/[...nextauth]/route";
 
 type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
 type ProspectTemperature = "chaud" | "tiède" | "froid";
+type ProspectCategorie = "acheteur" | "vendeur";
 
 type ProspectRow = {
   id: string;
@@ -17,6 +18,7 @@ type ProspectRow = {
   type_bien: string | null;
   notes: string | null;
   temperature: ProspectTemperature;
+  categorie: ProspectCategorie;
   created_at: string;
   updated_at: string;
 };
@@ -31,6 +33,7 @@ const statuses: ProspectStatus[] = [
 ];
 
 const temperatures: ProspectTemperature[] = ["chaud", "tiède", "froid"];
+const categories: ProspectCategorie[] = ["acheteur", "vendeur"];
 
 function isStatus(value: string): value is ProspectStatus {
   return statuses.includes(value as ProspectStatus);
@@ -38,6 +41,10 @@ function isStatus(value: string): value is ProspectStatus {
 
 function isTemperature(value: string): value is ProspectTemperature {
   return temperatures.includes(value as ProspectTemperature);
+}
+
+function isCategorie(value: string): value is ProspectCategorie {
+  return categories.includes(value as ProspectCategorie);
 }
 
 function isUuid(value: string): boolean {
@@ -53,7 +60,7 @@ function createServiceClient() {
 }
 
 const PROSPECT_COLUMNS =
-  "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, created_at, updated_at";
+  "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, categorie, created_at, updated_at";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -65,6 +72,7 @@ export async function GET(request: Request) {
   const statut = (url.searchParams.get("statut") ?? "").trim();
   const search = (url.searchParams.get("search") ?? "").trim();
   const temperature = (url.searchParams.get("temperature") ?? "").trim();
+  const categorie = (url.searchParams.get("categorie") ?? "").trim();
 
   let query = supabase
     .from("prospects")
@@ -79,6 +87,10 @@ export async function GET(request: Request) {
   if (temperature) {
     if (!isTemperature(temperature)) return NextResponse.json({ error: "Température invalide." }, { status: 400 });
     query = query.eq("temperature", temperature);
+  }
+  if (categorie) {
+    if (!isCategorie(categorie)) return NextResponse.json({ error: "Catégorie invalide." }, { status: 400 });
+    query = query.eq("categorie", categorie);
   }
   if (search) query = query.ilike("nom", `%${search}%`);
 
@@ -105,6 +117,7 @@ export async function POST(request: Request) {
     budget?: string;
     type_bien?: string;
     notes?: string;
+    categorie?: string;
   };
 
   try {
@@ -120,6 +133,8 @@ export async function POST(request: Request) {
   if (!isStatus(statut)) return NextResponse.json({ error: "Statut invalide." }, { status: 400 });
   const temperature = (body.temperature ?? "tiède").trim();
   if (!isTemperature(temperature)) return NextResponse.json({ error: "Température invalide." }, { status: 400 });
+  const categorie = (body.categorie ?? "acheteur").trim();
+  if (!isCategorie(categorie)) return NextResponse.json({ error: "Catégorie invalide." }, { status: 400 });
 
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -131,6 +146,7 @@ export async function POST(request: Request) {
       email: body.email?.trim() || null,
       statut,
       temperature,
+      categorie,
       budget: body.budget?.trim() || null,
       type_bien: body.type_bien?.trim() || null,
       notes: body.notes?.trim() || null,

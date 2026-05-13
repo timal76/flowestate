@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 export type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
 export type ProspectTemperature = "chaud" | "tiède" | "froid";
+export type ProspectCategorie = "acheteur" | "vendeur";
 
 export type ProspectInput = {
   nom: string;
@@ -12,6 +13,7 @@ export type ProspectInput = {
   email: string;
   statut: ProspectStatus;
   temperature: ProspectTemperature;
+  categorie: ProspectCategorie;
   budget: string;
   type_bien: string;
   notes: string;
@@ -42,6 +44,7 @@ const emptyForm: ProspectInput = {
   email: "",
   statut: "Nouveau",
   temperature: "tiède",
+  categorie: "acheteur",
   budget: "",
   type_bien: "",
   notes: "",
@@ -55,7 +58,10 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
   useEffect(() => {
     if (!open) return;
     const next = initialValue ?? emptyForm;
-    setForm(next);
+    setForm({
+      ...next,
+      categorie: next.categorie === "vendeur" ? "vendeur" : "acheteur",
+    });
     setTemperature(
       next.temperature === "chaud" || next.temperature === "tiède" || next.temperature === "froid"
         ? next.temperature
@@ -93,6 +99,7 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
         email: form.email.trim(),
         statut: form.statut,
         temperature,
+        categorie: form.categorie,
         budget: form.budget.trim(),
         type_bien: form.type_bien.trim(),
         notes: form.notes.trim(),
@@ -127,6 +134,26 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
         </div>
 
         <div className="space-y-4 px-6 py-5">
+          <div>
+            <span className="mb-2 block text-xs uppercase tracking-wider text-[#666]">Profil</span>
+            <div className="flex gap-2">
+              {(["acheteur", "vendeur"] as const).map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, categorie: cat }))}
+                  className={`flex-1 rounded-full border px-3 py-2 text-xs font-medium transition ${
+                    form.categorie === cat
+                      ? "border-[#C9A96E]/40 bg-[#C9A96E]/15 text-[#C9A96E]"
+                      : "border-white/10 bg-white/[0.03] text-[#A0A0A0]"
+                  }`}
+                >
+                  {cat === "acheteur" ? "Acheteur" : "Vendeur"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="block space-y-1">
             <span className="text-xs text-[#666]">Nom*</span>
             <input value={form.nom} onChange={(e) => setForm((p) => ({ ...p, nom: e.target.value }))} className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50" />

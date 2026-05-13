@@ -526,7 +526,10 @@ function ComptesRendusContent() {
       const response = await fetch("/api/generate-compte-rendu", {
         method: "POST",
         headers,
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          prospectId: searchParams.get("prospect_id")?.trim() || undefined,
+        }),
       });
 
       const payload = (await response.json()) as { compteRendu?: string; error?: string; message?: string };

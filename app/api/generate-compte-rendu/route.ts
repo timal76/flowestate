@@ -39,21 +39,25 @@ async function recordGeneration(
   request: Request,
   type: "annonce" | "email" | "compte-rendu",
   description: string,
-  prospectName: string | null
+  prospectName: string | null,
+  prospectId: string | null,
+  content: string,
 ) {
   const userId = request.headers.get("x-user-id")?.trim();
   if (!userId) return;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
 
-  const supabase = createClient(url, key);
+  const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await supabase.from("generations").insert({
     type,
     user_id: userId,
     description,
     prospect_name: prospectName,
+    prospect_id: prospectId,
+    content: content.trim() || null,
   });
   if (error) {
     console.error("[generations] insert", error);
@@ -80,6 +84,7 @@ type GenerateReportPayload = {
   agentPhone?: string;
   agentEmail?: string;
   tone?: string;
+  prospectId?: string;
 };
 
 export async function POST(request: Request) {
@@ -201,7 +206,14 @@ Consignes :
 
     const prospectName = body.prospectName?.trim() || null;
 
-    await recordGeneration(request, "compte-rendu", generationDescription, prospectName);
+    await recordGeneration(
+      request,
+      "compte-rendu",
+      generationDescription,
+      prospectName,
+      body.prospectId?.trim() || null,
+      compteRendu,
+    );
 
     return NextResponse.json({ compteRendu });
   } catch {

@@ -41,21 +41,23 @@ async function recordGeneration(
   description: string,
   prospectName: string | null,
   prospectId: string | null,
+  content: string,
 ) {
   const userId = request.headers.get("x-user-id")?.trim();
   if (!userId) return;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
 
-  const supabase = createClient(url, key);
+  const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await supabase.from("generations").insert({
     type,
     user_id: userId,
     description,
     prospect_name: prospectName,
     prospect_id: prospectId,
+    content: content.trim() || null,
   });
   if (error) {
     console.error("[generations] insert", error);
@@ -213,6 +215,7 @@ Consignes :
       generationDescription,
       body.prospectName?.trim() || null,
       body.prospectId?.trim() || null,
+      annonce,
     );
 
     return NextResponse.json({ annonce });

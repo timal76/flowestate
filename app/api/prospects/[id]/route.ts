@@ -5,6 +5,7 @@ import { auth } from "@/app/api/auth/[...nextauth]/route";
 
 type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
 type ProspectTemperature = "chaud" | "tiède" | "froid";
+type ProspectCategorie = "acheteur" | "vendeur";
 
 type ProspectRow = {
   id: string;
@@ -17,17 +18,9 @@ type ProspectRow = {
   type_bien: string | null;
   notes: string | null;
   temperature: ProspectTemperature;
+  categorie: ProspectCategorie;
   created_at: string;
   updated_at: string;
-};
-
-type GenerationRow = {
-  id: string;
-  type: "annonce" | "email" | "compte-rendu";
-  description: string | null;
-  prospect_name: string | null;
-  created_at: string;
-  prospect_id: string | null;
 };
 
 const statuses: ProspectStatus[] = [
@@ -40,6 +33,7 @@ const statuses: ProspectStatus[] = [
 ];
 
 const temperatures: ProspectTemperature[] = ["chaud", "tiède", "froid"];
+const categories: ProspectCategorie[] = ["acheteur", "vendeur"];
 
 function isStatus(value: string): value is ProspectStatus {
   return statuses.includes(value as ProspectStatus);
@@ -47,6 +41,10 @@ function isStatus(value: string): value is ProspectStatus {
 
 function isTemperature(value: string): value is ProspectTemperature {
   return temperatures.includes(value as ProspectTemperature);
+}
+
+function isCategorie(value: string): value is ProspectCategorie {
+  return categories.includes(value as ProspectCategorie);
 }
 
 function isUuid(value: string): boolean {
@@ -63,15 +61,11 @@ function createServiceClient() {
 
 type Context = { params: Promise<{ id: string }> };
 
+const PROSPECT_COLUMNS =
+  "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, categorie, created_at, updated_at";
+
 async function getOwnedProspect(supabase: ReturnType<typeof createServiceClient>, userId: string, id: string) {
-  const { data, error } = await supabase
-    .from("prospects")
-    .select(
-      "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, created_at, updated_at",
-    )
-    .eq("id", id)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data, error } = await supabase.from("prospects").select(PROSPECT_COLUMNS).eq("id", id).eq("user_id", userId).maybeSingle();
 
   return { data: data as ProspectRow | null, error };
 }
@@ -91,22 +85,7 @@ export async function GET(_request: Request, context: Context) {
   }
   if (!prospect) return NextResponse.json({ error: "Prospect introuvable." }, { status: 404 });
 
-  const { data: generations, error: genErr } = await supabase
-    .from("generations")
-    .select("id,type,description,prospect_name,created_at,prospect_id")
-    .eq("user_id", session.user.id)
-    .eq("prospect_id", id)
-    .order("created_at", { ascending: false });
-
-  if (genErr) {
-    console.error("[prospects/:id] generations", JSON.stringify(genErr));
-    return NextResponse.json({ error: genErr.message }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    prospect,
-    generations: (generations ?? []) as GenerationRow[],
-  });
+  return NextResponse.json({ prospect });
 }
 
 export async function PATCH(request: Request, context: Context) {
@@ -130,6 +109,7 @@ export async function PATCH(request: Request, context: Context) {
     email?: string;
     statut?: string;
     temperature?: string;
+    categorie?: string;
     budget?: string;
     type_bien?: string;
     notes?: string;
@@ -153,6 +133,11 @@ export async function PATCH(request: Request, context: Context) {
     if (!isTemperature(t)) return NextResponse.json({ error: "Température invalide." }, { status: 400 });
     payload.temperature = t;
   }
+  if (typeof body.categorie === "string") {
+    const c = body.categorie.trim();
+    if (!isCategorie(c)) return NextResponse.json({ error: "Catégorie invalide." }, { status: 400 });
+    payload.categorie = c;
+  }
 
   if (typeof body.statut === "string") {
     const s = body.statut.trim();
@@ -167,9 +152,7 @@ export async function PATCH(request: Request, context: Context) {
     .update(payload)
     .eq("id", id)
     .eq("user_id", session.user.id)
-    .select(
-      "id, user_id, nom, telephone, email, statut, budget, type_bien, notes, temperature, created_at, updated_at",
-    )
+    .select(PROSPECT_COLUMNS)
     .single();
 
   if (updateErr || !data) {

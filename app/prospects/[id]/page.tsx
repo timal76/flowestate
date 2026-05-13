@@ -5,14 +5,16 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import ProspectModal, { type ProspectInput, type ProspectStatus } from "@/components/prospects/ProspectModal";
+import ProspectModal, { type ProspectInput, type ProspectStatus, type ProspectCategorie } from "@/components/prospects/ProspectModal";
+import GenerationModal from "@/components/prospects/GenerationModal";
 import RelanceModal from "@/components/relances/RelanceModal";
 import SiteHeader from "@/components/site-header";
 
-type Generation = {
+type ProspectGenRow = {
   id: string;
-  type: "annonce" | "email" | "compte-rendu";
+  type: string;
   description: string | null;
+  content: string | null;
   created_at: string;
 };
 
@@ -20,6 +22,7 @@ type Prospect = ProspectInput & {
   id: string;
   created_at: string;
   updated_at: string;
+  categorie?: ProspectCategorie;
 };
 
 type Relance = {
@@ -71,6 +74,31 @@ function temperatureLabel(temperature: "chaud" | "tiède" | "froid") {
   return "🔵 Froid";
 }
 
+function normalizeCategorie(value: string | null | undefined): ProspectCategorie {
+  return value === "vendeur" ? "vendeur" : "acheteur";
+}
+
+function generationTypeTitle(type: string): string {
+  if (type === "email") return "Email généré";
+  if (type === "compte-rendu") return "Compte-rendu";
+  if (type === "annonce") return "Annonce";
+  return "Génération";
+}
+
+function excerpt100(text: string): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= 100) return t;
+  return `${t.slice(0, 100)}…`;
+}
+
+function fullGenerationText(row: ProspectGenRow): string {
+  const c = row.content?.trim();
+  if (c) return c;
+  const d = row.description?.trim();
+  if (d) return d;
+  return "Aucun contenu détaillé disponible.";
+}
+
 function formatBudget(budget: string) {
   const num = parseInt(budget.replace(/\D/g, ""));
   if (isNaN(num)) return budget;
@@ -95,21 +123,32 @@ export default function ProspectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [prospect, setProspect] = useState<Prospect | null>(null);
-  const [generations, setGenerations] = useState<Generation[]>([]);
+  const [emailGenerations, setEmailGenerations] = useState<ProspectGenRow[]>([]);
+  const [crGenerations, setCrGenerations] = useState<ProspectGenRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [relanceOpen, setRelanceOpen] = useState(false);
   const [relances, setRelances] = useState<Relance[]>([]);
+  const [genModal, setGenModal] = useState<{ title: string; content: string } | null>(null);
 
   async function load() {
     if (!params?.id) return;
     setLoading(true);
-    const res = await fetch(`/api/prospects/${params.id}`);
-    const data = (await res.json()) as { prospect?: Prospect; generations?: Generation[] };
+    const [res, emailRes, crRes, relanceRes] = await Promise.all([
+      fetch(`/api/prospects/${params.id}`),
+      fetch(`/api/generations?prospect_id=${params.id}&type=email`),
+      fetch(`/api/generations?prospect_id=${params.id}&type=compte-rendu`),
+      fetch(`/api/relances?prospect_id=${params.id}`),
+    ]);
+    const data = (await res.json()) as { prospect?: Prospect; error?: string };
     setProspect(data.prospect ?? null);
-    setGenerations(data.generations ?? []);
-    const relanceRes = await fetch(`/api/relances?prospect_id=${params.id}`);
+
+    const emailData = (await emailRes.json()) as { generations?: ProspectGenRow[]; error?: string };
+    const crData = (await crRes.json()) as { generations?: ProspectGenRow[]; error?: string };
+    setEmailGenerations(emailRes.ok ? (emailData.generations ?? []) : []);
+    setCrGenerations(crRes.ok ? (crData.generations ?? []) : []);
+
     const relanceData = (await relanceRes.json()) as { relances?: Relance[] };
     setRelances(relanceData.relances ?? []);
     setLoading(false);
@@ -135,6 +174,7 @@ export default function ProspectDetailPage() {
       budget: prospect.budget,
       type_bien: prospect.type_bien,
       notes: prospect.notes,
+      categorie: normalizeCategorie(prospect.categorie),
       temperature:
         prospect.temperature === "chaud" ||
         prospect.temperature === "tiède" ||
@@ -201,6 +241,9 @@ export default function ProspectDetailPage() {
               <div>
                 <h1 className="text-2xl font-semibold">{prospect.nom}</h1>
                 <span className={`mt-1 inline-flex rounded-full border px-2.5 py-0.5 text-xs ${statusClass(prospect.statut)}`}>{prospect.statut}</span>
+                <span className="ml-2 mt-1 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-xs text-[#A0A0A0]">
+                  {normalizeCategorie(prospect.categorie) === "vendeur" ? "Vendeur" : "Acheteur"}
+                </span>
                 <span className={`ml-2 mt-1 inline-flex rounded-full border px-2.5 py-0.5 text-xs ${temperatureClass(prospect.temperature)}`}>{temperatureLabel(prospect.temperature)}</span>
               </div>
             </div>
@@ -290,30 +333,98 @@ export default function ProspectDetailPage() {
         </section>
 
         <section className="mt-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">Historique des générations</h2>
-            <span className="text-sm text-[#A0A0A0]">{generations.length}</span>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-lg font-semibold">Emails générés</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/emails?prospect_id=${prospect.id}`}
+                className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+              >
+                Générer un email
+              </Link>
+              <span className="text-sm text-[#A0A0A0]">{emailGenerations.length}</span>
+            </div>
           </div>
-
-          {generations.length === 0 ? (
-            <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-10 text-center text-sm text-[#A0A0A0]">Aucune génération liée à ce prospect</p>
+          {emailGenerations.length === 0 ? (
+            <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-8 text-center text-sm text-[#A0A0A0]">Aucun email généré pour ce prospect</p>
           ) : (
-            <ul className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.02]">
-              {generations.map((g) => (
-                <li key={g.id} className="px-5 py-4">
-                  <p className="text-xs text-[#A0A0A0]">{new Date(g.created_at).toLocaleDateString("fr-FR")} • {g.type}</p>
-                  <p className="mt-1 text-sm text-[#F5F5F0]">{(g.description || "Génération").slice(0, 80)}</p>
+            <ul className="space-y-3">
+              {emailGenerations.map((g) => (
+                <li key={g.id} className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-[#A0A0A0]">{formatDate(g.created_at)}</p>
+                      <p className="mt-1 text-sm text-[#F5F5F0]">{excerpt100(fullGenerationText(g))}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setGenModal({
+                          title: `${generationTypeTitle(g.type)} — ${formatDate(g.created_at)}`,
+                          content: fullGenerationText(g),
+                        })
+                      }
+                      className="shrink-0 rounded-full border border-white/10 px-4 py-2 text-xs text-[#C9A96E] transition hover:border-[#C9A96E]/40"
+                    >
+                      Voir
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
+        </section>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href={`/comptes-rendus?prospect_id=${prospect.id}`} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">Générer un compte-rendu pour ce prospect</Link>
-            <Link href={`/emails?prospect_id=${prospect.id}`} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">Générer un email pour ce prospect</Link>
+        <section className="mt-6">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-lg font-semibold">Comptes-rendus</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/comptes-rendus?prospect_id=${prospect.id}`}
+                className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+              >
+                Générer un compte-rendu
+              </Link>
+              <span className="text-sm text-[#A0A0A0]">{crGenerations.length}</span>
+            </div>
           </div>
+          {crGenerations.length === 0 ? (
+            <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-8 text-center text-sm text-[#A0A0A0]">Aucun compte-rendu pour ce prospect</p>
+          ) : (
+            <ul className="space-y-3">
+              {crGenerations.map((g) => (
+                <li key={g.id} className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-[#A0A0A0]">{formatDate(g.created_at)}</p>
+                      <p className="mt-1 text-sm text-[#F5F5F0]">{excerpt100(fullGenerationText(g))}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setGenModal({
+                          title: `${generationTypeTitle(g.type)} — ${formatDate(g.created_at)}`,
+                          content: fullGenerationText(g),
+                        })
+                      }
+                      className="shrink-0 rounded-full border border-white/10 px-4 py-2 text-xs text-[#C9A96E] transition hover:border-[#C9A96E]/40"
+                    >
+                      Voir
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
+
+      <GenerationModal
+        open={Boolean(genModal)}
+        onClose={() => setGenModal(null)}
+        title={genModal?.title ?? ""}
+        content={genModal?.content ?? ""}
+      />
 
       <ProspectModal
         open={editOpen}

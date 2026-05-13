@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import ProspectModal, { type ProspectInput, type ProspectStatus } from "@/components/prospects/ProspectModal";
+import ProspectModal, { type ProspectInput, type ProspectStatus, type ProspectCategorie } from "@/components/prospects/ProspectModal";
 import SiteHeader from "@/components/site-header";
 
 type ProspectTemperature = "chaud" | "tiède" | "froid";
@@ -19,6 +19,8 @@ type StatusFilter = "Tous" | ProspectStatus;
 const statuses: StatusFilter[] = ["Tous", "Nouveau", "Contacté", "Visite planifiée", "Offre faite", "Signé", "Perdu"];
 type TemperatureFilter = "Tous" | ProspectTemperature;
 const temperatures: TemperatureFilter[] = ["Tous", "chaud", "tiède", "froid"];
+type CategorieFilter = "Tous" | ProspectCategorie;
+const categories: CategorieFilter[] = ["Tous", "acheteur", "vendeur"];
 
 function initials(name: string) {
   return name
@@ -43,6 +45,11 @@ function normalizeProspectTemperature(value: string | null | undefined): Prospec
   return "tiède";
 }
 
+function normalizeProspectCategorie(value: string | null | undefined): ProspectCategorie {
+  if (value === "vendeur") return "vendeur";
+  return "acheteur";
+}
+
 function temperatureLabel(temperature: ProspectTemperature) {
   if (temperature === "chaud") return "🔴 Chaud";
   if (temperature === "tiède") return "🟡 Tiède";
@@ -61,6 +68,7 @@ export default function ProspectsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("Tous");
   const [temperature, setTemperature] = useState<TemperatureFilter>("Tous");
+  const [categorieFilter, setCategorieFilter] = useState<CategorieFilter>("Tous");
   const [modalOpen, setModalOpen] = useState(false);
 
   async function loadProspects() {
@@ -68,6 +76,7 @@ export default function ProspectsPage() {
     const params = new URLSearchParams();
     if (status !== "Tous") params.set("statut", status);
     if (temperature !== "Tous") params.set("temperature", temperature);
+    if (categorieFilter !== "Tous") params.set("categorie", categorieFilter);
     if (search.trim()) params.set("search", search.trim());
     const res = await fetch(`/api/prospects${params.size ? `?${params.toString()}` : ""}`);
     const data = (await res.json()) as { prospects?: Prospect[] };
@@ -76,6 +85,7 @@ export default function ProspectsPage() {
       raw.map((p) => ({
         ...p,
         temperature: normalizeProspectTemperature(p.temperature as string | null | undefined),
+        categorie: normalizeProspectCategorie((p as { categorie?: string }).categorie),
       })),
     );
     setLoading(false);
@@ -83,7 +93,7 @@ export default function ProspectsPage() {
 
   useEffect(() => {
     void loadProspects();
-  }, [status, temperature]);
+  }, [status, temperature, categorieFilter]);
 
   useEffect(() => {
     const t = setTimeout(() => void loadProspects(), 250);
@@ -102,6 +112,21 @@ export default function ProspectsPage() {
             Nouveau prospect
           </button>
         </header>
+
+        <div className="mb-4 flex flex-wrap gap-2">
+          {categories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategorieFilter(c)}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                categorieFilter === c ? "border-[#C9A96E]/40 bg-[#C9A96E]/15 text-[#C9A96E]" : "border-white/10 text-[#A0A0A0]"
+              }`}
+            >
+              {c === "Tous" ? "Tous" : c === "acheteur" ? "Acheteurs" : "Vendeurs"}
+            </button>
+          ))}
+        </div>
 
         <div className="mb-4 flex flex-wrap gap-2">
           {statuses.map((s) => (
@@ -173,6 +198,9 @@ export default function ProspectsPage() {
                       <p className="min-w-0 flex-1 truncate text-base font-medium text-[#F5F5F0]">{prospect.nom}</p>
                       <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${statusClass(prospect.statut)}`}>
                         {prospect.statut}
+                      </span>
+                      <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-xs text-[#A0A0A0]">
+                        {prospect.categorie === "vendeur" ? "Vendeur" : "Acheteur"}
                       </span>
                       {prospect.temperature ? (
                         <span
