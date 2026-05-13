@@ -59,6 +59,10 @@ const pdfSectionTitleStyle: CSSProperties = {
   marginBottom: "5px",
 };
 
+/** Titres de section du corps (markdown / numérotation) — rendu unifié dans le PDF. */
+const pdfMarkdownSectionHeadingStyle =
+  "font-weight:bold;font-size:11px;margin-top:10px;margin-bottom:4px;color:#111;";
+
 function formatVisitDateFr(iso: string) {
   if (!iso) return "—";
   const d = new Date(`${iso}T12:00:00`);
@@ -91,6 +95,9 @@ function markdownToPdfHtml(markdown: string) {
     }
   };
 
+  const sectionHeadingOpen = `<h3 style="${pdfMarkdownSectionHeadingStyle}">`;
+  const sectionHeadingClose = "</h3>";
+
   for (const raw of rawLines) {
     const line = raw.trimEnd();
     if (line.trim() === "") {
@@ -111,27 +118,29 @@ function markdownToPdfHtml(markdown: string) {
 
     closeList();
 
+    const numberedTitle = /^(\d+)\.\s+(.+)$/.exec(line);
+    if (numberedTitle) {
+      parts.push(
+        `${sectionHeadingOpen}${applyInlineBold(numberedTitle[2].trim())}${sectionHeadingClose}`,
+      );
+      continue;
+    }
+
     if (/^###(?!#)\s+/.test(line)) {
       const content = line.replace(/^###\s+/, "").trim();
-      parts.push(
-        `<h2 style="font-size:12px;font-weight:bold;margin:10px 0 5px;color:#111;">${applyInlineBold(content)}</h2>`,
-      );
+      parts.push(`${sectionHeadingOpen}${applyInlineBold(content)}${sectionHeadingClose}`);
       continue;
     }
 
     if (/^##(?!#)\s+/.test(line)) {
       const content = line.replace(/^##\s+/, "").trim();
-      parts.push(
-        `<h2 style="font-size:13px;font-weight:bold;margin:12px 0 6px;color:#111;">${applyInlineBold(content)}</h2>`,
-      );
+      parts.push(`${sectionHeadingOpen}${applyInlineBold(content)}${sectionHeadingClose}`);
       continue;
     }
 
     if (/^#(?!#)\s+/.test(line)) {
       const content = line.replace(/^#\s+/, "").trim();
-      parts.push(
-        `<h1 style="font-size:15px;font-weight:bold;margin:14px 0 8px;color:#111;">${applyInlineBold(content)}</h1>`,
-      );
+      parts.push(`${sectionHeadingOpen}${applyInlineBold(content)}${sectionHeadingClose}`);
       continue;
     }
 
@@ -388,18 +397,20 @@ function ComptesRendusContent() {
         if (normalized.includes("compte-rendu rédigé le")) return false;
         if (normalized.includes("document rédigé le")) return false;
         if (normalized.includes("compte-rendu établi le")) return false;
-        if (normalized.includes("agence :")) return false;
-        if (normalized.includes("agent en charge :")) return false;
-        if (normalized.includes("contact agent")) return false;
-        if (normalized.includes("date de visite :")) return false;
-        if (normalized.includes("durée :") || normalized.includes("duree :")) return false;
-        if (normalized.includes("tel :") || normalized.startsWith("tel ")) return false;
-        if (normalized.includes("bien visité :") || normalized.includes("bien visite :")) return false;
-        if (normalized.includes("adresse :")) return false;
-        if (normalized.includes("prix affiché :") || normalized.includes("prix affiche :")) return false;
-        if (normalized.startsWith("nom :")) return false;
-        if (normalized.startsWith("téléphone :") || normalized.startsWith("telephone :")) return false;
-        if (normalized.includes("email :")) return false;
+        /* N’exclure que les pseudo-en-têtes en début de ligne pour ne pas couper le corps (ex. « Suite à donner »). */
+        if (/^agence\s*:/i.test(normalized)) return false;
+        if (/^agent en charge\s*:/i.test(normalized)) return false;
+        if (/^contact\s+de\s+l'agent\s*:/i.test(normalized)) return false;
+        if (/^contact\s+agent\s*:/i.test(normalized)) return false;
+        if (/^date de visite\s*:/i.test(normalized)) return false;
+        if (/^durée\s*:/i.test(normalized) || /^duree\s*:/i.test(normalized)) return false;
+        if (/^tel\s*:/i.test(normalized) || normalized.startsWith("tel ")) return false;
+        if (/^bien visité\s*:/i.test(normalized) || /^bien visite\s*:/i.test(normalized)) return false;
+        if (/^adresse\s*:/i.test(normalized)) return false;
+        if (/^prix affiché\s*:/i.test(normalized) || /^prix affiche\s*:/i.test(normalized)) return false;
+        if (/^nom\s*:/i.test(normalized)) return false;
+        if (/^téléphone\s*:/i.test(normalized) || /^telephone\s*:/i.test(normalized)) return false;
+        if (/^e-?mail\s*:/i.test(normalized)) return false;
 
         const agent = toCapitalizedWords(form.agentName).toLowerCase();
         const agency = toCapitalizedWords(form.agencyName).toLowerCase();
@@ -1183,6 +1194,19 @@ function ComptesRendusContent() {
               __html: pdfReportBodyHtml || "<p style=\"margin:0;font-size:11px;line-height:1.5;color:#111;\">—</p>",
             }}
           />
+
+          <div style={pdfSectionTitleStyle}>SUITE À DONNER (prochaine étape)</div>
+          <div
+            style={{
+              fontSize: "11px",
+              lineHeight: 1.5,
+              color: "#111",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {form.nextStep}
+          </div>
 
           <div style={{ marginTop: "20px" }}>
             <div style={{ fontSize: "11px", lineHeight: 1.5, color: "#111", marginBottom: "10px" }}>
