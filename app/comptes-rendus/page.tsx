@@ -59,50 +59,92 @@ const pdfSectionTitleStyle: CSSProperties = {
   marginBottom: "5px",
 };
 
-function cleanPdfLine(line: string) {
-  return line.replace(/^#+\s*/g, "").replace(/[#*`]/g, "").trim();
-}
-
 function formatVisitDateFr(iso: string) {
   if (!iso) return "—";
   const d = new Date(`${iso}T12:00:00`);
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("fr-FR");
 }
 
-function splitReportForPdf(lines: string[]) {
-  const idx = lines.findIndex((line) => {
-    const t = line.toLowerCase();
-    return (
-      (t.includes("question") && (t.includes("posé") || t.includes("pose"))) ||
-      t.startsWith("questions") ||
-      t.includes("analyse") ||
-      t.includes("recommandation") ||
-      t.includes("suite à donner") ||
-      t.includes("suite a donner") ||
-      (t.includes("suite") && t.includes("donner"))
-    );
-  });
-  if (idx < 0) {
-    const mid = Math.max(1, Math.ceil(lines.length / 2));
-    return { page1: lines.slice(0, mid), page2: lines.slice(mid) };
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function applyInlineBold(text: string) {
+  const escaped = escapeHtml(text);
+  return escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+/** Markdown léger pour le PDF (marked n'est pas une dépendance du projet). */
+function markdownToPdfHtml(markdown: string) {
+  const rawLines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const parts: string[] = [];
+  let listOpen = false;
+
+  const closeList = () => {
+    if (listOpen) {
+      parts.push("</ul>");
+      listOpen = false;
+    }
+  };
+
+  for (const raw of rawLines) {
+    const line = raw.trimEnd();
+    if (line.trim() === "") {
+      closeList();
+      parts.push("<br/>");
+      continue;
+    }
+
+    const listMatch = /^[\-\*]\s+(.+)$/.exec(line);
+    if (listMatch) {
+      if (!listOpen) {
+        parts.push('<ul style="margin:6px 0;padding-left:20px;">');
+        listOpen = true;
+      }
+      parts.push(`<li style="margin:2px 0;">${applyInlineBold(listMatch[1].trim())}</li>`);
+      continue;
+    }
+
+    closeList();
+
+    if (/^###(?!#)\s+/.test(line)) {
+      const content = line.replace(/^###\s+/, "").trim();
+      parts.push(
+        `<h2 style="font-size:12px;font-weight:bold;margin:10px 0 5px;color:#111;">${applyInlineBold(content)}</h2>`,
+      );
+      continue;
+    }
+
+    if (/^##(?!#)\s+/.test(line)) {
+      const content = line.replace(/^##\s+/, "").trim();
+      parts.push(
+        `<h2 style="font-size:13px;font-weight:bold;margin:12px 0 6px;color:#111;">${applyInlineBold(content)}</h2>`,
+      );
+      continue;
+    }
+
+    if (/^#(?!#)\s+/.test(line)) {
+      const content = line.replace(/^#\s+/, "").trim();
+      parts.push(
+        `<h1 style="font-size:15px;font-weight:bold;margin:14px 0 8px;color:#111;">${applyInlineBold(content)}</h1>`,
+      );
+      continue;
+    }
+
+    parts.push(`<p style="margin:0 0 6px 0;font-size:11px;line-height:1.5;color:#111;">${applyInlineBold(line.trim())}</p>`);
   }
-  if (idx === 0) {
-    return { page1: [], page2: lines };
-  }
-  return { page1: lines.slice(0, idx), page2: lines.slice(idx) };
+
+  closeList();
+  return parts.join("");
 }
 
 function revokeIfBlob(url: string) {
   if (!url || !url.startsWith("blob:")) return;
   URL.revokeObjectURL(url);
-}
-
-function isLikelySectionHeading(line: string) {
-  const t = line.trim();
-  if (!t) return false;
-  if (t.endsWith(":") && t.length < 80) return true;
-  if (t === t.toUpperCase() && t.length > 3 && t.length < 60 && !t.includes(".")) return true;
-  return false;
 }
 
 type FormState = {
@@ -332,11 +374,11 @@ function ComptesRendusContent() {
     setProfileSignatureUrl("");
   }
 
-  const { pdfPage1Lines, pdfPage2Lines } = useMemo(() => {
+  const pdfReportMarkdown = useMemo(() => {
     const lines = generatedReport
       .replace(/\r\n/g, "\n")
       .split("\n")
-      .map(cleanPdfLine)
+      .map((line) => line.trim())
       .filter((line) => {
         if (!line || line === "---") return false;
 
@@ -373,9 +415,13 @@ function ComptesRendusContent() {
         return true;
       });
 
-    const { page1, page2 } = splitReportForPdf(lines);
-    return { pdfPage1Lines: page1, pdfPage2Lines: page2 };
+    return lines.join("\n");
   }, [generatedReport, form.agentName, form.agencyName]);
+
+  const pdfReportBodyHtml = useMemo(
+    () => (pdfReportMarkdown ? markdownToPdfHtml(pdfReportMarkdown) : ""),
+    [pdfReportMarkdown],
+  );
 
   const profilBullets = useMemo(() => {
     const raw = form.personalInfo.trim();
@@ -467,9 +513,8 @@ function ComptesRendusContent() {
 
   async function handleDownloadPdf() {
     if (!generatedReport) return;
-    const page1 = document.getElementById("pdf-page-1");
-    const page2 = document.getElementById("pdf-page-2");
-    if (!page1 || !page2) return;
+    const captureRoot = document.getElementById("pdf-capture");
+    if (!captureRoot) return;
 
     try {
       setIsPdfLoading(true);
@@ -480,27 +525,20 @@ function ComptesRendusContent() {
         backgroundColor: "#ffffff",
       };
 
+      const canvas = await html2canvas(captureRoot as HTMLElement, canvasOpts);
+      const imgData = canvas.toDataURL("image/png");
+      const pageHeightPx = (canvas.width * 297) / 210;
+      let positionPx = 0;
       const pdf = new jsPDF("p", "mm", "a4");
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
+      const imgWidthMm = 210;
+      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
 
-      async function addPageFromElement(element: HTMLElement, addNewPage: boolean) {
-        const canvas = await html2canvas(element, canvasOpts);
-        const imgData = canvas.toDataURL("image/png");
-        let imgW = pageW;
-        let imgH = (canvas.height * imgW) / canvas.width;
-        if (imgH > pageH) {
-          const scale = pageH / imgH;
-          imgW *= scale;
-          imgH = pageH;
-        }
-        const x = (pageW - imgW) / 2;
-        if (addNewPage) pdf.addPage();
-        pdf.addImage(imgData, "PNG", x, 0, imgW, imgH);
+      while (positionPx < canvas.height) {
+        if (positionPx > 0) pdf.addPage();
+        const offsetMm = (-positionPx * imgWidthMm) / canvas.width;
+        pdf.addImage(imgData, "PNG", 0, offsetMm, imgWidthMm, imgHeightMm, undefined, "FAST");
+        positionPx += pageHeightPx;
       }
-
-      await addPageFromElement(page1 as HTMLElement, false);
-      await addPageFromElement(page2 as HTMLElement, true);
 
       pdf.save("compte-rendu-visite.pdf");
     } catch (error) {
@@ -1062,7 +1100,7 @@ function ComptesRendusContent() {
         style={{ width: "794px" }}
         aria-hidden
       >
-        <div id="pdf-page-1" style={pdfBaseStyle}>
+        <div id="pdf-capture" style={pdfBaseStyle}>
           <div
             style={{
               display: "flex",
@@ -1138,57 +1176,13 @@ function ComptesRendusContent() {
           )}
 
           <div style={pdfSectionTitleStyle}>DÉROULEMENT DE LA VISITE</div>
-          <div>
-            {pdfPage1Lines.length ? (
-              pdfPage1Lines.map((line, idx) => {
-                const sub = isLikelySectionHeading(line);
-                return (
-                  <p
-                    // eslint-disable-next-line react/no-array-index-key
-                    key={`pdf-p1-${idx}`}
-                    style={{
-                      margin: sub ? "8px 0 4px 0" : "0 0 6px 0",
-                      fontSize: "11px",
-                      fontWeight: sub ? "bold" : "normal",
-                      lineHeight: 1.5,
-                      color: "#111",
-                    }}
-                  >
-                    {line}
-                  </p>
-                );
-              })
-            ) : (
-              <p style={{ margin: 0, fontSize: "11px", lineHeight: 1.5, color: "#111" }}>—</p>
-            )}
-          </div>
-        </div>
-
-        <div id="pdf-page-2" style={pdfBaseStyle}>
-          <div>
-            {pdfPage2Lines.length ? (
-              pdfPage2Lines.map((line, idx) => {
-                const sub = isLikelySectionHeading(line);
-                return (
-                  <p
-                    // eslint-disable-next-line react/no-array-index-key
-                    key={`pdf-p2-${idx}`}
-                    style={{
-                      margin: sub ? "8px 0 4px 0" : "0 0 6px 0",
-                      fontSize: "11px",
-                      fontWeight: sub ? "bold" : "normal",
-                      lineHeight: 1.5,
-                      color: "#111",
-                    }}
-                  >
-                    {line}
-                  </p>
-                );
-              })
-            ) : (
-              <p style={{ margin: 0, fontSize: "11px", lineHeight: 1.5, color: "#111" }}>—</p>
-            )}
-          </div>
+          <div
+            style={{ fontSize: "11px", lineHeight: 1.5, color: "#111" }}
+            // eslint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{
+              __html: pdfReportBodyHtml || "<p style=\"margin:0;font-size:11px;line-height:1.5;color:#111;\">—</p>",
+            }}
+          />
 
           <div style={{ marginTop: "20px" }}>
             <div style={{ fontSize: "11px", lineHeight: 1.5, color: "#111", marginBottom: "10px" }}>
