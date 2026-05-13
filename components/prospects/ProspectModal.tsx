@@ -129,8 +129,11 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl border border-[#C9A96E]/20 bg-[#0A0A0A]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-[#C9A96E]/10 bg-[#060606] px-6 py-4">
+      <div
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto rounded-2xl border border-[#C9A96E]/20 bg-[#0A0A0A]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-[#C9A96E]/10 bg-[#060606] px-6 py-4">
           <h3 className="text-base font-medium text-[#F5F5F0]">
             {mode === "create" ? "Nouveau prospect" : "Modifier le prospect"}
           </h3>
@@ -268,13 +271,13 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
             <span className="text-xs text-[#666]">Notes</span>
             <textarea rows={3} placeholder="Informations complémentaires..." value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-[#F5F5F0] outline-none focus:border-[#C9A96E]/50" />
           </label>
+        </div>
 
-          <div className="mt-4 flex items-center justify-between">
-            <button type="button" onClick={onClose} className="text-sm text-[#555] transition hover:text-[#888]">Annuler</button>
-            <button type="button" onClick={() => void handleSubmit()} disabled={saving} className="rounded-full border-[1.5px] border-[#C9A96E] px-5 py-2 text-sm font-medium text-[#C9A96E] transition duration-200 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:opacity-50">
-              {saving ? "Enregistrement..." : "Enregistrer"}
-            </button>
-          </div>
+        <div className="sticky bottom-0 z-10 flex items-center justify-between border-t border-white/10 bg-[#0A0A0A] px-6 pb-5 pt-4">
+          <button type="button" onClick={onClose} className="text-sm text-[#555] transition hover:text-[#888]">Annuler</button>
+          <button type="button" onClick={() => void handleSubmit()} disabled={saving} className="rounded-full border-[1.5px] border-[#C9A96E] px-5 py-2 text-sm font-medium text-[#C9A96E] transition duration-200 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:opacity-50">
+            {saving ? "Enregistrement..." : "Enregistrer"}
+          </button>
         </div>
       </div>
     </div>
