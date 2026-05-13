@@ -10,6 +10,7 @@ import ClickableGenerationsList, {
 } from "@/components/generations/ClickableGenerationsList";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import UpcomingRelancesBanner from "@/components/relances/UpcomingRelancesBanner";
+import DashboardActivityChart from "@/components/dashboard/DashboardActivityChart";
 import SiteHeader from "@/components/site-header";
 import { absoluteUrl } from "@/lib/constants";
 import { supabase } from "@/lib/supabase";
@@ -399,6 +400,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </article>
           </div>
         </section>
+
+        <DashboardActivityChart />
 
         {/* Outils */}
         <section aria-label="Accès rapide aux outils">

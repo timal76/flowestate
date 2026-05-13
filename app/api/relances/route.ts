@@ -92,11 +92,28 @@ export async function POST(request: Request) {
   if (!body.scheduled_at) return NextResponse.json({ error: "La date est requise." }, { status: 400 });
 
   const supabase = createServiceClient();
+
+  let prospectId = body.prospect_id?.trim() || null;
+  const prospectEmail = body.prospect_email?.trim();
+  if (prospectEmail) {
+    const { data: prospectRow, error: prospectErr } = await supabase
+      .from("prospects")
+      .select("id")
+      .eq("email", prospectEmail)
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    if (prospectErr) {
+      console.error("[relances] POST prospect lookup", JSON.stringify(prospectErr));
+    } else if (prospectRow?.id) {
+      prospectId = prospectRow.id;
+    }
+  }
+
   const { data, error } = await supabase
     .from("relances")
     .insert({
       user_id: session.user.id,
-      prospect_id: body.prospect_id || null,
+      prospect_id: prospectId,
       titre: body.titre.trim(),
       message: body.message?.trim() || null,
       scheduled_at: body.scheduled_at,

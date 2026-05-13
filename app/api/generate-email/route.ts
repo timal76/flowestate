@@ -1,7 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { checkGenerationLimit } from "@/lib/check-generation-limit";
+import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
 async function callAnthropicWithRetry(apiKey: string, params: Record<string, unknown>) {
   const callOnce = async () => {
@@ -33,35 +33,6 @@ async function callAnthropicWithRetry(apiKey: string, params: Record<string, unk
 
   await new Promise((resolve) => setTimeout(resolve, 2000));
   return callOnce();
-}
-
-async function recordGeneration(
-  request: Request,
-  type: "annonce" | "email" | "compte-rendu",
-  description: string,
-  prospectName: string | null,
-  prospectId: string | null,
-  content: string,
-) {
-  const userId = request.headers.get("x-user-id")?.trim();
-  if (!userId) return;
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return;
-
-  const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { error } = await supabase.from("generations").insert({
-    type,
-    user_id: userId,
-    description,
-    prospect_name: prospectName,
-    prospect_id: prospectId,
-    content: content.trim() || null,
-  });
-  if (error) {
-    console.error("[generations] insert", error);
-  }
 }
 
 type GenerateEmailPayload = {
@@ -96,9 +67,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const userId = request.headers.get("x-user-id");
-    if (userId) {
-      const { allowed, reason } = await checkGenerationLimit(userId);
+    const effectiveUserId = await resolveGenerationUserId(request);
+    if (effectiveUserId) {
+      const { allowed, reason } = await checkGenerationLimit(effectiveUserId);
       if (!allowed) {
         return NextResponse.json({ error: reason }, { status: 403 });
       }
@@ -200,14 +171,13 @@ Consignes :
 
     const prospectName = body.prospectName?.trim() || null;
 
-    await recordGeneration(
-      request,
-      "email",
-      generationDescription,
+    await recordGenerationFromRequest(request, {
+      type: "email",
+      description: generationDescription,
       prospectName,
-      body.prospectId?.trim() || null,
-      email,
-    );
+      prospectId: body.prospectId?.trim() || null,
+      content: email,
+    });
 
     return NextResponse.json({ email });
   } catch {
