@@ -526,18 +526,18 @@ function ComptesRendusContent() {
       };
 
       const canvas = await html2canvas(captureRoot as HTMLElement, canvasOpts);
-      const imgData = canvas.toDataURL("image/png");
-      const pageHeightPx = (canvas.width * 297) / 210;
-      let positionPx = 0;
       const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidthMm = 210;
-      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+      /** Hauteur d’une tranche « page A4 » en pixels canvas (largeur canvas ↔ 210 mm). */
+      const pageHeight = (canvas.width * 297) / 210;
+      let position = 0;
+      const imgW = 210;
+      const imgH = (canvas.height * imgW) / canvas.width;
 
-      while (positionPx < canvas.height) {
-        if (positionPx > 0) pdf.addPage();
-        const offsetMm = (-positionPx * imgWidthMm) / canvas.width;
-        pdf.addImage(imgData, "PNG", 0, offsetMm, imgWidthMm, imgHeightMm, undefined, "FAST");
-        positionPx += pageHeightPx;
+      while (position < canvas.height) {
+        if (position > 0) pdf.addPage();
+        const yMm = (-position * 210) / canvas.width;
+        pdf.addImage(canvas, "PNG", 0, yMm, imgW, imgH, "", "FAST");
+        position += pageHeight;
       }
 
       pdf.save("compte-rendu-visite.pdf");
