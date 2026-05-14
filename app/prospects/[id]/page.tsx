@@ -242,6 +242,102 @@ export default function ProspectDetailPage() {
     router.push("/prospects");
   }
 
+  async function exportProspectPDF() {
+    const p = prospect;
+    if (!p) return;
+
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF();
+
+    const gold = [184, 150, 90] as const;
+    const dark = [20, 20, 20] as const;
+    const gray = [120, 120, 120] as const;
+    const light = [245, 245, 240] as const;
+
+    doc.setFillColor(...dark);
+    doc.rect(0, 0, 210, 297, "F");
+    doc.setFillColor(...gold);
+    doc.rect(0, 0, 210, 2, "F");
+
+    doc.setFontSize(22);
+    doc.setTextColor(...light);
+    doc.text("Fiche Prospect", 20, 20);
+
+    doc.setFontSize(16);
+    doc.setTextColor(...gold);
+    doc.text(p.nom, 20, 32);
+
+    doc.setFontSize(9);
+    doc.setTextColor(...gray);
+    doc.text(
+      `${p.statut} · ${normalizeCategorie(p.categorie) === "vendeur" ? "Vendeur" : "Acheteur"} · ${temperatureLabel(p.temperature)}`,
+      20,
+      40,
+    );
+
+    doc.setDrawColor(...gold);
+    doc.setLineWidth(0.3);
+    doc.line(20, 45, 190, 45);
+
+    let y = 55;
+    const fields =
+      normalizeCategorie(p.categorie) === "vendeur"
+        ? [
+            ["Email", p.email || "—"],
+            ["Téléphone", p.telephone || "—"],
+            ["Adresse du bien", p.adresse || "—"],
+            ["Prix de vente souhaité", p.budget ? formatBudget(p.budget) : "—"],
+            ["Type de bien", p.type_bien || "—"],
+          ]
+        : [
+            ["Email", p.email || "—"],
+            ["Téléphone", p.telephone || "—"],
+            ["Budget", p.budget ? formatBudget(p.budget) : "—"],
+            ["Type de bien recherché", p.type_bien || "—"],
+          ];
+
+    for (const [label, value] of fields) {
+      doc.setFontSize(8);
+      doc.setTextColor(...gray);
+      doc.text(label.toUpperCase(), 20, y);
+      doc.setFontSize(11);
+      doc.setTextColor(...light);
+      doc.text(value, 20, y + 6);
+      y += 18;
+    }
+
+    if (p.notes) {
+      doc.setFontSize(8);
+      doc.setTextColor(...gray);
+      doc.text("NOTES", 20, y);
+      y += 6;
+      doc.setFontSize(10);
+      doc.setTextColor(...light);
+      const lines = doc.splitTextToSize(p.notes, 170);
+      doc.text(lines, 20, y);
+      y += lines.length * 6 + 8;
+    }
+
+    if (relances.length > 0) {
+      doc.setFontSize(8);
+      doc.setTextColor(...gray);
+      doc.text("RELANCES", 20, y);
+      y += 8;
+      for (const r of relances) {
+        doc.setFontSize(10);
+        doc.setTextColor(...light);
+        doc.text(`• ${r.titre} — ${formatDate(r.scheduled_at)} (${r.statut})`, 20, y);
+        y += 7;
+      }
+    }
+
+    doc.setFontSize(8);
+    doc.setTextColor(...gray);
+    doc.text(`Généré par FlowEstate · ${new Date().toLocaleDateString("fr-FR")}`, 20, 285);
+
+    doc.save(`prospect-${p.nom.replace(/\s+/g, "-").toLowerCase()}.pdf`);
+  }
+
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
       <SiteHeader />
@@ -263,6 +359,13 @@ export default function ProspectDetailPage() {
           </div>
 
           <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => void exportProspectPDF()}
+              className="rounded-full border border-white/10 px-4 py-2 text-sm text-[#A0A0A0] transition hover:border-[#C9A96E]/40 hover:text-[#C9A96E]"
+            >
+              Exporter PDF
+            </button>
             <button type="button" onClick={() => setEditOpen(true)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-[#A0A0A0] transition hover:border-[#C9A96E]/40 hover:text-[#C9A96E]">Modifier</button>
             {confirmDelete ? (
               <button type="button" onClick={() => void removeProspect()} className="rounded-full border border-red-500/40 px-4 py-2 text-sm text-red-300">Confirmer ?</button>

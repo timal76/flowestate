@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import RelanceModal from "@/components/relances/RelanceModal";
 import SiteHeader from "@/components/site-header";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import { supabase } from "@/lib/supabase";
@@ -90,6 +91,7 @@ function EmailsContent() {
   const [sendTo, setSendTo] = useState("");
   const [sendSubject, setSendSubject] = useState("");
   const [sending, setSending] = useState(false);
+  const [relanceModalOpen, setRelanceModalOpen] = useState(false);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -736,6 +738,13 @@ function EmailsContent() {
                       <Link href="/profil" className="text-[#C9A96E] hover:underline">Configurer →</Link>
                     </div>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => setRelanceModalOpen(true)}
+                    className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#C9A96E] px-5 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+                  >
+                    🕐 Programmer une relance
+                  </button>
                 </div>
               ) : (
                 <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/20 px-6 py-12 text-center">
@@ -776,6 +785,25 @@ function EmailsContent() {
         onLoad={(content) => {
           setForm((prev) => ({ ...prev, personalInfo: content }));
           toast.success("Template chargé");
+        }}
+      />
+      <RelanceModal
+        open={relanceModalOpen}
+        mode="create"
+        defaultProspectId={prospectId ?? undefined}
+        initialValue={{
+          id: "",
+          titre: `Relance — ${form.prospectName || "Prospect"}`,
+          message: generatedEmail,
+          type: "email",
+          prospect_id: prospectId ?? null,
+          prospect_email: form.prospectEmail || sendTo || "",
+          scheduled_at: "",
+        }}
+        onClose={() => setRelanceModalOpen(false)}
+        onSaved={() => {
+          setRelanceModalOpen(false);
+          toast.success("Relance programmée !");
         }}
       />
     </main>
