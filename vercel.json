@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/send-relances",
-      "schedule": "0 8 * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }
