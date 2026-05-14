@@ -246,100 +246,94 @@ export default function ProspectDetailPage() {
     const p = prospect;
     if (!p) return;
 
-    const esc = (s: string) =>
-      s
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF();
 
     const categorie = normalizeCategorie(p.categorie);
-    const tempLabel = p.temperature === "chaud" ? "Chaud" : p.temperature === "tiède" ? "Tiede" : "Froid";
+
+    const tempLabel =
+      p.temperature === "chaud"
+        ? "Chaud"
+        : String(p.temperature) === "tiede" || p.temperature === "tiède"
+          ? "Tiede"
+          : "Froid";
+    const categorieLabel = categorie === "vendeur" ? "Vendeur" : "Acheteur";
+
+    doc.setFillColor(20, 20, 20);
+    doc.rect(0, 0, 210, 297, "F");
+    doc.setFillColor(184, 150, 90);
+    doc.rect(0, 0, 210, 2, "F");
+
+    doc.setFontSize(22);
+    doc.setTextColor(245, 245, 240);
+    doc.text(p.nom, 20, 20);
+
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`${p.statut} - ${categorieLabel} - ${tempLabel}`, 20, 30);
+
+    doc.setDrawColor(184, 150, 90);
+    doc.setLineWidth(0.3);
+    doc.line(20, 35, 190, 35);
+
     const fields =
       categorie === "vendeur"
         ? [
-            ["Email", p.email || "—"],
-            ["Téléphone", p.telephone || "—"],
-            ["Adresse du bien", p.adresse || "—"],
-            ["Prix de vente souhaité", p.budget ? formatBudget(p.budget) : "—"],
-            ["Type de bien", p.type_bien || "—"],
+            ["Email", p.email || "-"],
+            ["Telephone", p.telephone || "-"],
+            ["Adresse du bien", p.adresse || "-"],
+            ["Prix de vente souhaite", p.budget ? formatBudget(p.budget) : "-"],
+            ["Type de bien", p.type_bien || "-"],
           ]
         : [
-            ["Email", p.email || "—"],
-            ["Téléphone", p.telephone || "—"],
-            ["Budget", p.budget ? formatBudget(p.budget) : "—"],
-            ["Type de bien recherché", p.type_bien || "—"],
+            ["Email", p.email || "-"],
+            ["Telephone", p.telephone || "-"],
+            ["Budget", p.budget ? formatBudget(p.budget) : "-"],
+            ["Type de bien recherche", p.type_bien || "-"],
           ];
 
-    const relancesHtml =
-      relances.length > 0
-        ? relances
-            .map(
-              (r) =>
-                `<li>${esc(r.titre)} — ${esc(formatDate(r.scheduled_at))} <span class="badge">${esc(r.statut)}</span></li>`,
-            )
-            .join("")
-        : "<li>Aucune relance</li>";
+    let y = 45;
+    for (const [label, value] of fields) {
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(label.toUpperCase(), 20, y);
+      doc.setFontSize(11);
+      doc.setTextColor(245, 245, 240);
+      const lines = doc.splitTextToSize(value, 170);
+      doc.text(lines, 20, y + 6);
+      y += 8 + lines.length * 6;
+    }
 
-    const fieldsHtml = fields
-      .map(
-        ([label, value]) => `
-    <div class="field">
-      <div class="label">${esc(label)}</div>
-      <div class="value">${esc(value)}</div>
-    </div>
-  `,
-      )
-      .join("");
+    if (p.notes) {
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text("NOTES", 20, y + 4);
+      y += 10;
+      doc.setFontSize(10);
+      doc.setTextColor(245, 245, 240);
+      const lines = doc.splitTextToSize(p.notes, 170);
+      doc.text(lines, 20, y);
+      y += lines.length * 6 + 8;
+    }
 
-    const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Fiche prospect — ${esc(p.nom)}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #1a1a1a; padding: 40px; }
-    .header { border-bottom: 3px solid #B8943F; padding-bottom: 20px; margin-bottom: 30px; }
-    .name { font-size: 28px; font-weight: 700; color: #1a1a1a; }
-    .badges { margin-top: 8px; display: flex; gap: 8px; }
-    .badge { background: #f0f0f0; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #555; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    .field { background: #f9f9f9; border-radius: 8px; padding: 14px; }
-    .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 4px; }
-    .value { font-size: 14px; color: #1a1a1a; }
-    .section { margin-top: 24px; }
-    .section-title { font-size: 14px; font-weight: 600; color: #B8943F; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    .notes { background: #f9f9f9; border-radius: 8px; padding: 14px; font-size: 14px; line-height: 1.6; color: #555; }
-    ul { padding-left: 16px; }
-    li { font-size: 13px; padding: 6px 0; border-bottom: 1px solid #eee; }
-    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #eee; font-size: 11px; color: #aaa; text-align: center; }
-    @media print { body { padding: 20px; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="name">${esc(p.nom)}</div>
-    <div class="badges">
-      <span class="badge">${esc(p.statut)}</span>
-      <span class="badge">${categorie === "vendeur" ? "Vendeur" : "Acheteur"}</span>
-      <span class="badge">${tempLabel}</span>
-    </div>
-  </div>
-  <div class="grid">${fieldsHtml}</div>
-  ${p.notes ? `<div class="section"><div class="section-title">Notes</div><div class="notes">${esc(p.notes)}</div></div>` : ""}
-  <div class="section"><div class="section-title">Relances</div><ul>${relancesHtml}</ul></div>
-  <div class="footer">Généré par FlowEstate · ${new Date().toLocaleDateString("fr-FR")}</div>
-</body>
-</html>`;
+    if (relances.length > 0) {
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text("RELANCES", 20, y + 4);
+      y += 10;
+      for (const r of relances) {
+        doc.setFontSize(10);
+        doc.setTextColor(245, 245, 240);
+        doc.text(`- ${r.titre} (${r.statut})`, 20, y);
+        y += 7;
+      }
+    }
 
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 500);
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Genere par FlowEstate - ${new Date().toLocaleDateString("fr-FR")}`, 20, 285);
+
+    doc.save(`prospect-${p.nom.replace(/\s+/g, "-").toLowerCase()}.pdf`);
   }
 
   return (
