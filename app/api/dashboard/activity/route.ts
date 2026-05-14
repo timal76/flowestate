@@ -12,6 +12,7 @@ function isUuid(value: string): boolean {
 
 export async function GET() {
   const session = await auth();
+  console.log("[DEBUG dashboard] session.user.id =", session?.user?.id);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
