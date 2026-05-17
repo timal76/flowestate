@@ -253,7 +253,9 @@ function RegisterPageContent() {
                 <span className="min-w-0 flex-1 leading-snug">
                   J&apos;accepte les{" "}
                   <a
-                    href="#"
+                    href="/cgu"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="font-medium text-[#B8965A] transition hover:text-[#c9a873] hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
