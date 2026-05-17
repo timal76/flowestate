@@ -35,7 +35,7 @@ SaaS d'automatisation pour agents immobiliers.
 - Templates sauvegardés : table Supabase, API CRUD complète, modale save/load, page /templates, intégration boutons dans annonces/emails/comptes-rendus
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
-- Stripe : checkout, plans Starter(30 gen)/Pro(2 users), 
+- Stripe : checkout, plans Starter(30 gen)/Pro(1 user), 
   essai 14 jours, webhooks local + production, portail client
 - Limite 30 générations/mois pour Starter
 - Domaine flowestate.fr connecté à Vercel ✅
