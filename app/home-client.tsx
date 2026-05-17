@@ -4,21 +4,11 @@ import Link from "next/link";
 
 import SiteHeader from "@/components/site-header";
 import StripePlanCheckoutButton from "@/components/stripe-plan-checkout-button";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
-
-function scrollRevealClass(isIntersecting: boolean) {
-  return isIntersecting ? "animate-fade-in-up-scroll" : "opacity-0 translate-y-[30px]";
-}
 
 const featureCardClass =
   "flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-inherit no-underline outline-none transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#C9A96E]/75 hover:bg-white/[0.055] hover:shadow-[0_0_32px_-12px_rgba(201,169,110,0.38)] focus-visible:ring-2 focus-visible:ring-[#C9A96E]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] md:h-full";
 
 export default function HomePage() {
-  const featuresIntro = useIntersectionObserver({ threshold: 0, rootMargin: "0px" });
-  const featuresGrid = useIntersectionObserver({ threshold: 0, rootMargin: "0px" });
-  const tarifsGrid = useIntersectionObserver({ threshold: 0, rootMargin: "0px" });
-  const finalCta = useIntersectionObserver({ threshold: 0, rootMargin: "0px" });
-
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
       <SiteHeader />
@@ -62,21 +52,13 @@ export default function HomePage() {
       {/* Fonctionnalités */}
       <section id="fonctionnalites" className="px-6 py-28 md:px-10">
         <div className="mx-auto w-full max-w-7xl">
-          <div ref={featuresIntro.ref} className="mb-14 max-w-2xl space-y-4">
-            <div className={scrollRevealClass(featuresIntro.isIntersecting)}>
-              <h2 className="text-3xl font-semibold md:text-4xl">Automatisez l&apos;essentiel, gardez l&apos;humain.</h2>
-              <p className="mt-4 text-[#A0A0A0]">Trois modules pensés pour les agences exigeantes.</p>
-            </div>
+          <div className="mb-14 max-w-2xl space-y-4">
+            <h2 className="text-3xl font-semibold md:text-4xl">Automatisez l&apos;essentiel, gardez l&apos;humain.</h2>
+            <p className="mt-4 text-[#A0A0A0]">Trois modules pensés pour les agences exigeantes.</p>
           </div>
 
-          <div ref={featuresGrid.ref} className="grid gap-6 md:grid-cols-3 md:items-stretch">
-            <Link
-              href="/annonces"
-              className={`${featureCardClass} ${scrollRevealClass(featuresGrid.isIntersecting)}`}
-              style={
-                featuresGrid.isIntersecting ? { animationDelay: "0s" } : undefined
-              }
-            >
+          <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+            <Link href="/annonces" className={featureCardClass}>
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -101,13 +83,7 @@ export default function HomePage() {
               </p>
             </Link>
 
-            <Link
-              href="/emails"
-              className={`${featureCardClass} ${scrollRevealClass(featuresGrid.isIntersecting)}`}
-              style={
-                featuresGrid.isIntersecting ? { animationDelay: "0.15s" } : undefined
-              }
-            >
+            <Link href="/emails" className={featureCardClass}>
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -131,13 +107,7 @@ export default function HomePage() {
               </p>
             </Link>
 
-            <Link
-              href="/comptes-rendus"
-              className={`${featureCardClass} ${scrollRevealClass(featuresGrid.isIntersecting)}`}
-              style={
-                featuresGrid.isIntersecting ? { animationDelay: "0.3s" } : undefined
-              }
-            >
+            <Link href="/comptes-rendus" className={featureCardClass}>
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -177,13 +147,8 @@ export default function HomePage() {
             <p className="text-[#A0A0A0]">Choisissez le niveau d&apos;automatisation adapté à votre équipe.</p>
           </div>
 
-          <div ref={tarifsGrid.ref} className="grid gap-6 md:grid-cols-2 md:items-stretch">
-            <article
-              className={`flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E]/60 hover:bg-white/[0.04] ${scrollRevealClass(
-                tarifsGrid.isIntersecting
-              )}`}
-              style={tarifsGrid.isIntersecting ? { animationDelay: "0s" } : undefined}
-            >
+          <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+            <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Starter</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
                 49€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
@@ -214,13 +179,8 @@ export default function HomePage() {
             </article>
 
             <article
-              className={`flex flex-col rounded-2xl border border-[#C9A96E] bg-white/[0.03] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E] hover:bg-white/[0.05] ${scrollRevealClass(
-                tarifsGrid.isIntersecting
-              )}`}
-              style={{
-                boxShadow: "0 0 28px rgba(201, 169, 110, 0.18)",
-                ...(tarifsGrid.isIntersecting ? { animationDelay: "0.15s" } : {}),
-              }}
+              className="flex flex-col rounded-2xl border border-[#C9A96E] bg-white/[0.03] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E] hover:bg-white/[0.05]"
+              style={{ boxShadow: "0 0 28px rgba(201, 169, 110, 0.18)" }}
             >
               <div className="mb-3 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
                 Le plus populaire
@@ -264,19 +224,17 @@ export default function HomePage() {
 
       {/* CTA */}
       <section className="border-t border-white/10 bg-white/[0.02] px-6 py-28 md:px-10">
-        <div ref={finalCta.ref} className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
-          <div className={scrollRevealClass(finalCta.isIntersecting)}>
-            <h2 className="text-3xl font-semibold text-[#F5F5F0] md:text-4xl">Prêt à transformer votre quotidien ?</h2>
-            <p className="mt-4 text-lg text-[#A0A0A0] md:text-xl">
-              Rejoignez les agences qui gagnent du temps chaque jour.
-            </p>
-            <Link
-              href="/register"
-              className="mt-10 inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-8 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 ease-out hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
-            >
-              Commencer gratuitement
-            </Link>
-          </div>
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
+          <h2 className="text-3xl font-semibold text-[#F5F5F0] md:text-4xl">Prêt à transformer votre quotidien ?</h2>
+          <p className="mt-4 text-lg text-[#A0A0A0] md:text-xl">
+            Rejoignez les agences qui gagnent du temps chaque jour.
+          </p>
+          <Link
+            href="/register"
+            className="mt-10 inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-8 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 ease-out hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+          >
+            Commencer gratuitement
+          </Link>
         </div>
       </section>
 
