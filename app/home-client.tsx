@@ -14,10 +14,10 @@ const featureCardClass =
   "flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-inherit no-underline outline-none transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#C9A96E]/75 hover:bg-white/[0.055] hover:shadow-[0_0_32px_-12px_rgba(201,169,110,0.38)] focus-visible:ring-2 focus-visible:ring-[#C9A96E]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] md:h-full";
 
 export default function HomePage() {
-  const featuresIntro = useIntersectionObserver();
-  const featuresGrid = useIntersectionObserver();
-  const tarifsGrid = useIntersectionObserver();
-  const finalCta = useIntersectionObserver();
+  const featuresIntro = useIntersectionObserver({ threshold: 0, rootMargin: "0px" });
+  const featuresGrid = useIntersectionObserver({ threshold: 0, rootMargin: "0px" });
+  const tarifsGrid = useIntersectionObserver({ threshold: 0, rootMargin: "0px" });
+  const finalCta = useIntersectionObserver({ threshold: 0, rootMargin: "0px" });
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
