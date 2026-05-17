@@ -92,7 +92,7 @@ export default function TarifsPage() {
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>1 utilisateur</span>
+                  <span>{"1\u00a0utilisateur"}</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
