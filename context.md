@@ -26,7 +26,7 @@ SaaS d'automatisation pour agents immobiliers.
 - Spinner génération + Toast notifications (sonner)
 - Page contact/support avec FAQ
 - CGU + Mentions légales
-- Animations landing page (Intersection Observer)
+- Landing page : hero animé CSS, sections features/tarifs/CTA toujours visibles (sans IntersectionObserver)
 - SEO meta tags sur toutes les pages
 - SEO meta tags corrigés (flowestate.fr au lieu de localhost)
 - Modale visiteur : s'affiche à la première visite via localStorage (flowestate_visited)
@@ -46,7 +46,7 @@ SaaS d'automatisation pour agents immobiliers.
 - Retry automatique API Claude en cas d'erreur overloaded (1 retry après 2 secondes)
 - CRM prospects : formatage budget « 400 000 € »
 - Envoi d'emails via SMTP : configuration dans le profil, guide Gmail/Outlook, envoi direct depuis la page Emails
-- Relances programmées avec envoi automatique via Vercel Cron (toutes les minutes en prod)
+- Relances programmées avec envoi automatique via Vercel Cron (1x/jour à 8h UTC, plan Hobby)
 - Fix fuseau horaire Europe/Paris pour l'affichage des dates de relances ✅
 - Stripe passé en mode live — clés, produits et webhook configurés en production ✅
 - Compte de démo créé avec profil complet (Thomas Marchand, Orpi Paris 11e)
@@ -65,17 +65,22 @@ SaaS d'automatisation pour agents immobiliers.
 - Données de démo : annonce, email, compte-rendu, 2 relances programmées
 - Agence démo mise à jour en « Orpi Paris 11e »
 - Fix modal prospect scroll (bouton Enregistrer visible)
+- Enregistrement des générations en base via `recordGenerationFromRequest` (service role + session NextAuth, fix compte démo)
+- Bouton « Programmer une relance » dans le générateur d'emails (email généré pré-rempli dans la modale)
+- Relances liées aux prospects via `prospect_id` (lookup par email à la création)
+- Export PDF fiche prospect (téléchargement direct jsPDF sans emojis)
+- Colonne `content` ajoutée à la table `generations` (fix historique et activité récente)
+- Fix animations landing page (suppression IntersectionObserver, contenu toujours visible)
+- Plan Pro passé à 1 utilisateur sur la page tarifs
+- Cron relances repassé à 1x/jour à 8h (contrainte Vercel Hobby)
+- Compte démo passé en plan Pro
+- Données de démo mises à jour (prospects parisiens crédibles)
+- Fix lien CGU page register (`/cgu`, nouvel onglet)
 
 ## ⏭️ Prochaine étape
-- BUG PRIORITAIRE : générations non enregistrées dans la table `generations` pour le compte démo → historique vide et activité récente vide
-- Vérifier en Supabase : table `generations`, `user_id` du compte démo
-- Relances non liées aux prospects (n'apparaissent pas dans la fiche prospect)
-- Tester historique cliquable une fois le bug générations résolu
-- Mettre à jour le guide SMTP Outlook (OAuth2 — non supporté pour l'instant)
-- Score annonce : vérifier l'affichage après génération
-- Tester le cron relances en prod
+- Guide SMTP Outlook à mettre à jour (OAuth2 non supporté)
 - OAuth Gmail pour simplifier la connexion email (v2)
-- Intégration copier pour SeLoger/LeBonCoin (formatage adapté)
+- Intégration copier pour SeLoger/LeBonCoin
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
@@ -101,4 +106,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : Session du 13 mai 2026
+- Dernière mise à jour : Session du 18 mai 2026
