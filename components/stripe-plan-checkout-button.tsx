@@ -8,12 +8,14 @@ export type StripePlan = "starter" | "pro";
 
 type StripePlanCheckoutButtonProps = {
   plan: StripePlan;
+  billing?: "monthly" | "annual";
   className?: string;
   children: React.ReactNode;
 };
 
 export default function StripePlanCheckoutButton({
   plan,
+  billing,
   className,
   children,
 }: StripePlanCheckoutButtonProps) {
@@ -34,7 +36,7 @@ export default function StripePlanCheckoutButton({
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, billing: billing ?? "monthly" }),
       });
 
       const payload = (await response.json()) as { url?: string; error?: string };
@@ -48,7 +50,7 @@ export default function StripePlanCheckoutButton({
     } finally {
       setLoading(false);
     }
-  }, [plan, router, session, status]);
+  }, [billing, plan, router, session, status]);
 
   return (
     <button

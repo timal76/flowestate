@@ -6,6 +6,7 @@ import { stripe } from "@/lib/stripe";
 
 type CheckoutBody = {
   plan?: string;
+  billing?: string;
 };
 
 export async function POST(request: Request) {
@@ -16,20 +17,34 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CheckoutBody;
-    const plan = body.plan;
+    const { plan, billing } = body;
 
     if (plan !== "starter" && plan !== "pro") {
       return NextResponse.json({ error: "Plan invalide." }, { status: 400 });
     }
 
-    const priceId =
-      plan === "starter"
-        ? process.env.STRIPE_STARTER_PRICE_ID
-        : process.env.STRIPE_PRO_PRICE_ID;
+    const PRICE_IDS = {
+      starter: {
+        monthly: process.env.STRIPE_STARTER_PRICE_ID,
+        annual: process.env.STRIPE_STARTER_ANNUAL_PRICE_ID,
+      },
+      pro: {
+        monthly: process.env.STRIPE_PRO_PRICE_ID,
+        annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
+      },
+    };
+
+    const billingPeriod = billing === "annual" ? "annual" : "monthly";
+    const priceId = PRICE_IDS[plan as "starter" | "pro"]?.[billingPeriod];
 
     if (!priceId) {
       return NextResponse.json(
-        { error: "Identifiant de prix Stripe manquant dans la configuration." },
+        {
+          error:
+            billingPeriod === "annual"
+              ? "Identifiant de prix annuel Stripe manquant (STRIPE_*_ANNUAL_PRICE_ID)."
+              : "Identifiant de prix Stripe manquant dans la configuration.",
+        },
         { status: 500 }
       );
     }
@@ -45,12 +60,14 @@ export async function POST(request: Request) {
       metadata: {
         userId: session.user.id,
         plan,
+        billing: billingPeriod,
       },
       subscription_data: {
         trial_period_days: 14,
         metadata: {
           userId: session.user.id,
           plan,
+          billing: billingPeriod,
         },
       },
     });

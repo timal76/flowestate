@@ -1,25 +1,13 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 
 import SiteHeader from "@/components/site-header";
 import StripePlanCheckoutButton from "@/components/stripe-plan-checkout-button";
-import { absoluteUrl } from "@/lib/constants";
-
-const CANONICAL_PATH = "/tarifs";
-
-export const metadata: Metadata = {
-  title: "Tarifs",
-  description:
-    "Offres Starter et Pro FlowEstate : essai 14 jours, générations automatisées pour annonces, emails et comptes-rendus. Paiement sécurisé Stripe.",
-  alternates: { canonical: CANONICAL_PATH },
-  openGraph: {
-    title: "Tarifs | FlowEstate",
-    description:
-      "Offres Starter et Pro FlowEstate : essai 14 jours, générations automatisées pour annonces, emails et comptes-rendus. Paiement sécurisé Stripe.",
-    url: absoluteUrl(CANONICAL_PATH),
-  },
-};
 
 export default function TarifsPage() {
+  const [annuel, setAnnuel] = useState(false);
+
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
       <SiteHeader />
@@ -42,13 +30,37 @@ export default function TarifsPage() {
             </p>
           </div>
 
+          <div className="mb-10 flex items-center gap-4">
+            <span className={`text-sm font-medium ${!annuel ? "text-[#F5F5F0]" : "text-[#A0A0A0]"}`}>
+              Mensuel
+            </span>
+            <button
+              type="button"
+              onClick={() => setAnnuel(!annuel)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${annuel ? "bg-[#B8943F]" : "bg-white/20"}`}
+              aria-pressed={annuel}
+              aria-label={annuel ? "Facturation annuelle" : "Facturation mensuelle"}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${annuel ? "translate-x-6" : "translate-x-1"}`}
+              />
+            </button>
+            <span className={`text-sm font-medium ${annuel ? "text-[#F5F5F0]" : "text-[#A0A0A0]"}`}>
+              Annuel
+              <span className="ml-2 rounded-full bg-[#C9A96E]/20 px-2 py-0.5 text-xs text-[#C9A96E]">
+                -10%
+              </span>
+            </span>
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">
                 Starter
               </p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                49€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+                {annuel ? "44€" : "49€"}
+                <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
 
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
@@ -68,12 +80,13 @@ export default function TarifsPage() {
 
               <StripePlanCheckoutButton
                 plan="starter"
+                billing={annuel ? "annual" : "monthly"}
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-70"
               >
                 Essayer Starter gratuitement
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                14 jours gratuits, puis 49€/mois
+                {annuel ? "529€/an — 14 jours gratuits" : "14 jours gratuits, puis 49€/mois"}
               </p>
             </article>
 
@@ -86,7 +99,8 @@ export default function TarifsPage() {
               </div>
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Pro</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+                {annuel ? "89€" : "99€"}
+                <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
 
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
@@ -110,12 +124,13 @@ export default function TarifsPage() {
 
               <StripePlanCheckoutButton
                 plan="pro"
+                billing={annuel ? "annual" : "monthly"}
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-[#B8943F] bg-[#B8943F] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90 disabled:cursor-wait disabled:opacity-70"
               >
                 Essayer Pro gratuitement
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                14 jours gratuits, puis 99€/mois
+                {annuel ? "1 069€/an — 14 jours gratuits" : "14 jours gratuits, puis 99€/mois"}
               </p>
             </article>
           </div>
