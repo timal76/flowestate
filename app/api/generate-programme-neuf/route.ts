@@ -275,6 +275,7 @@ Règles : uniquement des faits vérifiables et récents, chiffres précis quand 
     }
 
     const extractionText = extractTextFromAnthropic(extractionCall.json);
+    console.log("EXTRACTION RAW:", extractionText?.substring(0, 500));
     if (!extractionText) {
       return NextResponse.json(
         { error: "Impossible d'extraire les informations du PDF." },
@@ -285,11 +286,17 @@ Règles : uniquement des faits vérifiables et récents, chiffres précis quand 
     let extractedData: Record<string, unknown>;
     try {
       extractedData = parseJsonFromText(extractionText) as Record<string, unknown>;
-    } catch {
-      return NextResponse.json(
-        { error: "Format d'extraction PDF invalide. Réessayez avec un autre document." },
-        { status: 502 },
-      );
+    } catch (e) {
+      console.error("PARSE ERROR:", e, "RAW:", extractionText?.substring(0, 200));
+      // Fallback : utiliser un objet vide plutôt que de bloquer
+      extractedData = {
+        nom: null,
+        ville: body.address?.split(",").pop()?.trim() || "Le Havre",
+        quartier: null,
+        promoteur: null,
+        types_biens: null,
+        arguments_promoteur: [],
+      };
     }
 
     const ville =
