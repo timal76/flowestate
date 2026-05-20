@@ -77,57 +77,99 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as GenerateEmailPayload;
 
-    const systemPrompt = `Tu es un agent immobilier expérimenté qui rédige des emails 
-de relance depuis 20 ans. Tu écris de façon naturelle, directe 
-et humaine. Jamais pompeux ni robotique.
+    const systemPrompt = `Tu es un agent immobilier expert avec 20 ans d'expérience, spécialisé dans la rédaction d'emails de relance à fort taux de conversion. Tu connais parfaitement la psychologie de l'acheteur immobilier, les cycles de décision longs, les objections fréquentes et les leviers de réengagement.
 
-Règles strictes :
-- Personnalise chaque email selon le profil du prospect, 
-  son intérêt, ses objections et sa situation
-- Commence toujours par : Objet: [objet accrocheur et personnalisé]
-- Structure : Accroche personnalisée → Corps → CTA clair → Politesse → Signature
-- Ton Professionnel : sobre, factuel, formule 'Bien cordialement'
-- Ton Chaleureux : humain, proche, formule 'À très bientôt'
-- Ton Urgent : direct, créateur d'urgence, formule 'Dans l'attente de votre retour'
-- Ne mentionne jamais l'IA
-- Retourne uniquement le texte final de l'email`;
+CONTEXTE MÉTIER :
+Un email de relance immobilier intervient après une visite, un premier contact ou une période de silence. Son objectif est de maintenir le lien, lever les freins, et provoquer une prise de décision ou un rendez-vous. Chaque email doit donner l'impression d'avoir été écrit spécifiquement pour ce prospect, pas d'être un template.
+
+RÈGLES DE PERSONNALISATION :
+- Toujours référencer un élément concret de la visite ou de l'échange précédent
+- Adresser directement les objections mentionnées sans les minimiser
+- Adapter le registre à la situation du prospect (primo-accédant, investisseur, vendeur-acheteur, retraité...)
+- Si un délai de recherche est connu, calibrer l'urgence en conséquence
+
+STRUCTURE OBLIGATOIRE :
+1. Objet : [percutant, personnalisé, 50 caractères max, sans point d'exclamation]
+2. Accroche : référence directe à la visite ou au dernier échange (1-2 phrases)
+3. Corps : apport de valeur concret (nouvelle info sur le bien, argument marché, solution à une objection)
+4. CTA : une seule action demandée, formulée clairement (rappel, rendez-vous, réponse par email)
+5. Formule de politesse adaptée au ton
+6. Signature complète
+
+RÈGLES PAR TON :
+- Ton Professionnel : registre soutenu, "Bien cordialement", phrases complètes, distance respectueuse, aucun familier
+- Ton Chaleureux : registre accessible, "À très bientôt", prénom du prospect utilisé naturellement, ton proche sans être familier
+- Ton Urgent : direct et factuel, "Dans l'attente de votre retour rapide", argument marché ou rareté concret, jamais de pression artificielle
+
+LONGUEURS STRICTES :
+- Court : 8 à 10 lignes maximum
+- Standard : 12 à 15 lignes
+- Long : 18 à 22 lignes
+
+EXPRESSIONS INTERDITES :
+- "Suite à notre entretien téléphonique" (trop générique)
+- "N'hésitez pas à me contacter" (passif et inefficace)
+- "Je me permets de" (servile)
+- "Comme convenu" sans contexte précis
+- "J'espère que vous allez bien" (remplissage)
+- Tout superlatif non étayé sur le bien
+
+CONTRÔLE QUALITÉ OBLIGATOIRE :
+Avant de retourner le texte, relis-le intégralement et vérifie :
+1. Zéro faute d'orthographe, de grammaire, de typographie et d'accord
+2. L'objet fait moins de 50 caractères et ne contient pas de point d'exclamation
+3. Une seule action demandée dans le CTA
+4. Le ton est cohérent du début à la fin
+5. La signature est complète et correctement formatée
+
+Retourne uniquement le texte final de l'email, sans commentaire ni encadrement.`;
 
     const userPrompt = `
-Rédige un email de relance immobilier avec ces informations :
+Rédige un email de relance immobilier personnalisé à partir des informations suivantes :
 
-- Prénom et nom de l'agent : ${body.agentName || "Non précisé"}
-- Nom de l'agence : ${body.agencyName || "Non précisé"}
-- Téléphone de l'agent : ${body.agentPhone || "Non précisé"}
-- Email de l'agent : ${body.agentEmail || "Non précisé"}
-- Prénom et nom du prospect : ${body.prospectName || "Non précisé"}
+INFORMATIONS SUR L'AGENT :
+- Nom de l'agent : ${body.agentName || "Non précisé"}
+- Agence : ${body.agencyName || "Non précisée"}
+- Téléphone : ${body.agentPhone || "Non précisé"}
+- Email : ${body.agentEmail || "Non précisé"}
+
+INFORMATIONS SUR LE PROSPECT :
+- Nom du prospect : ${body.prospectName || "Non précisé"}
 - Email du prospect : ${body.prospectEmail || "Non précisé"}
-- Type de bien visité : ${body.propertyType || "Non précisé"}
-- Localisation du bien : ${body.propertyLocation || "Non précisé"}
-- Prix du bien : ${body.propertyPrice || "Non précisé"} EUR
-- Date de visite : ${body.visitDate || "Non précisée"}
-- Budget du prospect : ${body.prospectBudget || "Non précisé"} EUR
-- Situation du prospect : ${body.prospectSituation || "Non précisée"}
-- Retour après visite : ${body.visitFeedback || "Non précisé"}
+- Situation personnelle et professionnelle : ${body.prospectSituation || "Non précisée"}
+- Budget : ${body.prospectBudget ? body.prospectBudget + " €" : "Non précisé"}
 - Délai de recherche : ${body.searchDelay || "Non précisé"}
-- Objections éventuelles : ${body.objections || "Non précisées"}
-- Informations personnelles du prospect : ${body.personalInfo || "Non précisées"}
-- Ton de l'email : ${body.tone || "Professionnel"}
-- Longueur souhaitée : ${body.length || "Standard (10-15 lignes)"}
+- Informations personnelles utiles : ${body.personalInfo || "Non précisées"}
 
-Termine avec cette signature :
+INFORMATIONS SUR LE BIEN :
+- Type de bien : ${body.propertyType || "Non précisé"}
+- Localisation : ${body.propertyLocation || "Non précisée"}
+- Prix : ${body.propertyPrice ? body.propertyPrice + " €" : "Non précisé"}
+
+CONTEXTE DE LA RELATION :
+- Date de visite : ${body.visitDate || "Non précisée"}
+- Retour du prospect après visite : ${body.visitFeedback || "Non précisé"}
+- Objections exprimées : ${body.objections || "Non précisées"}
+
+PARAMÈTRES RÉDACTIONNELS :
+- Ton imposé : ${body.tone || "Professionnel"}
+- Longueur souhaitée : ${body.length || "Standard (12-15 lignes)"}
+
+SIGNATURE À UTILISER :
 ---
-
 ${body.agentName || "L'agent"}
 ${body.agencyName || ""}
 ${body.agentPhone || ""}
 ${body.agentEmail || ""}
 
-Chaque élément sur sa propre ligne.
-
-Consignes :
-- Rédige en français.
-- Retourne uniquement le texte final.
-    `.trim();
+CONSIGNES FINALES :
+- Commence par l'objet de l'email
+- Référence un élément concret de la visite ou de l'échange
+- Adresse directement les objections si elles sont mentionnées
+- Termine par un CTA unique et clair
+- Applique le contrôle qualité avant de retourner le texte
+- Rédige exclusivement en français
+`.trim();
 
     const { response: anthropicResponse, json: anthropicJson } = await callAnthropicWithRetry(apiKey, {
       model: "claude-sonnet-4-5",

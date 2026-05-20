@@ -341,6 +341,12 @@ export default function SiteHeader() {
           <Link href="/annonces" className={pathname === "/annonces" ? desktopToolActiveClass : desktopToolLinkClass}>
             Annonces
           </Link>
+          <Link
+            href="/programmes-neufs"
+            className={pathname === "/programmes-neufs" ? desktopToolActiveClass : desktopToolLinkClass}
+          >
+            Programmes neufs
+          </Link>
           <Link href="/emails" className={pathname === "/emails" ? desktopToolActiveClass : desktopToolLinkClass}>
             Emails
           </Link>
@@ -379,6 +385,9 @@ export default function SiteHeader() {
             {templatesMobile}
             <Link href="/annonces" className={mobileLinkClass} onClick={closeMenu}>
               Annonces
+            </Link>
+            <Link href="/programmes-neufs" className={mobileLinkClass} onClick={closeMenu}>
+              Programmes neufs
             </Link>
             <Link href="/emails" className={mobileLinkClass} onClick={closeMenu}>
               Emails

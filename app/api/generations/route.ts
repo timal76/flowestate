@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 
-const generationTypes = ["annonce", "email", "compte-rendu"] as const;
+const generationTypes = ["annonce", "email", "compte-rendu", "programme-neuf"] as const;
 type GenerationType = (typeof generationTypes)[number];
 
 function isUuid(value: string): boolean {

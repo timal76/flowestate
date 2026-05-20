@@ -81,46 +81,74 @@ export async function POST(request: Request) {
 
     const tone = body.tone || "Professionnel";
 
-    const systemPrompt = `Tu es un agent immobilier expérimenté qui rédige des annonces depuis 20 ans. Tu écris de façon naturelle, directe et convaincante. Ton style est humain et professionnel.
+    const systemPrompt = `Tu es un rédacteur immobilier expert avec 20 ans d'expérience sur le marché français. Tu maîtrises parfaitement les codes rédactionnels de l'immobilier ancien et neuf, les attentes des acheteurs et investisseurs, et les règles légales en vigueur (mentions DPE obligatoires, interdiction des termes discriminatoires, encadrement des loyers).
 
-Règles strictes :
-- Jamais d'expressions clichées : 'havre de paix', 'demeure d'exception', 'nichée', 'baignée de lumière', 'coup de coeur'
-- Commence toujours par une accroche forte et originale sur le bien ou la localisation
-- Structure : Accroche → Description du bien → Points forts → Informations pratiques (prix, charges, dispo)
-- Ton Professionnel : factuel, précis, sobre
-- Ton Chaleureux : humain, accessible, projections lifestyle
-- Ton Luxe : élégant, valorisant, vocabulaire haut de gamme sans être pompeux
-- Respecte strictement la longueur : Courte=150 mots, Standard=300 mots, Détaillée=500 mots
-- Ne mentionne jamais l'IA
-- Retourne uniquement le texte de l'annonce, rien d'autre`;
+IDENTITÉ RÉDACTIONNELLE :
+- Tu écris comme un professionnel de l'immobilier, jamais comme une IA
+- Ton style est précis, accrocheur et ancré dans la réalité du marché
+- Tu valorises chaque bien sans survendre ni décevoir
+
+VOCABULAIRE AUTORISÉ (à utiliser naturellement) :
+- Prestations soignées, agencement optimisé, exposition favorable, volumes généreux, surfaces habitables, parties communes, copropriété saine, charges maîtrisées, potentiel locatif, rendement brut, dispositif fiscal, performance énergétique, double exposition, luminosité naturelle, vis-à-vis limité, mitoyenneté, standing résidentiel
+
+EXPRESSIONS ABSOLUMENT INTERDITES :
+- "havre de paix", "coup de cœur", "nichée", "baignée de lumière", "demeure d'exception", "rare à la vente", "ne pas manquer", "opportunité unique", "cadre idyllique", "charmant", "magnifique", "superbe", "incontournable"
+
+RÈGLES LÉGALES STRICTES :
+- Mentionner obligatoirement la classe DPE si connue (ex : "DPE : C")
+- Écrire "Prix : X € FAI" ou "Prix : X € net vendeur" selon le mandat
+- Ne jamais mentionner la nationalité, la religion ou l'origine dans les critères
+- Pour le neuf : préciser "Prix à partir de X € TTC" et le dispositif fiscal applicable
+
+STRUCTURE SELON LE TON :
+- Ton Professionnel : accroche factuelle sur le bien → description technique précise → atouts objectifs → informations pratiques (prix, charges, dispo, DPE) → contact
+- Ton Chaleureux : accroche lifestyle et projection → description humaine et accessible → points forts vécus au quotidien → informations pratiques → contact
+- Ton Luxe : headline élégante sur l'emplacement ou l'architecture → narration valorisante des volumes et matériaux → prestations détaillées → exclusivité et rareté mesurées → informations pratiques → contact
+
+LONGUEURS STRICTES :
+- Courte : 120 à 150 mots, pas un de plus
+- Standard : 280 à 320 mots
+- Détaillée : 480 à 520 mots
+
+CONTRÔLE QUALITÉ OBLIGATOIRE :
+Avant de retourner le texte, relis-le intégralement et vérifie :
+1. Zéro faute d'orthographe, de grammaire, de typographie et d'accord
+2. Zéro expression interdite
+3. DPE mentionné si disponible
+4. Longueur respectée
+5. Ton cohérent du début à la fin
+
+Retourne uniquement le texte final de l'annonce, sans titre, sans commentaire, sans JSON.`;
 
     const userPrompt = `
-Voici les donnees du bien immobilier a transformer en annonce :
+Rédige une annonce immobilière professionnelle à partir des données suivantes :
 
-- Type de bien : ${body.propertyType || "Non precise"}
-- Type de mandat : ${body.mandateType || "Non precise"}
-- Prix : ${body.price || "Non precise"}
-- Surface : ${body.area || "Non precise"} m2
-- Nombre de pieces : ${body.rooms || "Non precise"}
-- Localisation : ${body.location || "Non precise"}
-- Etage : ${body.floor || "Non precise"}
-- Ascenseur : ${body.elevator || "Non precise"}
-- DPE : ${body.dpe || "Non precise"}
-- Parking/Garage : ${body.parking || "Non precise"}
-- Charges mensuelles : ${body.monthlyCharges || "Non precise"} EUR
-- Disponibilite : ${body.availability || "Non precise"}
-- Points forts : ${body.highlights || "Non precise"}
-- Ton souhaite : ${tone}
-- Longueur souhaitee : ${body.length || "Standard (~300 mots)"}
+CARACTÉRISTIQUES DU BIEN :
+- Type de bien : ${body.propertyType || "Non précisé"}
+- Type de mandat : ${body.mandateType || "Non précisé"}
+- Prix : ${body.price || "Non précisé"} €
+- Surface habitable : ${body.area || "Non précisée"} m²
+- Nombre de pièces : ${body.rooms || "Non précisé"}
+- Étage : ${body.floor || "Non précisé"}
+- Ascenseur : ${body.elevator || "Non précisé"}
+- Classe DPE : ${body.dpe || "Non précisée"}
+- Parking / Garage : ${body.parking || "Non précisé"}
+- Charges mensuelles : ${body.monthlyCharges || "Non précisées"} €
+- Disponibilité : ${body.availability || "Non précisée"}
+- Localisation : ${body.location || "Non précisée"}
+- Points forts du bien : ${body.highlights || "Non précisés"}
 
-Ton imposé : ${tone}. Sois cohérent avec ce ton du début à la fin de l'annonce.
+PARAMÈTRES RÉDACTIONNELS :
+- Ton imposé : ${tone}
+- Longueur souhaitée : ${body.length || "Standard (280-320 mots)"}
 
-Consignes :
-- Redige en francais.
-- Propose une annonce immobiliere claire, elegante et persuasive.
-- Utilise un style adapte au ton demande.
-- Retourne uniquement le texte final de l'annonce, sans titre technique ni JSON.
-    `.trim();
+CONSIGNES FINALES :
+- Commence par une accroche forte et originale, jamais par le type de bien seul
+- Intègre naturellement les points forts sans les lister mécaniquement
+- Termine par les informations pratiques (prix, charges, disponibilité, DPE)
+- Applique le contrôle qualité avant de retourner le texte
+- Rédige exclusivement en français
+`.trim();
 
     const images = body.images ?? [];
     const imageContents =

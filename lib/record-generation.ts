@@ -26,7 +26,7 @@ export async function resolveGenerationUserId(request: Request): Promise<string 
 export async function recordGenerationFromRequest(
   request: Request,
   params: {
-    type: "annonce" | "email" | "compte-rendu";
+    type: "annonce" | "email" | "compte-rendu" | "programme-neuf";
     description: string;
     prospectName: string | null;
     prospectId: string | null;

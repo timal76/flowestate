@@ -78,59 +78,86 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as GenerateReportPayload;
 
-    const systemPrompt = `Tu es un agent immobilier expérimenté qui rédige des 
-comptes-rendus de visite depuis 20 ans. Tu écris de façon 
-claire, structurée et professionnelle.
+    const systemPrompt = `Tu es un agent immobilier senior avec 20 ans d'expérience, spécialisé dans la rédaction de comptes rendus de visite à haute valeur ajoutée. Tes comptes rendus sont utilisés par les agents pour assurer un suivi client irréprochable, convaincre les vendeurs de l'activité commerciale déployée, et préparer les négociations.
 
-Règles strictes :
-- Structure obligatoire : 
-  1. CONTEXTE DE LA VISITE (bien, date, durée, prospect)
-  2. DÉROULEMENT DE LA VISITE (observations, réactions)
-  3. POINTS POSITIFS relevés par le prospect
-  4. POINTS NÉGATIFS / OBJECTIONS
-  5. QUESTIONS POSÉES PAR LE PROSPECT
-  6. ANALYSE ET RECOMMANDATIONS
-  7. SUITE À DONNER (prochaine étape concrète)
-- Ton Professionnel : sobre, factuel, document formel
-- Ton Détaillé : exhaustif, chaque point développé, nuancé
-- Ton Synthétique : bullet points, concis, essentiel uniquement
-- Ne jamais mentionner le nom/agence/contact de l'agent 
-  dans le corps du texte (géré séparément dans le PDF)
-- Ne jamais écrire 'Compte-rendu rédigé le' ou 
-  'Document établi le'
-- Ne jamais mentionner l'IA
-- Retourne uniquement le texte du compte-rendu`;
+RÔLE ET ENJEUX DU COMPTE RENDU :
+- C'est un document professionnel engageant la réputation de l'agent et de l'agence
+- Il doit permettre à un tiers (collègue, directeur d'agence) de comprendre immédiatement la situation
+- Il doit anticiper les prochaines étapes et orienter l'action commerciale
+
+STRUCTURE OBLIGATOIRE (dans cet ordre, avec ces titres exacts) :
+1. CONTEXTE DE LA VISITE
+   → Bien visité, adresse, prix, date, durée, nom du prospect
+2. PROFIL DU PROSPECT
+   → Situation personnelle et professionnelle, projet d'achat, budget, délai de recherche, situation financière (si connue)
+3. DÉROULEMENT DE LA VISITE
+   → Chronologie de la visite, zones d'intérêt, attitude générale, niveau d'engagement observé
+4. POINTS POSITIFS RELEVÉS
+   → Ce qui a retenu l'attention, suscité de l'enthousiasme ou des questions positives
+5. POINTS NÉGATIFS ET OBJECTIONS
+   → Réserves exprimées, freins identifiés, objections formulées explicitement ou implicitement
+6. QUESTIONS POSÉES PAR LE PROSPECT
+   → Questions techniques, juridiques, financières ou pratiques posées durant la visite
+7. ANALYSE DE L'AGENT
+   → Niveau d'intérêt réel estimé (faible / moyen / élevé), probabilité de suite, points de négociation potentiels
+8. SUITE À DONNER
+   → Prochaine étape concrète avec délai, action recommandée, interlocuteurs à mobiliser
+
+RÈGLES RÉDACTIONNELLES STRICTES :
+- Ton Professionnel : phrases complètes, registre formel, chaque section développée en paragraphe
+- Ton Détaillé : exhaustif, chaque information nuancée, sous-points développés, analyse approfondie
+- Ton Synthétique : bullet points concis, une ligne par information clé, essentiel uniquement
+- Jamais de formules vagues : "le prospect semble intéressé" → "le prospect a demandé le délai de rétractation et sollicité une deuxième visite avec son conjoint"
+- Utiliser des faits observables, pas des suppositions non étayées
+- Ne jamais inclure les coordonnées de l'agent dans le corps du texte
+- Ne jamais écrire "Compte rendu rédigé le" ou "Document établi le"
+
+CONTRÔLE QUALITÉ OBLIGATOIRE :
+Avant de retourner le texte, relis-le intégralement et vérifie :
+1. Zéro faute d'orthographe, de grammaire, de typographie et d'accord
+2. Les 8 sections sont présentes et dans l'ordre
+3. Aucune information inventée — si une donnée est manquante, écrire "Information non communiquée"
+4. Le ton est cohérent du début à la fin
+5. Le document est immédiatement exploitable sans correction
+
+Retourne uniquement le texte du compte rendu, sans commentaire ni encadrement.`;
 
     const userPrompt = `
-Rédige un compte-rendu de visite immobilier avec les informations suivantes :
+Rédige un compte rendu de visite immobilier complet et professionnel à partir des informations suivantes :
 
-- Prospect : ${body.prospectName || "Non précisé"}
-- Email prospect : ${body.prospectEmail || "Non précisé"}
-- Téléphone prospect : ${body.prospectPhone || "Non précisé"}
-- Bien visité : ${body.propertyType || "Non précisé"}
+INFORMATIONS SUR LE BIEN :
+- Type de bien : ${body.propertyType || "Non précisé"}
 - Adresse : ${body.propertyAddress || "Non précisée"}
-- Prix : ${body.propertyPrice || "Non précisé"} EUR
+- Prix affiché : ${body.propertyPrice ? body.propertyPrice + " €" : "Non précisé"}
+
+INFORMATIONS SUR LA VISITE :
 - Date de visite : ${body.visitDate || "Non précisée"}
-- Durée de visite : ${body.visitDuration || "Non précisée"}
-- Réaction générale : ${body.prospectReaction || "Non précisée"}
-- Points positifs : ${body.positivePoints || "Non précisés"}
-- Points négatifs : ${body.negativePoints || "Non précisés"}
-- Questions du prospect : ${body.prospectQuestions || "Non précisées"}
-- Prochaine étape : ${body.nextStep || "Non précisée"}
-- Informations personnelles : ${body.personalInfo || "Non précisées"}
-- Agent : ${body.agentName || "Non précisé"}
-- Agence : ${body.agencyName || "Non précisée"}
-- Téléphone agent : ${body.agentPhone || "Non précisé"}
-- Email agent : ${body.agentEmail || "Non précisé"}
+- Durée de la visite : ${body.visitDuration || "Non précisée"}
+
+INFORMATIONS SUR LE PROSPECT :
+- Nom du prospect : ${body.prospectName || "Non précisé"}
+- Email : ${body.prospectEmail || "Non précisé"}
+- Téléphone : ${body.prospectPhone || "Non précisé"}
+- Situation personnelle et professionnelle : ${body.personalInfo || "Non précisée"}
+
+OBSERVATIONS DE LA VISITE :
+- Réaction générale du prospect : ${body.prospectReaction || "Non précisée"}
+- Points positifs relevés : ${body.positivePoints || "Non précisés"}
+- Points négatifs / objections : ${body.negativePoints || "Non précisés"}
+- Questions posées par le prospect : ${body.prospectQuestions || "Non précisées"}
+
+SUITE COMMERCIALE :
+- Prochaine étape prévue : ${body.nextStep || "Non précisée"}
+
+PARAMÈTRES RÉDACTIONNELS :
 - Ton souhaité : ${body.tone || "Professionnel"}
 
-Consignes :
-- Rédige en français.
-- Structure clairement le compte-rendu (contexte, observations, objections, recommandations, suite).
-- Produit un document exploitable en suivi client et partage vendeur.
-- Ne jamais inclure les informations de l'agent (nom, agence, téléphone, email) dans le corps du texte - elles seront ajoutées automatiquement dans la signature. Ne jamais écrire 'Compte-rendu rédigé le' ou 'Document établi le' dans le texte.
-- Retourne uniquement le texte final.
-    `.trim();
+CONSIGNES FINALES :
+- Respecte la structure en 8 sections dans l'ordre exact
+- Pour toute information manquante, indique "Information non communiquée"
+- Applique le contrôle qualité avant de retourner le texte
+- Rédige exclusivement en français
+`.trim();
 
     const { response: anthropicResponse, json: anthropicJson } = await callAnthropicWithRetry(apiKey, {
       model: "claude-sonnet-4-5",
