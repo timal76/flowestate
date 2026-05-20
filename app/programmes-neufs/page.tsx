@@ -620,6 +620,20 @@ export default function ProgrammesNeufsPage() {
                 </div>
               ) : result ? (
                 <div className="mt-6 flex flex-1 flex-col">
+                  <div
+                    role="alert"
+                    className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-950/60 p-5 text-sm text-amber-100"
+                  >
+                    <span className="shrink-0 text-lg" aria-hidden>
+                      ⚠️
+                    </span>
+                    <p>
+                      Avant toute publication, vérifiez impérativement : le prix de vente, la date de
+                      livraison, les conditions fiscales (PTZ, TVA réduite, Pinel) et les surfaces.
+                      Ces informations doivent être confirmées avec le promoteur. Ne publiez jamais
+                      une annonce sans validation préalable.
+                    </p>
+                  </div>
                   <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
                     {tabs.map((tab) => {
                       const selected = activeTab === tab.id;

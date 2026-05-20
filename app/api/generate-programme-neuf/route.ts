@@ -103,6 +103,11 @@ RÈGLES ABSOLUES :
 - Zéro expression interdite : "havre de paix", "coup de cœur", "nichée", "baignée de lumière", "demeure d'exception", "opportunité unique", "incontournable", "cadre idyllique", "charmant"
 - Mentions légales obligatoires : "Prix à partir de X € TTC", DPE si connu, dispositifs fiscaux applicables
 - Après génération, relire et corriger toute erreur avant de retourner
+- PRIX : si aucun prix n'est fourni dans les données ou s'il y a le moindre doute, ne jamais écrire de prix. Laisser un placeholder "[Prix à confirmer avec l'agence]" uniquement si la plateforme l'exige, sinon ne rien mettre.
+- DATE DE LIVRAISON : utiliser uniquement la date exacte présente dans les documents. Si absente, ne pas en mentionner.
+- SURFACES ET DONNÉES CHIFFRÉES : n'utiliser que les chiffres présents dans les documents fournis. Zéro extrapolation, zéro estimation.
+- DISPOSITIFS FISCAUX : recopier exactement les conditions mentionnées dans la plaquette sans les reformuler ni les interpréter. Si les conditions exactes ne sont pas claires, écrire "sous conditions — à vérifier avec votre conseiller".
+- EN CAS DE DOUTE SUR UNE INFORMATION : ne pas l'inclure dans l'annonce plutôt que de risquer une erreur.
 
 STRATÉGIE DE DIFFÉRENCIATION :
 - Utilise les données terrain locales (web search) pour ancrer l'annonce dans la réalité
