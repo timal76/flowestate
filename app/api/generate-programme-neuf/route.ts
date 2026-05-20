@@ -51,9 +51,35 @@ function extractTextFromAnthropic(json: {
 
 function parseJsonFromText(raw: string): unknown {
   const trimmed = raw.trim();
-  const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)```$/i);
+
+  // Enlève les backticks markdown
+  const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const jsonStr = fenceMatch ? fenceMatch[1].trim() : trimmed;
-  return JSON.parse(jsonStr);
+
+  // Essaie de parser directement
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    // Cherche le premier { ou [ et extrait jusqu'au dernier } ou ]
+    const firstBrace = jsonStr.indexOf("{");
+    const firstBracket = jsonStr.indexOf("[");
+    let start = -1;
+    if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+      start = firstBrace;
+    } else if (firstBracket !== -1) {
+      start = firstBracket;
+    }
+
+    if (start !== -1) {
+      const lastBrace = jsonStr.lastIndexOf("}");
+      const lastBracket = jsonStr.lastIndexOf("]");
+      const end = Math.max(lastBrace, lastBracket);
+      if (end !== -1) {
+        return JSON.parse(jsonStr.slice(start, end + 1));
+      }
+    }
+    throw new Error("JSON invalide");
+  }
 }
 
 function cleanPdfBase64(input: string): string {
