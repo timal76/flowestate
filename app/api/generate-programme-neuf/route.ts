@@ -138,7 +138,12 @@ ANNONCE 3 — SITE DE L'AGENCE :
 - Peut inclure des sous-titres
 - Ton : adapté au ton choisi par l'agent, mais toujours ancré dans le concret
 
-Retourne un JSON avec 3 clés : leboncoin, seloger, siteAgence. Chaque clé contient : titre (string) et corps (string). Aucun markdown, aucun commentaire.`;
+FORMAT DE SORTIE OBLIGATOIRE : Tu dois retourner UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans backticks, sans markdown, sans commentaire. Commence directement par { et termine par }. Structure exacte :
+{
+  "leboncoin": { "titre": "...", "corps": "..." },
+  "seloger": { "titre": "...", "corps": "..." },
+  "siteAgence": { "titre": "...", "corps": "..." }
+}`;
 
 type GenerateProgrammeNeufPayload = {
   pdfBase64?: string;
@@ -411,11 +416,13 @@ Consignes finales :
 - Ne pas reprendre les formulations marketing du promoteur listées dans les arguments promoteur
 - Respecter strictement les limites de caractères par plateforme
 - Retourner uniquement le JSON demandé
+
+RAPPEL FINAL : Retourne uniquement le JSON. Pas de texte introductif, pas de commentaire, pas de backticks. Commence par { et termine par }.
 `.trim();
 
     const generationCall = await callAnthropicWithRetry(apiKey, {
       model: "claude-sonnet-4-5",
-      max_tokens: 4000,
+      max_tokens: 5000,
       system: GENERATION_SYSTEM,
       messages: [{ role: "user", content: generationUserPrompt }],
     });
