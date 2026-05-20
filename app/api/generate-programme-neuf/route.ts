@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { checkGenerationLimit } from "@/lib/check-generation-limit";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
+export const maxDuration = 300;
+
 async function callAnthropicWithRetry(apiKey: string, params: Record<string, unknown>) {
   const callOnce = async () => {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -175,30 +177,72 @@ export async function POST(request: Request) {
     const additionalInfo = body.additionalInfo?.trim() || "";
     const address = body.address?.trim() || "";
 
-    const extractionCall = await callAnthropicWithRetry(apiKey, {
-      model: "claude-sonnet-4-5",
-      max_tokens: 2000,
-      system: EXTRACTION_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: {
-                type: "base64",
-                media_type: "application/pdf",
-                data: pdfData,
+    const webSearchVille = address
+      ? `localisation ciblée via l'adresse : ${address}`
+      : "la commune du programme immobilier neuf";
+    const webSearchQuartier = "non précisé (plaquette en cours d'analyse)";
+    const webSearchNomResidence = "programme immobilier neuf";
+
+    const webSearchPrompt = `
+Tu es un expert immobilier et analyste territorial français. Tu dois enrichir une annonce immobilière neuf avec des informations locales précises, concrètes et différenciantes — des informations que les autres agences qui vendent ce même programme n'auront pas pensé à chercher.
+
+LOCALISATION :
+- Ville : ${webSearchVille}
+- Quartier : ${webSearchQuartier}
+- Programme : ${webSearchNomResidence}
+${address ? `- Adresse exacte : ${address}` : ""}
+
+DONNÉES DÉJÀ DANS LA PLAQUETTE (à NE PAS répéter dans l'annonce) :
+Non disponibles pour cette recherche — base-toi sur l'adresse et la localisation ci-dessus.
+
+OBJECTIF : Trouve des informations que le promoteur n'a PAS mises dans sa plaquette mais qui sont pertinentes et différenciantes pour convaincre un acheteur. Exemples : une école réputée à 200m, un marché local le dimanche matin, un projet de tramway annoncé, une hausse des prix au m² sur ce secteur, un employeur majeur à 5 minutes, une piste cyclable directe vers le centre.
+
+Fournis un JSON structuré (sans markdown) avec ces clés :
+- mobilite_concrete (temps de trajet réels vers le centre, gare, autoroute avec chiffres)
+- vie_de_quartier (commerces, marchés, restaurants, parcs dans un rayon de 500m)
+- ecoles_proximite (noms et distances des établissements scolaires)
+- dynamisme_economique (employeurs locaux, bassin d'emploi, taux de chômage si disponible)
+- projets_territoire (aménagements urbains, infrastructures annoncées ou en cours)
+- evolution_marche_immo (tendance des prix au m² sur ce secteur sur 2 ans si disponible)
+- atouts_meconnus (faits locaux positifs peu connus, que les autres agences n'auront pas)
+- environnement_immediat (description de ce qu'on trouve dans un rayon de 200m autour de l'adresse)
+${address ? `- description_rue (ambiance réelle de la rue et du quartier immédiat basée sur l'adresse : ${address})` : ""}
+
+Règles : uniquement des faits vérifiables et récents, chiffres précis quand disponibles, aucune invention. Si une donnée est introuvable, mettre null.
+`.trim();
+
+    const [extractionCall, webSearchCall] = await Promise.all([
+      callAnthropicWithRetry(apiKey, {
+        model: "claude-sonnet-4-5",
+        max_tokens: 2000,
+        system: EXTRACTION_SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "document",
+                source: {
+                  type: "base64",
+                  media_type: "application/pdf",
+                  data: pdfData,
+                },
               },
-            },
-            {
-              type: "text",
-              text: "Analyse cette plaquette promoteur et extrais toutes les informations demandées.",
-            },
-          ],
-        },
-      ],
-    });
+              {
+                type: "text",
+                text: "Analyse cette plaquette promoteur et extrais toutes les informations demandées.",
+              },
+            ],
+          },
+        ],
+      }),
+      callAnthropicWithRetry(apiKey, {
+        model: "claude-sonnet-4-5",
+        max_tokens: 2000,
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+        messages: [{ role: "user", content: webSearchPrompt }],
+      }),
+    ]);
 
     if (!extractionCall.response.ok) {
       return anthropicErrorResponse(extractionCall.response, extractionCall.json);
@@ -239,6 +283,20 @@ export async function POST(request: Request) {
             ? extractedData["nom de la résidence"]
             : "";
 
+    if (!webSearchCall.response.ok) {
+      return anthropicErrorResponse(webSearchCall.response, webSearchCall.json);
+    }
+
+    const webSearchText = extractTextFromAnthropic(webSearchCall.json);
+    let webData: unknown = webSearchText;
+    if (webSearchText) {
+      try {
+        webData = parseJsonFromText(webSearchText);
+      } catch {
+        webData = webSearchText;
+      }
+    }
+
     const annexes = body.annexes ?? [];
     let annexesDescription = "";
 
@@ -277,55 +335,6 @@ export async function POST(request: Request) {
 
       if (annexeCall.response.ok) {
         annexesDescription = extractTextFromAnthropic(annexeCall.json);
-      }
-    }
-
-    const webSearchPrompt = `
-Tu es un expert immobilier et analyste territorial français. Tu dois enrichir une annonce immobilière neuf avec des informations locales précises, concrètes et différenciantes — des informations que les autres agences qui vendent ce même programme n'auront pas pensé à chercher.
-
-LOCALISATION :
-- Ville : ${ville}
-${quartier ? `- Quartier : ${quartier}` : ""}
-${nomResidence ? `- Programme : ${nomResidence}` : ""}
-${address ? `- Adresse exacte : ${address}` : ""}
-
-DONNÉES DÉJÀ DANS LA PLAQUETTE (à NE PAS répéter dans l'annonce) :
-${JSON.stringify(extractedData, null, 2)}
-
-OBJECTIF : Trouve des informations que le promoteur n'a PAS mises dans sa plaquette mais qui sont pertinentes et différenciantes pour convaincre un acheteur. Exemples : une école réputée à 200m, un marché local le dimanche matin, un projet de tramway annoncé, une hausse des prix au m² sur ce secteur, un employeur majeur à 5 minutes, une piste cyclable directe vers le centre.
-
-Fournis un JSON structuré (sans markdown) avec ces clés :
-- mobilite_concrete (temps de trajet réels vers le centre, gare, autoroute avec chiffres)
-- vie_de_quartier (commerces, marchés, restaurants, parcs dans un rayon de 500m)
-- ecoles_proximite (noms et distances des établissements scolaires)
-- dynamisme_economique (employeurs locaux, bassin d'emploi, taux de chômage si disponible)
-- projets_territoire (aménagements urbains, infrastructures annoncées ou en cours)
-- evolution_marche_immo (tendance des prix au m² sur ce secteur sur 2 ans si disponible)
-- atouts_meconnus (faits locaux positifs peu connus, que les autres agences n'auront pas)
-- environnement_immediat (description de ce qu'on trouve dans un rayon de 200m autour de l'adresse)
-${address ? `- description_rue (ambiance réelle de la rue et du quartier immédiat basée sur l'adresse : ${address})` : ""}
-
-Règles : uniquement des faits vérifiables et récents, chiffres précis quand disponibles, aucune invention. Si une donnée est introuvable, mettre null.
-`.trim();
-
-    const webSearchCall = await callAnthropicWithRetry(apiKey, {
-      model: "claude-sonnet-4-5",
-      max_tokens: 2000,
-      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
-      messages: [{ role: "user", content: webSearchPrompt }],
-    });
-
-    if (!webSearchCall.response.ok) {
-      return anthropicErrorResponse(webSearchCall.response, webSearchCall.json);
-    }
-
-    const webSearchText = extractTextFromAnthropic(webSearchCall.json);
-    let webData: unknown = webSearchText;
-    if (webSearchText) {
-      try {
-        webData = parseJsonFromText(webSearchText);
-      } catch {
-        webData = webSearchText;
       }
     }
 
