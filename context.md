@@ -35,7 +35,7 @@ SaaS d'automatisation pour agents immobiliers.
 - Templates sauvegardés : table Supabase, API CRUD complète, modale save/load, page /templates, intégration boutons dans annonces/emails/comptes-rendus
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
-- Stripe : checkout, plans Starter(30 gen)/Pro(1 user), 
+- Stripe : checkout, plans Starter(30 gen)/Pro(1 user), mensuel + annuel,
   essai 14 jours, webhooks local + production, portail client
 - Limite 30 générations/mois pour Starter
 - Domaine flowestate.fr connecté à Vercel ✅
@@ -61,8 +61,6 @@ SaaS d'automatisation pour agents immobiliers.
 - Formulaire prospect adapté selon catégorie (champs différents vendeur vs acheteur)
 - Fiche prospect complète : sections Emails générés, Comptes-rendus, Relances
 - Historique et dashboard cliquables (modal contenu)
-- 4 prospects de démo créés (Sophie Martin, Marc Dubois, Jean-Pierre Moreau, Isabelle Lefebvre)
-- Données de démo : annonce, email, compte-rendu, 2 relances programmées
 - Agence démo mise à jour en « Orpi Paris 11e »
 - Fix modal prospect scroll (bouton Enregistrer visible)
 - Enregistrement des générations en base via `recordGenerationFromRequest` (service role + session NextAuth, fix compte démo)
@@ -74,13 +72,24 @@ SaaS d'automatisation pour agents immobiliers.
 - Plan Pro passé à 1 utilisateur sur la page tarifs
 - Cron relances repassé à 1x/jour à 8h (contrainte Vercel Hobby)
 - Compte démo passé en plan Pro
-- Données de démo mises à jour (prospects parisiens crédibles)
-- Fix lien CGU page register (`/cgu`, nouvel onglet)
+- Plans annuels avec toggle mensuel/annuel (-10%) sur page tarifs
+  - Starter annuel : 529€/an (price_1TYQ8eKNbVXHUT7xQ8NxShie)
+  - Pro annuel : 1069€/an (price_1TYQA0KNbVXHUT7xxNP30gsR)
+  - Variables Vercel ajoutées : STRIPE_STARTER_ANNUAL_PRICE_ID, STRIPE_PRO_ANNUAL_PRICE_ID
+- Fix lien CGU page register (href="/cgu" target="_blank")
+- Fix DNS flowestate.fr (IP Ionos mise à jour vers 76.76.21.21)
+- Données de démo complètes recréées :
+  - 3 vendeurs : Catherine Bernier (Paris 7e, 1.15M), Laurent Favre (Paris 18e, 520k), Michel Rousseau (Paris 11e, 380k)
+  - 3 acheteurs : Sophie Marchand (Paris 10e/11e, 420k), Thomas Girard (banlieue ouest, 680k), Nathalie Chen (Paris 6e/7e/8e, 950k)
+  - 3 annonces générées (1 par vendeur)
+  - Emails de relance générés pour chaque prospect
+  - Comptes-rendus de visite générés pour les acheteurs
+- Démarchage agences immobilières Le Havre commencé (20 mai 2026)
 
 ## ⏭️ Prochaine étape
-- Guide SMTP Outlook à mettre à jour (OAuth2 non supporté)
-- OAuth Gmail pour simplifier la connexion email (v2)
-- Intégration copier pour SeLoger/LeBonCoin
+- Itérer sur le produit selon les retours des démos agences
+- Convertir les premières agences en clients payants
+- Objectif : 3 agences payantes dans les 30 jours
 
 ## 🗂️ Stack technique
 - Next.js + TypeScript
@@ -106,4 +115,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : Session du 18 mai 2026
+- Dernière mise à jour : Session du 20 mai 2026
