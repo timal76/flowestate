@@ -9,13 +9,6 @@ import { toast } from "sonner";
 import SiteHeader from "@/components/site-header";
 import { supabase } from "@/lib/supabase";
 
-type TargetBuyer =
-  | "Investisseur locatif"
-  | "Primo-accédant"
-  | "Résidence principale"
-  | "Résidence secondaire"
-  | "Tout profil";
-
 type Tone = "Professionnel" | "Chaleureux" | "Percutant";
 
 type TabId = "leboncoin" | "seloger" | "siteAgence";
@@ -31,19 +24,21 @@ type GeneratedResult = {
 type FormState = {
   address: string;
   angle: string;
-  targetBuyer: TargetBuyer;
+  prospectProfile: string;
   tone: Tone;
   priceFrom: string;
   additionalInfo: string;
+  competitorAds: string;
 };
 
 const initialForm: FormState = {
   address: "",
   angle: "",
-  targetBuyer: "Tout profil",
+  prospectProfile: "",
   tone: "Professionnel",
   priceFrom: "",
   additionalInfo: "",
+  competitorAds: "",
 };
 
 const ACCEPTED_ANNEX_TYPES = [
@@ -276,7 +271,8 @@ export default function ProgrammesNeufsPage() {
           address: form.address.trim() || undefined,
           annexes,
           angle: form.angle,
-          targetBuyer: form.targetBuyer,
+          prospectProfile: form.prospectProfile || undefined,
+          competitorAds: form.competitorAds || undefined,
           tone: form.tone,
           priceFrom: form.priceFrom || undefined,
           additionalInfo: form.additionalInfo || undefined,
@@ -510,23 +506,16 @@ export default function ProgrammesNeufsPage() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm text-[#A0A0A0]">Type d&apos;acquéreur cible</span>
-                  <select
-                    value={form.targetBuyer}
+                  <span className="text-sm text-[#A0A0A0]">Profil de votre prospect cible</span>
+                  <textarea
+                    rows={3}
+                    value={form.prospectProfile}
                     onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        targetBuyer: event.target.value as TargetBuyer,
-                      }))
+                      setForm((prev) => ({ ...prev, prospectProfile: event.target.value }))
                     }
-                    className={selectFieldClassName}
-                  >
-                    <option>Investisseur locatif</option>
-                    <option>Primo-accédant</option>
-                    <option>Résidence principale</option>
-                    <option>Résidence secondaire</option>
-                    <option>Tout profil</option>
-                  </select>
+                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    placeholder="Ex : couple 32 ans, 2 enfants en bas âge, budget 220 000€, locataires depuis 5 ans, ont visité 3 programmes, cherchent depuis 8 mois, priorité espace extérieur et écoles proches..."
+                  />
                 </label>
 
                 <label className="space-y-2">
@@ -567,6 +556,23 @@ export default function ProgrammesNeufsPage() {
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
                     placeholder="Infos non présentes dans le PDF : date de livraison, vue mer depuis certains lots, places de parking incluses..."
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm text-[#A0A0A0]">Annonces concurrentes (optionnel)</span>
+                  <span className="block text-xs text-[#A0A0A0]">
+                    Collez ici des annonces d&apos;autres agences pour ce même programme — Claude
+                    s&apos;en différenciera activement
+                  </span>
+                  <textarea
+                    rows={6}
+                    value={form.competitorAds}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, competitorAds: event.target.value }))
+                    }
+                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    placeholder="Copiez-collez les annonces concurrentes trouvées sur SeLoger, Leboncoin ou PAP pour ce programme..."
                   />
                 </label>
               </div>

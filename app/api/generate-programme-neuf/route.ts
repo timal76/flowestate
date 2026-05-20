@@ -96,6 +96,8 @@ const GENERATION_SYSTEM = `Tu es un rédacteur immobilier expert spécialisé da
 
 TA MISSION PRINCIPALE : Produire des annonces fondamentalement différentes de celles que les autres agences qui vendent ce même programme vont rédiger. Les autres vont reformuler la plaquette du promoteur. Toi tu construis une narration originale, ancrée dans la réalité du territoire, centrée sur le quotidien concret de l'acheteur selon son profil.
 
+DIFFÉRENCIATION ACTIVE : Si des annonces concurrentes sont fournies, tu dois les analyser précisément et construire tes annonces en opposition directe. Même programme, même bien, angle radicalement différent. Ce n'est pas une suggestion : c'est l'objectif principal de la génération.
+
 RÈGLES ABSOLUES :
 - Zéro faute d'orthographe, de grammaire, de typographie et d'accord — relis intégralement avant de retourner
 - Zéro information inventée — tout doit provenir des données fournies
@@ -143,7 +145,8 @@ type GenerateProgrammeNeufPayload = {
   address?: string;
   annexes?: Array<{ data: string; mediaType: string; name: string }>;
   angle?: string;
-  targetBuyer?: string;
+  prospectProfile?: string;
+  competitorAds?: string;
   tone?: string;
   priceFrom?: string;
   additionalInfo?: string;
@@ -202,7 +205,8 @@ export async function POST(request: Request) {
 
     const pdfData = cleanPdfBase64(body.pdfBase64);
     const angle = body.angle.trim();
-    const targetBuyer = body.targetBuyer?.trim() || "Tout profil";
+    const prospectProfile = body.prospectProfile?.trim() || "";
+    const competitorAds = body.competitorAds?.trim() || "";
     const tone = body.tone?.trim() || "Professionnel";
     const priceFrom = body.priceFrom?.trim() || "";
     const additionalInfo = body.additionalInfo?.trim() || "";
@@ -390,10 +394,17 @@ ${annexesDescription ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${anne
 
 PARAMÈTRES AGENT :
 - Angle souhaité : ${angle}
-- Type d'acquéreur cible : ${targetBuyer}
+- Profil prospect détaillé : ${prospectProfile || "Non renseigné"}
 - Ton souhaité : ${tone}
 ${priceFrom ? `- Prix à partir de (prioritaire si cohérent avec la plaquette) : ${priceFrom}` : "- Prix à partir de : utiliser les données de la plaquette"}
 ${additionalInfo ? `- Informations complémentaires : ${additionalInfo}` : ""}
+
+${competitorAds ? `
+ANNONCES CONCURRENTES À ANALYSER ET ÉVITER ACTIVEMENT :
+${competitorAds}
+
+INSTRUCTIONS : Analyse le style, le vocabulaire, la structure et les arguments de ces annonces concurrentes. Tes annonces doivent être fondamentalement différentes sur tous ces points : accroche, angle narratif, arguments mis en avant, vocabulaire utilisé, structure du texte. Si un concurrent commence par le nom de la résidence, toi tu commences par une situation concrète. Si un concurrent liste les prestations, toi tu racontes une journée type. L'objectif est qu'un prospect qui a lu les annonces concurrentes soit frappé par la différence de ton et d'approche.
+` : ""}
 
 Consignes finales :
 - Adapter chaque annonce au profil acquéreur et à l'angle demandé
