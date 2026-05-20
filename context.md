@@ -5,7 +5,7 @@ SaaS d'automatisation pour agents immobiliers.
 
 ## ✅ Fait
 - Landing page complète avec animations + essai gratuit 14 jours
-- Navigation complète : Dashboard, Historique, Annonces, Emails, 
+- Navigation complète : Dashboard, Historique, Annonces, Programmes neufs, Emails, 
   Comptes-rendus, Accueil, Prénom cliquable → Profil, Badge plan, Déconnexion
 - Menu hamburger responsive sur mobile (toutes les pages)
 - Générateur d'annonces : formulaire complet, upload 5 photos, 
@@ -85,6 +85,30 @@ SaaS d'automatisation pour agents immobiliers.
   - Emails de relance générés pour chaque prospect
   - Comptes-rendus de visite générés pour les acheteurs
 - Démarchage agences immobilières Le Havre commencé (20 mai 2026)
+- Feature Programmes neufs (`/programmes-neufs`) : plaquette PDF, annexes optionnelles, double génération programme global + lot si annexes, 3 plateformes par mode, bandeau validation avant publication
+
+## Feature Programmes neufs
+(`app/programmes-neufs/page.tsx` + `app/api/generate-programme-neuf/route.ts`)
+- Upload plaquette PDF promoteur (obligatoire)
+- Upload annexes : plans, photos, vues 3D (optionnel, 5 max, PDF ou images)
+- Champs : adresse, angle souhaité, profil prospect libre (textarea), ton, prix optionnel, infos complémentaires, annonces concurrentes (textarea)
+- 3 appels Anthropic en séquence : extraction PDF → web search enrichissement local → génération annonces
+- Si annexes présentes : appel supplémentaire extraction annexes + double génération (programme global + lot spécifique)
+- Retourne 3 annonces (Leboncoin / SeLoger / Site propre) par mode
+- Prompts optimisés immobilier neuf : zéro invention, zéro prix si non confirmé, mentions légales obligatoires
+- Bandeau avertissement affiché avant publication
+- `maxDuration = 300` sur la route API
+- Extraction PDF et web search tournent en parallèle (`Promise.all`)
+
+## Prompts réécrits (21 mai 2026)
+- `app/api/generate-annonce/route.ts` : systemPrompt et userPrompt optimisés immobilier
+- `app/api/generate-compte-rendu/route.ts` : idem, structure 8 sections obligatoires
+- `app/api/generate-email/route.ts` : idem, expressions interdites, contrôle qualité
+
+## Prochaines étapes TODO (Programmes neufs)
+- Score de différenciation /10 après génération
+- Génération par lot (changer de lot sans re-uploader la plaquette)
+- Export PDF des 3 annonces
 
 ## ⏭️ Prochaine étape
 - Itérer sur le produit selon les retours des démos agences
@@ -115,4 +139,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : Session du 20 mai 2026
+- Dernière mise à jour : Session du 21 mai 2026
