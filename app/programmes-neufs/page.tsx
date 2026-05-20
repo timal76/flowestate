@@ -15,10 +15,15 @@ type TabId = "leboncoin" | "seloger" | "siteAgence";
 
 type AnnonceBlock = { titre: string; corps: string };
 
-type GeneratedResult = {
+type AnnoncesSet = {
   leboncoin: AnnonceBlock;
   seloger: AnnonceBlock;
   siteAgence: AnnonceBlock;
+};
+
+type GeneratedResult = {
+  programme: AnnoncesSet;
+  lot: AnnoncesSet | null;
 };
 
 type FormState = {
@@ -81,8 +86,10 @@ export default function ProgrammesNeufsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [result, setResult] = useState<GeneratedResult | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>("leboncoin");
-  const [copiedTab, setCopiedTab] = useState<TabId | null>(null);
+  const [activeProgrammeTab, setActiveProgrammeTab] = useState<TabId>("leboncoin");
+  const [activeLotTab, setActiveLotTab] = useState<TabId>("leboncoin");
+  const [copiedProgrammeTab, setCopiedProgrammeTab] = useState<TabId | null>(null);
+  const [copiedLotTab, setCopiedLotTab] = useState<TabId | null>(null);
   const [generationsUsed, setGenerationsUsed] = useState<number | null>(null);
   const [userPlan, setUserPlan] = useState<string>("");
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>("");
@@ -220,7 +227,8 @@ export default function ProgrammesNeufsPage() {
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setGenerationError(null);
-    setCopiedTab(null);
+    setCopiedProgrammeTab(null);
+    setCopiedLotTab(null);
 
     if (!pdfFile) {
       toast.error("Veuillez ajouter une plaquette PDF.");
@@ -295,20 +303,37 @@ export default function ProgrammesNeufsPage() {
         return;
       }
 
-      if (!payload.leboncoin || !payload.seloger || !payload.siteAgence) {
+      if (
+        !payload.programme?.leboncoin ||
+        !payload.programme?.seloger ||
+        !payload.programme?.siteAgence
+      ) {
+        setGenerationError("Une erreur est survenue. Veuillez réessayer.");
+        toast.error("Une erreur est survenue. Réessayez.");
+        return;
+      }
+
+      if (
+        payload.lot &&
+        (!payload.lot.leboncoin || !payload.lot.seloger || !payload.lot.siteAgence)
+      ) {
         setGenerationError("Une erreur est survenue. Veuillez réessayer.");
         toast.error("Une erreur est survenue. Réessayez.");
         return;
       }
 
       setResult({
-        leboncoin: payload.leboncoin,
-        seloger: payload.seloger,
-        siteAgence: payload.siteAgence,
+        programme: payload.programme,
+        lot: payload.lot ?? null,
       });
-      setActiveTab("leboncoin");
+      setActiveProgrammeTab("leboncoin");
+      setActiveLotTab("leboncoin");
       setGenerationError(null);
-      toast.success("Les 3 annonces ont été générées !");
+      toast.success(
+        payload.lot
+          ? "Les annonces programme et lot ont été générées !"
+          : "Les 3 annonces ont été générées !",
+      );
     } catch {
       setGenerationError("Une erreur est survenue. Veuillez réessayer.");
       toast.error("Une erreur est survenue. Réessayez.");
@@ -318,16 +343,25 @@ export default function ProgrammesNeufsPage() {
     }
   }
 
-  async function handleCopy(tab: TabId) {
+  async function handleCopy(section: "programme" | "lot", tab: TabId) {
     if (!result) return;
-    const block = result[tab];
+    const annonces = section === "programme" ? result.programme : result.lot;
+    if (!annonces) return;
+    const block = annonces[tab];
     const text = `${block.titre}\n\n${block.corps}`;
     await navigator.clipboard.writeText(text);
-    setCopiedTab(tab);
+    if (section === "programme") {
+      setCopiedProgrammeTab(tab);
+      setCopiedLotTab(null);
+    } else {
+      setCopiedLotTab(tab);
+      setCopiedProgrammeTab(null);
+    }
     toast.success("Annonce copiée !");
   }
 
-  const activeBlock = result ? result[activeTab] : null;
+  const activeProgrammeBlock = result ? result.programme[activeProgrammeTab] : null;
+  const activeLotBlock = result?.lot ? result.lot[activeLotTab] : null;
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
@@ -640,43 +674,97 @@ export default function ProgrammesNeufsPage() {
                       une annonce sans validation préalable.
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
-                    {tabs.map((tab) => {
-                      const selected = activeTab === tab.id;
-                      return (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => setActiveTab(tab.id)}
-                          className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                            selected
-                              ? "border border-[#C9A96E] bg-[#C9A96E]/10 text-[#C9A96E]"
-                              : "border border-white/15 text-[#A0A0A0] hover:border-white/25 hover:text-[#F5F5F0]"
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {activeBlock ? (
-                    <div className="mt-6 flex flex-1 flex-col overflow-auto">
-                      <h3 className="text-lg font-semibold text-[#C9A96E]">{activeBlock.titre}</h3>
-                      <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                        {activeBlock.corps}
-                      </p>
-                      <div className="mt-8">
-                        <button
-                          type="button"
-                          onClick={() => void handleCopy(activeTab)}
-                          className="inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
-                        >
-                          {copiedTab === activeTab ? "Copié" : "Copier"}
-                        </button>
+                  <div className={result.lot ? "space-y-10" : ""}>
+                    <div>
+                      {result.lot ? (
+                        <h3 className="mb-4 text-base font-semibold text-[#C9A96E]">Programme global</h3>
+                      ) : null}
+                      <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
+                        {tabs.map((tab) => {
+                          const selected = activeProgrammeTab === tab.id;
+                          return (
+                            <button
+                              key={`programme-${tab.id}`}
+                              type="button"
+                              onClick={() => setActiveProgrammeTab(tab.id)}
+                              className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${
+                                selected
+                                  ? "border border-[#C9A96E] bg-[#C9A96E]/10 text-[#C9A96E]"
+                                  : "border border-white/15 text-[#A0A0A0] hover:border-white/25 hover:text-[#F5F5F0]"
+                              }`}
+                            >
+                              {tab.label}
+                            </button>
+                          );
+                        })}
                       </div>
+
+                      {activeProgrammeBlock ? (
+                        <div className="mt-6 flex flex-col overflow-auto">
+                          <h3 className="text-lg font-semibold text-[#C9A96E]">
+                            {activeProgrammeBlock.titre}
+                          </h3>
+                          <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
+                            {activeProgrammeBlock.corps}
+                          </p>
+                          <div className="mt-8">
+                            <button
+                              type="button"
+                              onClick={() => void handleCopy("programme", activeProgrammeTab)}
+                              className="inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+                            >
+                              {copiedProgrammeTab === activeProgrammeTab ? "Copié" : "Copier"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+
+                    {result.lot ? (
+                      <div className="border-t border-[#C9A96E]/25 pt-10">
+                        <h3 className="mb-4 text-base font-semibold text-[#C9A96E]">Lot spécifique</h3>
+                        <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
+                          {tabs.map((tab) => {
+                            const selected = activeLotTab === tab.id;
+                            return (
+                              <button
+                                key={`lot-${tab.id}`}
+                                type="button"
+                                onClick={() => setActiveLotTab(tab.id)}
+                                className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${
+                                  selected
+                                    ? "border border-[#C9A96E] bg-[#C9A96E]/10 text-[#C9A96E]"
+                                    : "border border-white/15 text-[#A0A0A0] hover:border-white/25 hover:text-[#F5F5F0]"
+                                }`}
+                              >
+                                {tab.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {activeLotBlock ? (
+                          <div className="mt-6 flex flex-col overflow-auto">
+                            <h3 className="text-lg font-semibold text-[#C9A96E]">
+                              {activeLotBlock.titre}
+                            </h3>
+                            <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
+                              {activeLotBlock.corps}
+                            </p>
+                            <div className="mt-8">
+                              <button
+                                type="button"
+                                onClick={() => void handleCopy("lot", activeLotTab)}
+                                className="inline-flex items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+                              >
+                                {copiedLotTab === activeLotTab ? "Copié" : "Copier"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               ) : (
                 <div className="mt-8 flex flex-1 flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/20 px-6 py-12 text-center">

@@ -385,8 +385,16 @@ Règles : uniquement des faits vérifiables et récents, chiffres précis quand 
       }
     }
 
-    const generationUserPrompt = `
+    const buildGenerationUserPrompt = (mode: "programme" | "lot") => {
+      const modeInstruction =
+        mode === "programme"
+          ? `MODE : Annonce programme global. Tu décris l'ensemble de la résidence (tous les types de lots, fourchette de surfaces et prix, prestations communes). Ne pas mentionner un lot spécifique. L'objectif est d'attirer un maximum de profils différents vers le programme.`
+          : `MODE : Annonce lot spécifique. Tu décris uniquement ce lot précis avec toutes ses caractéristiques détaillées (surfaces exactes, orientation, étage, balcon, agencement). C'est une annonce de vente directe pour ce lot.`;
+
+      return `
 Génère les 3 annonces immobilières différenciées à partir des données suivantes.
+
+${modeInstruction}
 
 DONNÉES EXTRAITES DE LA PLAQUETTE (JSON) :
 ${JSON.stringify(extractedData, null, 2)}
@@ -395,7 +403,7 @@ DONNÉES WEB LOCALES (enrichissement) :
 ${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}
 
 ${address ? `ADRESSE EXACTE DU PROGRAMME : ${address}` : ""}
-${annexesDescription ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}` : ""}
+${mode === "lot" && annexesDescription ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}` : ""}
 
 PARAMÈTRES AGENT :
 - Angle souhaité : ${angle}
@@ -419,41 +427,92 @@ Consignes finales :
 
 RAPPEL FINAL : Retourne uniquement le JSON. Pas de texte introductif, pas de commentaire, pas de backticks. Commence par { et termine par }.
 `.trim();
+    };
 
-    const generationCall = await callAnthropicWithRetry(apiKey, {
+    const parseGeneratedAnnonces = (
+      generationText: string,
+      label: string,
+    ): GeneratedAnnonces | NextResponse => {
+      if (!generationText) {
+        return NextResponse.json(
+          { error: `Aucune annonce ${label} n'a ete generee par Anthropic.` },
+          { status: 502 },
+        );
+      }
+
+      let annonces: GeneratedAnnonces;
+      try {
+        annonces = parseJsonFromText(generationText) as GeneratedAnnonces;
+      } catch {
+        return NextResponse.json(
+          { error: `Format de generation ${label} invalide. Veuillez reessayer.` },
+          { status: 502 },
+        );
+      }
+
+      if (!annonces.leboncoin?.titre || !annonces.seloger?.titre || !annonces.siteAgence?.titre) {
+        return NextResponse.json(
+          { error: `Les 3 annonces ${label} n'ont pas ete generees correctement.` },
+          { status: 502 },
+        );
+      }
+
+      return annonces;
+    };
+
+    const generationParams = {
       model: "claude-sonnet-4-5",
       max_tokens: 5000,
       system: GENERATION_SYSTEM,
-      messages: [{ role: "user", content: generationUserPrompt }],
-    });
+    };
 
-    if (!generationCall.response.ok) {
-      return anthropicErrorResponse(generationCall.response, generationCall.json);
-    }
+    const hasAnnexes = annexes.length > 0;
 
-    const generationText = extractTextFromAnthropic(generationCall.json);
-    if (!generationText) {
-      return NextResponse.json(
-        { error: "Aucune annonce n'a ete generee par Anthropic." },
-        { status: 502 },
-      );
-    }
+    let programmeAnnonces: GeneratedAnnonces;
+    let lotAnnonces: GeneratedAnnonces | null = null;
 
-    let annonces: GeneratedAnnonces;
-    try {
-      annonces = parseJsonFromText(generationText) as GeneratedAnnonces;
-    } catch {
-      return NextResponse.json(
-        { error: "Format de generation invalide. Veuillez reessayer." },
-        { status: 502 },
-      );
-    }
+    if (hasAnnexes) {
+      const [programmeCall, lotCall] = await Promise.all([
+        callAnthropicWithRetry(apiKey, {
+          ...generationParams,
+          messages: [{ role: "user", content: buildGenerationUserPrompt("programme") }],
+        }),
+        callAnthropicWithRetry(apiKey, {
+          ...generationParams,
+          messages: [{ role: "user", content: buildGenerationUserPrompt("lot") }],
+        }),
+      ]);
 
-    if (!annonces.leboncoin?.titre || !annonces.seloger?.titre || !annonces.siteAgence?.titre) {
-      return NextResponse.json(
-        { error: "Les 3 annonces n'ont pas ete generees correctement." },
-        { status: 502 },
-      );
+      if (!programmeCall.response.ok) {
+        return anthropicErrorResponse(programmeCall.response, programmeCall.json);
+      }
+      if (!lotCall.response.ok) {
+        return anthropicErrorResponse(lotCall.response, lotCall.json);
+      }
+
+      const programmeText = extractTextFromAnthropic(programmeCall.json);
+      const programmeParsed = parseGeneratedAnnonces(programmeText, "programme");
+      if (programmeParsed instanceof NextResponse) return programmeParsed;
+      programmeAnnonces = programmeParsed;
+
+      const lotText = extractTextFromAnthropic(lotCall.json);
+      const lotParsed = parseGeneratedAnnonces(lotText, "lot");
+      if (lotParsed instanceof NextResponse) return lotParsed;
+      lotAnnonces = lotParsed;
+    } else {
+      const programmeCall = await callAnthropicWithRetry(apiKey, {
+        ...generationParams,
+        messages: [{ role: "user", content: buildGenerationUserPrompt("programme") }],
+      });
+
+      if (!programmeCall.response.ok) {
+        return anthropicErrorResponse(programmeCall.response, programmeCall.json);
+      }
+
+      const programmeText = extractTextFromAnthropic(programmeCall.json);
+      const programmeParsed = parseGeneratedAnnonces(programmeText, "programme");
+      if (programmeParsed instanceof NextResponse) return programmeParsed;
+      programmeAnnonces = programmeParsed;
     }
 
     const residenceLabel =
@@ -464,9 +523,8 @@ RAPPEL FINAL : Retourne uniquement le JSON. Pas de texte introductif, pas de com
     const generationDescription = `Programme neuf — ${residenceLabel} — ${ville}`.replace(/\s+/g, " ").trim();
 
     const recordContent = JSON.stringify({
-      leboncoin: annonces.leboncoin,
-      seloger: annonces.seloger,
-      siteAgence: annonces.siteAgence,
+      programme: programmeAnnonces,
+      lot: lotAnnonces,
     });
 
     await recordGenerationFromRequest(request, {
@@ -478,9 +536,8 @@ RAPPEL FINAL : Retourne uniquement le JSON. Pas de texte introductif, pas de com
     });
 
     return NextResponse.json({
-      leboncoin: annonces.leboncoin,
-      seloger: annonces.seloger,
-      siteAgence: annonces.siteAgence,
+      programme: programmeAnnonces,
+      lot: lotAnnonces,
     });
   } catch {
     return NextResponse.json(
