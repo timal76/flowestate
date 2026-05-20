@@ -214,7 +214,7 @@ Règles : uniquement des faits vérifiables et récents, chiffres précis quand 
     const [extractionCall, webSearchCall] = await Promise.all([
       callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
-        max_tokens: 2000,
+        max_tokens: 1000,
         system: EXTRACTION_SYSTEM,
         messages: [
           {
@@ -238,8 +238,8 @@ Règles : uniquement des faits vérifiables et récents, chiffres précis quand 
       }),
       callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
-        max_tokens: 2000,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+        max_tokens: 1000,
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }],
         messages: [{ role: "user", content: webSearchPrompt }],
       }),
     ]);
@@ -316,7 +316,7 @@ Règles : uniquement des faits vérifiables et récents, chiffres précis quand 
 
       const annexeCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
-        max_tokens: 1500,
+        max_tokens: 800,
         system:
           "Tu es un expert en immobilier neuf. Analyse ces documents annexes (plans de logements, vues 3D, photos) et extrais les informations utiles pour rédiger une annonce commerciale : agencement des pièces, volumes, points forts architecturaux, qualité des espaces, orientation, luminosité apparente, qualité des finitions visibles. Sois précis et factuel. Retourne un texte structuré en bullet points.",
         messages: [
