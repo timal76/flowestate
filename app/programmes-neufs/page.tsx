@@ -29,6 +29,7 @@ type GeneratedResult = {
 };
 
 type FormState = {
+  address: string;
   angle: string;
   targetBuyer: TargetBuyer;
   tone: Tone;
@@ -37,12 +38,23 @@ type FormState = {
 };
 
 const initialForm: FormState = {
+  address: "",
   angle: "",
   targetBuyer: "Tout profil",
   tone: "Professionnel",
   priceFrom: "",
   additionalInfo: "",
 };
+
+const ACCEPTED_ANNEX_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
+
+const MAX_ANNEX_FILES = 5;
+const MAX_ANNEX_SIZE = 10 * 1024 * 1024;
 
 const selectFieldClassName =
   "w-full overflow-visible rounded-xl border border-white/15 bg-[#121212] pl-4 pr-10 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]";
@@ -68,7 +80,9 @@ export default function ProgrammesNeufsPage() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(initialForm);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [annexFiles, setAnnexFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingAnnex, setIsDraggingAnnex] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [result, setResult] = useState<GeneratedResult | null>(null);
@@ -153,6 +167,61 @@ export default function ProgrammesNeufsPage() {
     acceptPdf(event.dataTransfer.files?.[0]);
   }
 
+  const acceptAnnexes = useCallback((incoming: FileList | File[] | undefined) => {
+    if (!incoming?.length) return;
+    const files = Array.from(incoming);
+    const valid: File[] = [];
+
+    for (const file of files) {
+      if (!(ACCEPTED_ANNEX_TYPES as readonly string[]).includes(file.type)) {
+        toast.error(`Format non accepté : ${file.name}`);
+        continue;
+      }
+      if (file.size > MAX_ANNEX_SIZE) {
+        toast.error(`${file.name} dépasse 10 Mo.`);
+        continue;
+      }
+      valid.push(file);
+    }
+
+    if (!valid.length) return;
+
+    setAnnexFiles((prev) => {
+      const merged = [...prev, ...valid].slice(0, MAX_ANNEX_FILES);
+      if (prev.length + valid.length > MAX_ANNEX_FILES) {
+        toast.error("Maximum 5 fichiers annexes.");
+      }
+      return merged;
+    });
+    setResult(null);
+    setGenerationError(null);
+  }, []);
+
+  function handleAnnexInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    acceptAnnexes(event.target.files ?? undefined);
+    event.target.value = "";
+  }
+
+  function handleAnnexDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingAnnex(true);
+  }
+
+  function handleAnnexDragLeave(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingAnnex(false);
+  }
+
+  function handleAnnexDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingAnnex(false);
+    acceptAnnexes(event.dataTransfer.files);
+  }
+
+  function handleRemoveAnnex(index: number) {
+    setAnnexFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setGenerationError(null);
@@ -181,6 +250,16 @@ export default function ProgrammesNeufsPage() {
     try {
       setIsLoading(true);
       const pdfBase64 = await fileToBase64(pdfFile);
+      const annexes =
+        annexFiles.length > 0
+          ? await Promise.all(
+              annexFiles.map(async (file) => ({
+                data: await fileToBase64(file),
+                mediaType: file.type,
+                name: file.name,
+              })),
+            )
+          : undefined;
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -194,6 +273,8 @@ export default function ProgrammesNeufsPage() {
         headers,
         body: JSON.stringify({
           pdfBase64,
+          address: form.address.trim() || undefined,
+          annexes,
           angle: form.angle,
           targetBuyer: form.targetBuyer,
           tone: form.tone,
@@ -352,7 +433,70 @@ export default function ProgrammesNeufsPage() {
                 )}
               </div>
 
+              <div className="mt-6">
+                <h3 className="text-sm font-medium text-[#F5F5F0]">Documents annexes (optionnel)</h3>
+                <p className="mt-1 text-xs text-[#A0A0A0]">
+                  Plans, vues 3D, photos — jusqu&apos;à 5 fichiers
+                </p>
+                <div
+                  onDragOver={handleAnnexDragOver}
+                  onDragLeave={handleAnnexDragLeave}
+                  onDrop={handleAnnexDrop}
+                  className={`mt-3 rounded-xl border-2 border-dashed p-6 text-center transition-all duration-300 ${
+                    isDraggingAnnex
+                      ? "border-[#C9A96E] bg-[#C9A96E]/10"
+                      : "border-white/15 bg-[#121212]/50 hover:border-white/25"
+                  }`}
+                >
+                  <p className="text-sm text-[#A0A0A0]">Glissez-déposez vos fichiers ici</p>
+                  <label className="mt-3 inline-flex cursor-pointer items-center justify-center rounded-full border border-[#C9A96E] bg-transparent px-5 py-2 text-sm font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">
+                    Ajouter des fichiers
+                    <input
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,image/webp"
+                      multiple
+                      className="sr-only"
+                      onChange={handleAnnexInputChange}
+                    />
+                  </label>
+                  <p className="mt-3 text-xs text-[#A0A0A0]">PDF, JPEG, PNG, WebP — 10 Mo max par fichier</p>
+                </div>
+                {annexFiles.length > 0 ? (
+                  <ul className="mt-4 space-y-2">
+                    {annexFiles.map((file, index) => (
+                      <li
+                        key={`${file.name}-${index}`}
+                        className="flex items-center justify-between rounded-xl border border-white/10 bg-[#121212] px-4 py-2 text-sm text-[#F5F5F0]"
+                      >
+                        <span className="truncate pr-3">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAnnex(index)}
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 text-[#A0A0A0] transition hover:border-red-400/50 hover:text-red-300"
+                          aria-label={`Supprimer ${file.name}`}
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+
               <div className="mt-8 grid gap-6">
+                <label className="space-y-2">
+                  <span className="text-sm text-[#A0A0A0]">Adresse du programme</span>
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, address: event.target.value }))
+                    }
+                    className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    placeholder="Ex : 12 rue du Bois Flotté, 76600 Le Havre"
+                  />
+                </label>
+
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Angle souhaité</span>
                   <textarea

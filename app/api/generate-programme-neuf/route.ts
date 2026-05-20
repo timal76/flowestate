@@ -66,38 +66,49 @@ const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français avec 15 
 
 const GENERATION_SYSTEM = `Tu es un rédacteur immobilier expert spécialisé dans la promotion immobilière neuve en France. Tu maîtrises les codes rédactionnels de chaque plateforme, le vocabulaire juridique et fiscal du neuf (VEFA, PTZ, TVA réduite, LMNP, Pinel, RE2020), et la psychologie des différents profils d'acquéreurs.
 
+TA MISSION PRINCIPALE : Produire des annonces fondamentalement différentes de celles que les autres agences qui vendent ce même programme vont rédiger. Les autres vont reformuler la plaquette du promoteur. Toi tu construis une narration originale, ancrée dans la réalité du territoire, centrée sur le quotidien concret de l'acheteur selon son profil.
+
 RÈGLES ABSOLUES :
 - Zéro faute d'orthographe, de grammaire, de typographie et d'accord — relis intégralement avant de retourner
 - Zéro information inventée — tout doit provenir des données fournies
-- Zéro copie de l'angle marketing du promoteur
-- Zéro expression interdite : 'havre de paix', 'coup de cœur', 'nichée', 'baignée de lumière', 'demeure d'exception', 'opportunité unique', 'incontournable'
-- Mentions légales obligatoires : 'Prix à partir de X € TTC', DPE si connu, dispositifs fiscaux applicables
+- Zéro copie de l'angle marketing du promoteur — si le promoteur parle de "métropole dynamique", toi tu parles du marché du jeudi matin à 300m ou du temps de trajet réel vers la gare
+- Zéro expression interdite : "havre de paix", "coup de cœur", "nichée", "baignée de lumière", "demeure d'exception", "opportunité unique", "incontournable", "cadre idyllique", "charmant"
+- Mentions légales obligatoires : "Prix à partir de X € TTC", DPE si connu, dispositifs fiscaux applicables
 - Après génération, relire et corriger toute erreur avant de retourner
+
+STRATÉGIE DE DIFFÉRENCIATION :
+- Utilise les données terrain locales (web search) pour ancrer l'annonce dans la réalité
+- Utilise les plans et documents annexes pour parler d'agencement concret, pas de généralités
+- Construis l'annonce autour du profil acquéreur cible : ce qui change concrètement dans SA vie
+- Privilégie les faits précis et chiffrés aux adjectifs creux
+- L'accroche doit être inattendue — jamais commencer par le nom de la résidence ou le type de bien
 
 ANNONCE 1 — LEBONCOIN :
 - Titre : 60 caractères max, percutant, sans majuscules excessives
 - Corps : 1 200 caractères max
-- Structure : accroche directe → caractéristiques clés → avantages concrets selon l'angle → prix → dispositifs fiscaux → appel à l'action
+- Structure : accroche directe et inattendue → caractéristiques clés chiffrées → avantages concrets selon le profil acquéreur → prix → dispositifs fiscaux → appel à l'action
 - Ton : direct, concret, pas de jargon excessif
 
 ANNONCE 2 — SELOGER :
 - Titre : 100 caractères max, avec mots-clés de recherche (type de bien, ville, caractéristique principale)
 - Corps : 2 500 caractères max
-- Structure : accroche storytelling (2-3 lignes) → présentation du programme → prestations détaillées → localisation et cadre de vie avec données concrètes → dispositifs fiscaux → appel à l'action
+- Structure : accroche storytelling ancrée dans le quotidien (2-3 lignes) → présentation du programme avec données concrètes → agencement et prestations détaillés (utiliser les plans si disponibles) → localisation avec faits précis et chiffrés → dispositifs fiscaux → appel à l'action
 - Ton : professionnel, expert, rassurant
-- Vocabulaire technique : 'performance énergétique RE2020', 'agencement optimisé', 'livraison VEFA', 'garantie décennale'
+- Vocabulaire technique : "performance énergétique RE2020", "agencement optimisé", "livraison VEFA", "garantie décennale"
 
 ANNONCE 3 — SITE DE L'AGENCE :
-- Titre : libre, accrocheur
+- Titre : libre, accrocheur, peut être une question ou une affirmation forte
 - Corps : 3 500 caractères max, liberté éditoriale totale
-- Structure : headline émotionnelle → paragraphe storytelling sur le cadre de vie → détail complet du programme → pourquoi investir maintenant → dispositifs fiscaux détaillés → appel à l'action fort
+- Structure : headline émotionnelle et inattendue → storytelling ancré dans la vie réelle du quartier → détail complet du programme avec données plans si disponibles → argument différenciant principal (ce que les autres ne diront pas) → pourquoi maintenant (marché, fiscal) → dispositifs fiscaux détaillés → appel à l'action fort
 - Peut inclure des sous-titres
-- Ton : adapté au ton choisi par l'agent
+- Ton : adapté au ton choisi par l'agent, mais toujours ancré dans le concret
 
 Retourne un JSON avec 3 clés : leboncoin, seloger, siteAgence. Chaque clé contient : titre (string) et corps (string). Aucun markdown, aucun commentaire.`;
 
 type GenerateProgrammeNeufPayload = {
   pdfBase64?: string;
+  address?: string;
+  annexes?: Array<{ data: string; mediaType: string; name: string }>;
   angle?: string;
   targetBuyer?: string;
   tone?: string;
@@ -162,6 +173,7 @@ export async function POST(request: Request) {
     const tone = body.tone?.trim() || "Professionnel";
     const priceFrom = body.priceFrom?.trim() || "";
     const additionalInfo = body.additionalInfo?.trim() || "";
+    const address = body.address?.trim() || "";
 
     const extractionCall = await callAnthropicWithRetry(apiKey, {
       model: "claude-sonnet-4-5",
@@ -227,28 +239,73 @@ export async function POST(request: Request) {
             ? extractedData["nom de la résidence"]
             : "";
 
+    const annexes = body.annexes ?? [];
+    let annexesDescription = "";
+
+    if (annexes.length > 0) {
+      const annexeContents = annexes.map((file) => {
+        if (file.mediaType === "application/pdf") {
+          return {
+            type: "document",
+            source: { type: "base64", media_type: "application/pdf", data: cleanPdfBase64(file.data) },
+          };
+        }
+        return {
+          type: "image",
+          source: { type: "base64", media_type: file.mediaType, data: cleanPdfBase64(file.data) },
+        };
+      });
+
+      const annexeCall = await callAnthropicWithRetry(apiKey, {
+        model: "claude-sonnet-4-5",
+        max_tokens: 1500,
+        system:
+          "Tu es un expert en immobilier neuf. Analyse ces documents annexes (plans de logements, vues 3D, photos) et extrais les informations utiles pour rédiger une annonce commerciale : agencement des pièces, volumes, points forts architecturaux, qualité des espaces, orientation, luminosité apparente, qualité des finitions visibles. Sois précis et factuel. Retourne un texte structuré en bullet points.",
+        messages: [
+          {
+            role: "user",
+            content: [
+              ...annexeContents,
+              {
+                type: "text",
+                text: "Analyse ces documents et extrais les informations utiles pour enrichir une annonce immobilière commerciale.",
+              },
+            ],
+          },
+        ],
+      });
+
+      if (annexeCall.response.ok) {
+        annexesDescription = extractTextFromAnthropic(annexeCall.json);
+      }
+    }
+
     const webSearchPrompt = `
-Recherche des informations locales actualisées et vérifiables pour enrichir une annonce immobilière neuf en France.
+Tu es un expert immobilier et analyste territorial français. Tu dois enrichir une annonce immobilière neuf avec des informations locales précises, concrètes et différenciantes — des informations que les autres agences qui vendent ce même programme n'auront pas pensé à chercher.
 
 LOCALISATION :
 - Ville : ${ville}
 ${quartier ? `- Quartier : ${quartier}` : ""}
 ${nomResidence ? `- Programme : ${nomResidence}` : ""}
+${address ? `- Adresse exacte : ${address}` : ""}
 
-DONNÉES DÉJÀ EXTRAITES DE LA PLAQUETTE :
+DONNÉES DÉJÀ DANS LA PLAQUETTE (à NE PAS répéter dans l'annonce) :
 ${JSON.stringify(extractedData, null, 2)}
 
-OBJECTIF :
-Fournis un résumé structuré en JSON (sans markdown) avec ces clés :
-- transports (accès métro/tram/bus, gares, axes routiers)
-- ecoles_et_services (écoles, commerces, équipements)
-- economie_locale (dynamisme, emploi, projets si mentionnés)
-- projets_urbains (aménagements, rénovations urbaines récentes ou annoncées)
-- prix_m2_reference (fourchette indicative du marché local si trouvable)
-- cadre_de_vie (atouts du quartier factuels)
-- sources_resume (liste courte des types de sources consultées)
+OBJECTIF : Trouve des informations que le promoteur n'a PAS mises dans sa plaquette mais qui sont pertinentes et différenciantes pour convaincre un acheteur. Exemples : une école réputée à 200m, un marché local le dimanche matin, un projet de tramway annoncé, une hausse des prix au m² sur ce secteur, un employeur majeur à 5 minutes, une piste cyclable directe vers le centre.
 
-Règles : uniquement des informations plausibles et récentes ; si une donnée est introuvable, mettre null. Pas d'invention.
+Fournis un JSON structuré (sans markdown) avec ces clés :
+- mobilite_concrete (temps de trajet réels vers le centre, gare, autoroute avec chiffres)
+- vie_de_quartier (commerces, marchés, restaurants, parcs dans un rayon de 500m)
+- ecoles_proximite (noms et distances des établissements scolaires)
+- dynamisme_economique (employeurs locaux, bassin d'emploi, taux de chômage si disponible)
+- projets_territoire (aménagements urbains, infrastructures annoncées ou en cours)
+- evolution_marche_immo (tendance des prix au m² sur ce secteur sur 2 ans si disponible)
+- atouts_meconnus (faits locaux positifs peu connus, que les autres agences n'auront pas)
+- environnement_immediat (description de ce qu'on trouve dans un rayon de 200m autour de l'adresse)
+${address ? `- description_rue (ambiance réelle de la rue et du quartier immédiat basée sur l'adresse : ${address})` : ""}
+
+Règles : uniquement des faits vérifiables et récents, chiffres précis quand disponibles, aucune invention. Si une donnée est introuvable, mettre null.
 `.trim();
 
     const webSearchCall = await callAnthropicWithRetry(apiKey, {
@@ -280,6 +337,9 @@ ${JSON.stringify(extractedData, null, 2)}
 
 DONNÉES WEB LOCALES (enrichissement) :
 ${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}
+
+${address ? `ADRESSE EXACTE DU PROGRAMME : ${address}` : ""}
+${annexesDescription ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}` : ""}
 
 PARAMÈTRES AGENT :
 - Angle souhaité : ${angle}
