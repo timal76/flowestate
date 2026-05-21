@@ -90,12 +90,19 @@ function cleanPdfBase64(input: string): string {
   return trimmed;
 }
 
-const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut avec ces clés exactes. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
+const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
 
-Format exact à respecter :
-{"nom":null,"promoteur":null,"ville":null,"quartier":null,"types_biens":null,"surface_min":null,"surface_max":null,"prix_min":null,"prix_max":null,"nb_lots":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"prestations":[],"dpe":null,"re2020":null,"livraison":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[]}
+Format exact :
+{"nom":null,"promoteur":null,"ville":null,"quartier":null,"adresse":null,"types_biens":null,"surface_min":null,"surface_max":null,"nb_lots":null,"prix_min":null,"prix_max":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"re2020":null,"livraison":null,"prestations":[],"domotique":null,"stationnement":null,"commerces_rdc":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[]}
 
-Remplis uniquement les champs présents dans le document. Si absent : null. Retourne uniquement le JSON, rien d'autre.`;
+RÈGLES ABSOLUES :
+- Copie mot pour mot les informations présentes dans le document, sans reformuler
+- Pour "livraison" : copie exactement ce qui est écrit (ex: "T1 2026", "premier trimestre 2026")
+- Pour "prestations" : liste exhaustive de TOUT ce qui est mentionné dans le document
+- Pour "domotique" : note exactement le nom du système et si il est offert ou non
+- Pour "arguments_promoteur" : liste tous les angles marketing utilisés
+- Si une information est absente : null
+- Zéro invention, zéro interprétation, zéro extrapolation`;
 
 const GENERATION_SYSTEM = `Tu es un rédacteur immobilier expert spécialisé dans la promotion immobilière neuve en France. Tu maîtrises les codes rédactionnels de chaque plateforme, le vocabulaire juridique et fiscal du neuf (VEFA, PTZ, TVA réduite, LMNP, Pinel, RE2020), et la psychologie des différents profils d'acquéreurs.
 
@@ -104,17 +111,14 @@ TA MISSION PRINCIPALE : Produire des annonces fondamentalement différentes de c
 DIFFÉRENCIATION ACTIVE : Si des annonces concurrentes sont fournies, tu dois les analyser précisément et construire tes annonces en opposition directe. Même programme, même bien, angle radicalement différent. Ce n'est pas une suggestion : c'est l'objectif principal de la génération.
 
 RÈGLES ABSOLUES :
-- Zéro faute d'orthographe, de grammaire, de typographie et d'accord — relis intégralement avant de retourner
-- Zéro information inventée — tout doit provenir des données fournies
-- Zéro copie de l'angle marketing du promoteur — si le promoteur parle de "métropole dynamique", toi tu parles du marché du jeudi matin à 300m ou du temps de trajet réel vers la gare
-- Zéro expression interdite : "havre de paix", "coup de cœur", "nichée", "baignée de lumière", "demeure d'exception", "opportunité unique", "incontournable", "cadre idyllique", "charmant"
-- Mentions légales obligatoires : "Prix à partir de X € TTC", DPE si connu, dispositifs fiscaux applicables
-- Après génération, relire et corriger toute erreur avant de retourner
-- PRIX : si aucun prix n'est fourni dans les données ou s'il y a le moindre doute, ne jamais écrire de prix. Laisser un placeholder "[Prix à confirmer avec l'agence]" uniquement si la plateforme l'exige, sinon ne rien mettre.
-- DATE DE LIVRAISON : utiliser la date exacte de la plaquette mot pour mot. Ne jamais approximer ni modifier.
-- SURFACES ET DONNÉES CHIFFRÉES : n'utiliser que les chiffres présents dans les documents fournis. Zéro extrapolation, zéro estimation.
-- DISPOSITIFS FISCAUX : recopier exactement les conditions mentionnées dans la plaquette sans les reformuler ni les interpréter. Si les conditions exactes ne sont pas claires, écrire "sous conditions — à vérifier avec votre conseiller".
-- EN CAS DE DOUTE SUR UNE INFORMATION : ne pas l'inclure dans l'annonce plutôt que de risquer une erreur.
+- DONNÉES PLAQUETTE : utilise mot pour mot les informations extraites. Pour la date de livraison : si extractedData.livraison contient une valeur, l'écrire exactement telle quelle. Jamais de placeholder comme [Date exacte selon plaquette].
+- DONNÉES WEB : n'utilise QUE les informations marquées (CERTIFIÉ) ou (PROBABLE) dans les données web. Ignore tout ce qui est (INDICATIF) ou absent.
+- LOYERS : écrire "loyer de marché estimé" jamais "loyer encadré" sauf confirmation officielle.
+- ZÉRO INVENTION : si une information n'est pas dans les données fournies, ne pas l'écrire. Jamais de placeholder. Jamais d'approximation.
+- ZÉRO HALLUCINATION : ne jamais compléter avec des connaissances générales non présentes dans les données extraites ou web.
+- PRESTATIONS COMPLÈTES : inclure TOUTES les prestations listées dans extractedData.prestations et extractedData.domotique — ne rien oublier.
+- DATE DE LIVRAISON : obligatoirement présente dans chaque annonce si extractedData.livraison n'est pas null. Copie exacte, pas de reformulation.
+- ZÉRO FAUTE D'ORTHOGRAPHE, de grammaire, de typographie et d'accord — relis intégralement avant de retourner.
 
 STRATÉGIE DE DIFFÉRENCIATION :
 - Utilise les données terrain locales (web search) pour ancrer l'annonce dans la réalité
@@ -224,39 +228,26 @@ export async function POST(request: Request) {
     const additionalInfo = body.additionalInfo?.trim() || "";
     const address = body.address?.trim() || "";
 
-    const webSearchVille = address
-      ? `localisation ciblée via l'adresse : ${address}`
-      : "la commune du programme immobilier neuf";
-    const webSearchQuartier = "non précisé (plaquette en cours d'analyse)";
-    const webSearchNomResidence = "programme immobilier neuf";
+    const webSearchVille = address?.split(",").pop()?.trim() || "commune du programme immobilier neuf";
+    const webSearchQuartier = "";
 
-    const webSearchPrompt = `
-Tu es un expert immobilier et analyste territorial français. Tu dois enrichir une annonce immobilière neuf avec des informations locales précises, concrètes et différenciantes — des informations que les autres agences qui vendent ce même programme n'auront pas pensé à chercher.
+    const webSearchPrompt = `Tu es un analyste territorial français rigoureux. Tu dois enrichir une annonce immobilière avec des données locales VÉRIFIÉES et FIABLES.
 
-LOCALISATION :
-- Ville : ${webSearchVille}
-- Quartier : ${webSearchQuartier}
-- Programme : ${webSearchNomResidence}
-${address ? `- Adresse exacte : ${address}` : ""}
+LOCALISATION : ${webSearchVille}${webSearchQuartier ? `, ${webSearchQuartier}` : ""}${address ? `, ${address}` : ""}
 
-DONNÉES DÉJÀ DANS LA PLAQUETTE (à NE PAS répéter dans l'annonce) :
-Non disponibles pour cette recherche — base-toi sur l'adresse et la localisation ci-dessus.
+RÈGLES DE RIGUEUR ABSOLUE :
+- Ne cite QUE des faits que tu peux vérifier via une source officielle ou reconnue
+- Pour chaque information, indique entre parenthèses ton niveau de certitude : (CERTIFIÉ) si source officielle, (PROBABLE) si source fiable non officielle, (INDICATIF) si estimation
+- N'invente JAMAIS un chiffre, une distance, un nom de commerce ou un projet
+- Si tu n'as pas de données fiables sur un point, mets null
+- Les loyers : utiliser le terme "loyer de marché estimé" jamais "loyer encadré" sauf si la ville est officiellement en zone d'encadrement
+- Les prix au m² : uniquement si source DVF ou notaires de France
+- Les projets urbains : uniquement si annoncés officiellement par la mairie ou métropole
 
-OBJECTIF : Trouve des informations que le promoteur n'a PAS mises dans sa plaquette mais qui sont pertinentes et différenciantes pour convaincre un acheteur. Exemples : une école réputée à 200m, un marché local le dimanche matin, un projet de tramway annoncé, une hausse des prix au m² sur ce secteur, un employeur majeur à 5 minutes, une piste cyclable directe vers le centre.
+Retourne un JSON sans markdown :
+{"mobilite":null,"commerces_proximite":null,"ecoles":null,"bassin_emploi":null,"projets_urbains":null,"prix_m2_marche":null,"demande_locative":null,"atouts_quartier":null,"avertissements":[]}
 
-Fournis un JSON structuré (sans markdown) avec ces clés :
-- mobilite_concrete (temps de trajet réels vers le centre, gare, autoroute avec chiffres)
-- vie_de_quartier (commerces, marchés, restaurants, parcs dans un rayon de 500m)
-- ecoles_proximite (noms et distances des établissements scolaires)
-- dynamisme_economique (employeurs locaux, bassin d'emploi, taux de chômage si disponible)
-- projets_territoire (aménagements urbains, infrastructures annoncées ou en cours)
-- evolution_marche_immo (tendance des prix au m² sur ce secteur sur 2 ans si disponible)
-- atouts_meconnus (faits locaux positifs peu connus, que les autres agences n'auront pas)
-- environnement_immediat (description de ce qu'on trouve dans un rayon de 200m autour de l'adresse)
-${address ? `- description_rue (ambiance réelle de la rue et du quartier immédiat basée sur l'adresse : ${address})` : ""}
-
-Règles : uniquement des faits vérifiables et récents, chiffres précis quand disponibles, aucune invention. Si une donnée est introuvable, mettre null.
-`.trim();
+Le champ "avertissements" liste les informations que tu n'as pas pu vérifier et qui ne doivent pas apparaître dans l'annonce.`;
 
     const [extractionCall, webSearchCall] = await Promise.all([
       callAnthropicWithRetry(apiKey, {
@@ -435,6 +426,17 @@ ${competitorAds}
 
 INSTRUCTIONS : Analyse le style, le vocabulaire, la structure et les arguments de ces annonces concurrentes. Tes annonces doivent être fondamentalement différentes sur tous ces points : accroche, angle narratif, arguments mis en avant, vocabulaire utilisé, structure du texte. Si un concurrent commence par le nom de la résidence, toi tu commences par une situation concrète. Si un concurrent liste les prestations, toi tu racontes une journée type. L'objectif est qu'un prospect qui a lu les annonces concurrentes soit frappé par la différence de ton et d'approche.
 ` : ""}
+
+DONNÉES CRITIQUES À INCLURE OBLIGATOIREMENT :
+- Date de livraison : ${extractedData.livraison || "non disponible dans la plaquette"}
+- Domotique : ${extractedData.domotique || "non mentionné"}
+- Prestations complètes : ${JSON.stringify(extractedData.prestations)}
+- Dispositifs fiscaux : TVA ${extractedData.taux_tva || "non précisé"}, PTZ : ${extractedData.ptz}, Pinel : ${extractedData.pinel}
+- Données web NON FIABLES à exclure : ${JSON.stringify(
+        typeof webData === "object" && webData !== null && "avertissements" in webData
+          ? (webData as { avertissements: unknown }).avertissements
+          : [],
+      )}
 
 Consignes finales :
 - Adapter chaque annonce au profil acquéreur et à l'angle demandé
