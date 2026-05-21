@@ -143,7 +143,9 @@ FORMAT DE SORTIE OBLIGATOIRE : Tu dois retourner UNIQUEMENT un objet JSON valide
   "leboncoin": { "titre": "...", "corps": "..." },
   "seloger": { "titre": "...", "corps": "..." },
   "siteAgence": { "titre": "...", "corps": "..." }
-}`;
+}
+
+DERNIER RAPPEL ABSOLU : Ta réponse doit commencer par { et se terminer par }. Aucun caractère avant ou après. Aucun backtick. Aucun commentaire. Uniquement le JSON brut.`;
 
 type GenerateProgrammeNeufPayload = {
   pdfBase64?: string;
@@ -436,6 +438,9 @@ Consignes finales :
 - Retourner uniquement le JSON demandé
 
 RAPPEL FINAL : Retourne uniquement le JSON. Pas de texte introductif, pas de commentaire, pas de backticks. Commence par { et termine par }.
+
+FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après, zéro backtick, zéro markdown :
+{"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}
 `.trim();
     };
 
@@ -454,6 +459,7 @@ RAPPEL FINAL : Retourne uniquement le JSON. Pas de texte introductif, pas de com
       try {
         annonces = parseJsonFromText(generationText) as GeneratedAnnonces;
       } catch {
+        console.error(`GENERATION PARSE ERROR ${label}:`, generationText?.substring(0, 300));
         return NextResponse.json(
           { error: `Format de generation ${label} invalide. Veuillez reessayer.` },
           { status: 502 },
