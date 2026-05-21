@@ -106,7 +106,7 @@ RÈGLES ABSOLUES :
 - Mentions légales obligatoires : "Prix à partir de X € TTC", DPE si connu, dispositifs fiscaux applicables
 - Après génération, relire et corriger toute erreur avant de retourner
 - PRIX : si aucun prix n'est fourni dans les données ou s'il y a le moindre doute, ne jamais écrire de prix. Laisser un placeholder "[Prix à confirmer avec l'agence]" uniquement si la plateforme l'exige, sinon ne rien mettre.
-- DATE DE LIVRAISON : utiliser uniquement la date exacte présente dans les documents. Si absente, ne pas en mentionner.
+- DATE DE LIVRAISON : utiliser la date exacte de la plaquette mot pour mot. Ne jamais approximer ni modifier.
 - SURFACES ET DONNÉES CHIFFRÉES : n'utiliser que les chiffres présents dans les documents fournis. Zéro extrapolation, zéro estimation.
 - DISPOSITIFS FISCAUX : recopier exactement les conditions mentionnées dans la plaquette sans les reformuler ni les interpréter. Si les conditions exactes ne sont pas claires, écrire "sous conditions — à vérifier avec votre conseiller".
 - EN CAS DE DOUTE SUR UNE INFORMATION : ne pas l'inclure dans l'annonce plutôt que de risquer une erreur.
@@ -391,20 +391,30 @@ Règles : uniquement des faits vérifiables et récents, chiffres précis quand 
           ? `MODE : Annonce programme global. Tu décris l'ensemble de la résidence (tous les types de lots, fourchette de surfaces et prix, prestations communes). Ne pas mentionner un lot spécifique. L'objectif est d'attirer un maximum de profils différents vers le programme.`
           : `MODE : Annonce lot spécifique. Tu décris uniquement ce lot précis avec toutes ses caractéristiques détaillées (surfaces exactes, orientation, étage, balcon, agencement). C'est une annonce de vente directe pour ce lot.`;
 
+      const programmeStrictRule =
+        mode === "programme"
+          ? `RÈGLE ABSOLUE PROGRAMME GLOBAL : Tu disposes uniquement des données extraites de la plaquette promoteur. N'invente aucune information non présente dans ces données. Si une information n'est pas dans la plaquette (surface min/max, date de livraison, équipements, dispositifs fiscaux), utilise exactement ce qui est écrit dans la plaquette ou ne le mentionne pas. Zéro extrapolation.`
+          : "";
+
+      const addressBlock =
+        mode === "lot" && address ? `ADRESSE EXACTE DU PROGRAMME : ${address}` : "";
+      const annexesBlock =
+        mode === "lot" && annexesDescription
+          ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}`
+          : "";
+
       return `
 Génère les 3 annonces immobilières différenciées à partir des données suivantes.
 
 ${modeInstruction}
-
+${programmeStrictRule ? `\n${programmeStrictRule}\n` : ""}
 DONNÉES EXTRAITES DE LA PLAQUETTE (JSON) :
 ${JSON.stringify(extractedData, null, 2)}
 
 DONNÉES WEB LOCALES (enrichissement) :
 ${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}
 
-${address ? `ADRESSE EXACTE DU PROGRAMME : ${address}` : ""}
-${mode === "lot" && annexesDescription ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}` : ""}
-
+${addressBlock ? `${addressBlock}\n` : ""}${annexesBlock ? `${annexesBlock}\n` : ""}
 PARAMÈTRES AGENT :
 - Angle souhaité : ${angle}
 - Profil prospect détaillé : ${prospectProfile || "Non renseigné"}
