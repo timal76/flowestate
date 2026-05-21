@@ -90,7 +90,12 @@ function cleanPdfBase64(input: string): string {
   return trimmed;
 }
 
-const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français avec 15 ans d'expérience dans l'analyse de plaquettes promoteurs. Analyse ce document et extrais les informations clés de manière structurée en JSON : nom de la résidence, promoteur, ville, quartier, types de biens (T2/T3/T4/maisons), surfaces min/max, prix min/max, dispositifs fiscaux (TVA réduite, PTZ, LMNP, Pinel), prestations listées, performance énergétique (DPE, RE2020), date de livraison estimée, éléments de localisation mentionnés (transports, commerces, écoles), et les arguments marketing utilisés par le promoteur (pour s'en différencier). Si une information est absente, mettre null. Retourne uniquement le JSON, sans markdown ni commentaire.`;
+const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut avec ces clés exactes. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
+
+Format exact à respecter :
+{"nom":null,"promoteur":null,"ville":null,"quartier":null,"types_biens":null,"surface_min":null,"surface_max":null,"prix_min":null,"prix_max":null,"nb_lots":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"prestations":[],"dpe":null,"re2020":null,"livraison":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[]}
+
+Remplis uniquement les champs présents dans le document. Si absent : null. Retourne uniquement le JSON, rien d'autre.`;
 
 const GENERATION_SYSTEM = `Tu es un rédacteur immobilier expert spécialisé dans la promotion immobilière neuve en France. Tu maîtrises les codes rédactionnels de chaque plateforme, le vocabulaire juridique et fiscal du neuf (VEFA, PTZ, TVA réduite, LMNP, Pinel, RE2020), et la psychologie des différents profils d'acquéreurs.
 
