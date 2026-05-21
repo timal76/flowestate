@@ -117,7 +117,11 @@ RÈGLES ABSOLUES :
 - ZÉRO INVENTION : si une information n'est pas dans les données fournies, ne pas l'écrire. Jamais de placeholder. Jamais d'approximation.
 - ZÉRO HALLUCINATION : ne jamais compléter avec des connaissances générales non présentes dans les données extraites ou web.
 - PRESTATIONS COMPLÈTES : inclure TOUTES les prestations listées dans extractedData.prestations et extractedData.domotique — ne rien oublier.
-- DATE DE LIVRAISON : obligatoirement présente dans chaque annonce si extractedData.livraison n'est pas null. Copie exacte, pas de reformulation.
+- DATE DE LIVRAISON : si extractedData.livraison n'est pas null, l'inclure obligatoirement dans TOUTES les annonces (programme global ET lot spécifique), mot pour mot, sans reformulation.
+- FISCALITÉ PINEL : ne jamais mentionner une date d'échéance du dispositif Pinel. Écrire uniquement "dispositif Pinel sous conditions en vigueur — à vérifier avec votre conseiller fiscal"
+- RENTABILITÉ : ne jamais calculer ni écrire un taux de rentabilité brute ou nette. Ces chiffres dépendent du prix non confirmé. Écrire uniquement "simulation de rentabilité personnalisée disponible sur demande"
+- SOURCES MARCHÉ : ne jamais attribuer une affirmation à "les agences locales" ou "le marché confirme" sans source vérifiable. Formuler à la place "constat de marché observé" ou "tendance observée sur le marché havrais"
+- TVA RÉDUITE : ne jamais écrire "conditionné secteur ANRU". Écrire exactement ce que dit la plaquette : "TVA réduite 5,5% selon conditions de ressources, en résidence principale pendant au minimum 10 ans"
 - ZÉRO FAUTE D'ORTHOGRAPHE, de grammaire, de typographie et d'accord — relis intégralement avant de retourner.
 
 STRATÉGIE DE DIFFÉRENCIATION :
