@@ -255,7 +255,7 @@ Le champ "avertissements" liste les informations que tu n'as pas pu vérifier et
 
     const [extractionCall, webSearchCall] = await Promise.all([
       callAnthropicWithRetry(apiKey, {
-        model: "claude-sonnet-4-5",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1000,
         system: EXTRACTION_SYSTEM,
         messages: [
@@ -281,7 +281,7 @@ Le champ "avertissements" liste les informations que tu n'as pas pu vérifier et
       callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
         max_tokens: 1000,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }],
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }],
         messages: [{ role: "user", content: webSearchPrompt }],
       }),
     ]);
@@ -364,7 +364,7 @@ Le champ "avertissements" liste les informations que tu n'as pas pu vérifier et
       });
 
       const annexeCall = await callAnthropicWithRetry(apiKey, {
-        model: "claude-sonnet-4-5",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 800,
         system:
           "Tu es un expert en immobilier neuf. Analyse ces documents annexes (plans de logements, vues 3D, photos) et extrais les informations utiles pour rédiger une annonce commerciale : agencement des pièces, volumes, points forts architecturaux, qualité des espaces, orientation, luminosité apparente, qualité des finitions visibles. Sois précis et factuel. Retourne un texte structuré en bullet points.",
