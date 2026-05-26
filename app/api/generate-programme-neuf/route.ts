@@ -287,7 +287,7 @@ Le champ avertissements liste les données introuvables sur sources officielles 
     const [extractionCall, webSearchCall] = await Promise.all([
       callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1000,
+        max_tokens: 800,
         system: EXTRACTION_SYSTEM,
         messages: [
           {
@@ -311,8 +311,8 @@ Le champ avertissements liste les données introuvables sur sources officielles 
       }),
       callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
-        max_tokens: 1000,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }],
+        max_tokens: 800,
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }],
         messages: [{ role: "user", content: webSearchPrompt }],
       }),
     ]);
@@ -396,7 +396,7 @@ Le champ avertissements liste les données introuvables sur sources officielles 
 
       const annexeCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
+        max_tokens: 600,
         system:
           "Tu es un expert en immobilier neuf. Analyse ces documents annexes (plans de logements, vues 3D, photos) et extrais les informations utiles pour rédiger une annonce commerciale : agencement des pièces, volumes, points forts architecturaux, qualité des espaces, orientation, luminosité apparente, qualité des finitions visibles. Sois précis et factuel. Retourne un texte structuré en bullet points.",
         messages: [
@@ -619,7 +619,7 @@ Retourne uniquement le JSON. Commence par {`;
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 600,
+        max_tokens: 400,
         messages: [{ role: "user", content: scoringPrompt }],
       });
 
