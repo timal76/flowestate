@@ -123,12 +123,15 @@ RÈGLES ABSOLUES :
 - SOURCES MARCHÉ : ne jamais attribuer une affirmation à "les agences locales" ou "le marché confirme" sans source vérifiable. Formuler à la place "constat de marché observé" ou "tendance observée sur le marché havrais"
 - TVA RÉDUITE : ne jamais écrire "conditionné secteur ANRU". Écrire exactement ce que dit la plaquette : "TVA réduite 5,5% selon conditions de ressources, en résidence principale pendant au minimum 10 ans"
 - HAUTEUR SOUS PLAFOND : si les données extraites ou les annexes mentionnent une hauteur sous plafond, utiliser cette valeur exacte. Le plan architectural indique 2,70m — ne jamais écrire 2,10m qui est une erreur. Si aucune hauteur n'est confirmée dans les documents, ne pas en mentionner.
-- CUISINE ÉQUIPÉE : ne jamais affirmer que la cuisine est équipée (réfrigérateur, lave-vaisselle, lave-linge) sauf si explicitement mentionné dans la plaquette ou la notice descriptive. Si visible uniquement sur une perspective 3D, écrire "cuisine aménageable (équipements en option — à confirmer avec le promoteur)"
+- CUISINE ÉQUIPÉE : ne jamais affirmer que la cuisine est livrée équipée (réfrigérateur, lave-vaisselle, lave-linge, four) sauf si explicitement écrit dans la plaquette ou la notice descriptive. Si visible uniquement sur une perspective 3D ou un plan, écrire uniquement "cuisine aménageable (équipements optionnels — à confirmer avec le promoteur lors de la signature)".
 - ORIENTATION ET EXPOSITION : ne jamais mentionner l'orientation (sud, nord, est, ouest) ni "exposition favorable" si cette information n'est pas explicitement présente dans les documents fournis. Le plan doit indiquer l'orientation pour qu'elle soit utilisée.
 - CHIFFRES MARCHÉ : ne jamais écrire de pourcentages ou statistiques de commercialisation non présents dans les données fournies (ex: "30% plus rapide", "taux de vacance 5%"). Ces chiffres sont invérifiables et potentiellement trompeurs.
 - NOMBRE DE CHAMBRES : utiliser uniquement le nombre de chambres présent dans les données extraites ou les plans. Ne jamais arrondir ou approximer. Si le plan indique 2 chambres, écrire 2 chambres, jamais 3.
 - DOUBLE ORIENTATION : ne jamais écrire "double orientation" ou "traversant" sauf si explicitement confirmé dans les documents fournis (plan avec indication nord/sud/est/ouest).
 - TRAMWAY : ne mentionner le tramway que si explicitement indiqué dans la plaquette avec une ligne et un arrêt précis. Ne pas confondre bus et tramway.
+- ÉTAGE : R+2 = 2ème étage en français. Ne jamais écrire "3ème étage" pour un lot au R+2. Utiliser exactement "2ème étage (R+2)".
+- INFORMATIONS PERTINENTES AUTORISÉES : tu peux utiliser les données web marquées (CERTIFIÉ) ou (PROBABLE) pour enrichir l'annonce avec des faits locaux concrets (transports, commerces, écoles, projets urbains). Ces informations enrichissent sans inventer.
+- ZÉRO INVENTION ABSOLUE : toute information non présente dans les documents fournis ou les données web vérifiées doit être omise. En cas de doute, omettre plutôt qu'approximer.
 - ZÉRO FAUTE D'ORTHOGRAPHE, de grammaire, de typographie et d'accord — relis intégralement avant de retourner.
 
 STRATÉGIE DE DIFFÉRENCIATION :
@@ -569,9 +572,50 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
       content: recordContent,
     });
 
+    const annonces = lotAnnonces
+      ? { programme: programmeAnnonces, lot: lotAnnonces }
+      : programmeAnnonces;
+
+    let scoring = null;
+    try {
+      const scoringPrompt = `Tu es un expert en marketing immobilier. Analyse ces annonces et retourne UNIQUEMENT ce JSON sans markdown :
+{"score":8,"verdict":"Une phrase de verdict","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}
+
+ANNONCES :
+${JSON.stringify(annonces, null, 2)}
+
+ANGLE : ${angle}
+PROFIL PROSPECT : ${prospectProfile || "Non précisé"}
+ARGUMENTS PROMOTEUR À ÉVITER : ${JSON.stringify(extractedData.arguments_promoteur || [])}
+
+Critères de scoring :
+- Différenciation vs angle promoteur (3 points)
+- Ancrage dans les données réelles et vérifiées (3 points)
+- Adaptation au profil prospect (2 points)
+- Qualité rédactionnelle et accroche (2 points)
+
+Retourne uniquement le JSON. Commence par {`;
+
+      const scoringCall = await callAnthropicWithRetry(apiKey, {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 600,
+        messages: [{ role: "user", content: scoringPrompt }],
+      });
+
+      if (scoringCall.response.ok) {
+        const scoringText = extractTextFromAnthropic(scoringCall.json);
+        console.log("SCORING RAW:", scoringText?.substring(0, 300));
+        scoring = parseJsonFromText(scoringText);
+      }
+    } catch (e) {
+      console.error("SCORING ERROR:", e);
+      scoring = null;
+    }
+
     return NextResponse.json({
       programme: programmeAnnonces,
       lot: lotAnnonces,
+      scoring,
     });
   } catch {
     return NextResponse.json(

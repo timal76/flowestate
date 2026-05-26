@@ -21,9 +21,17 @@ type AnnoncesSet = {
   siteAgence: AnnonceBlock;
 };
 
+type ScoringResult = {
+  score: number;
+  verdict: string;
+  points_forts: string[];
+  suggestions: string[];
+};
+
 type GeneratedResult = {
   programme: AnnoncesSet;
   lot: AnnoncesSet | null;
+  scoring: ScoringResult | null;
 };
 
 type FormState = {
@@ -325,6 +333,7 @@ export default function ProgrammesNeufsPage() {
       setResult({
         programme: payload.programme,
         lot: payload.lot ?? null,
+        scoring: payload.scoring ?? null,
       });
       setActiveProgrammeTab("leboncoin");
       setActiveLotTab("leboncoin");
@@ -660,6 +669,53 @@ export default function ProgrammesNeufsPage() {
                 </div>
               ) : result ? (
                 <div className="mt-6 flex flex-1 flex-col">
+                  {result.scoring ? (
+                    <div className="mt-6 rounded-2xl border border-[#C9A96E]/30 bg-white/[0.02] p-6">
+                      <div className="mb-4 flex items-center gap-4">
+                        <div
+                          className="text-4xl font-bold"
+                          style={{
+                            color:
+                              result.scoring.score >= 7
+                                ? "#C9A96E"
+                                : result.scoring.score >= 5
+                                  ? "#f97316"
+                                  : "#ef4444",
+                          }}
+                        >
+                          {result.scoring.score}/10
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-[#F5F5F0]">
+                            Score de différenciation
+                          </p>
+                          <p className="text-sm text-[#A0A0A0]">{result.scoring.verdict}</p>
+                        </div>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="mb-2 text-xs font-semibold text-green-400">✓ Points forts</p>
+                          <ul className="space-y-1">
+                            {result.scoring.points_forts.map((point, i) => (
+                              <li key={i} className="text-xs text-[#A0A0A0]">
+                                • {point}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="mb-2 text-xs font-semibold text-[#C9A96E]">→ Suggestions</p>
+                          <ul className="space-y-1">
+                            {result.scoring.suggestions.map((s, i) => (
+                              <li key={i} className="text-xs italic text-[#A0A0A0]">
+                                • {s}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                   <div
                     role="alert"
                     className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-950/60 p-5 text-sm text-amber-100"
