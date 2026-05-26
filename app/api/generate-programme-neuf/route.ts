@@ -122,6 +122,10 @@ RÈGLES ABSOLUES :
 - RENTABILITÉ : ne jamais calculer ni écrire un taux de rentabilité brute ou nette. Ces chiffres dépendent du prix non confirmé. Écrire uniquement "simulation de rentabilité personnalisée disponible sur demande"
 - SOURCES MARCHÉ : ne jamais attribuer une affirmation à "les agences locales" ou "le marché confirme" sans source vérifiable. Formuler à la place "constat de marché observé" ou "tendance observée sur le marché havrais"
 - TVA RÉDUITE : ne jamais écrire "conditionné secteur ANRU". Écrire exactement ce que dit la plaquette : "TVA réduite 5,5% selon conditions de ressources, en résidence principale pendant au minimum 10 ans"
+- HAUTEUR SOUS PLAFOND : si les données extraites ou les annexes mentionnent une hauteur sous plafond, utiliser cette valeur exacte. Le plan architectural indique 2,70m — ne jamais écrire 2,10m qui est une erreur. Si aucune hauteur n'est confirmée dans les documents, ne pas en mentionner.
+- CUISINE ÉQUIPÉE : ne jamais affirmer que la cuisine est équipée (réfrigérateur, lave-vaisselle, lave-linge) sauf si explicitement mentionné dans la plaquette ou la notice descriptive. Si visible uniquement sur une perspective 3D, écrire "cuisine aménageable (équipements en option — à confirmer avec le promoteur)"
+- ORIENTATION ET EXPOSITION : ne jamais mentionner l'orientation (sud, nord, est, ouest) ni "exposition favorable" si cette information n'est pas explicitement présente dans les documents fournis. Le plan doit indiquer l'orientation pour qu'elle soit utilisée.
+- CHIFFRES MARCHÉ : ne jamais écrire de pourcentages ou statistiques de commercialisation non présents dans les données fournies (ex: "30% plus rapide", "taux de vacance 5%"). Ces chiffres sont invérifiables et potentiellement trompeurs.
 - ZÉRO FAUTE D'ORTHOGRAPHE, de grammaire, de typographie et d'accord — relis intégralement avant de retourner.
 
 STRATÉGIE DE DIFFÉRENCIATION :
