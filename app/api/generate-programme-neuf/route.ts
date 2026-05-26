@@ -112,7 +112,12 @@ DIFFÉRENCIATION ACTIVE : Si des annonces concurrentes sont fournies, tu dois le
 
 RÈGLES ABSOLUES :
 - DONNÉES PLAQUETTE : utilise mot pour mot les informations extraites. Pour la date de livraison : si extractedData.livraison contient une valeur, l'écrire exactement telle quelle. Jamais de placeholder comme [Date exacte selon plaquette].
-- DONNÉES WEB : n'utilise QUE les informations marquées (CERTIFIÉ) ou (PROBABLE) dans les données web. Ignore tout ce qui est (INDICATIF) ou absent.
+UTILISATION DES DONNÉES WEB :
+- Utilise UNIQUEMENT les données accompagnées d'une source officielle dans les données web fournies
+- Chaque donnée chiffrée issue du web doit mentionner sa source dans l'annonce : "selon les données DVF", "d'après l'Observatoire des loyers du Havre", "annoncé par la Mairie du Havre"
+- INTERDIT ABSOLUMENT : pourcentages de commercialisation sans source ("30% plus vite"), rendements bruts/nets sans prix confirmé, surloyers estimés sans source officielle ("+30-50€/mois"), "constat de marché observé" sans donnée sourcée
+- Si aucune donnée officielle n'est disponible sur un point, ne pas en parler plutôt qu'inventer
+- Les données non officielles du champ "avertissements" sont interdites dans l'annonce
 - LOYERS : écrire "loyer de marché estimé" jamais "loyer encadré" sauf confirmation officielle.
 - ZÉRO INVENTION : si une information n'est pas dans les données fournies, ne pas l'écrire. Jamais de placeholder. Jamais d'approximation.
 - ZÉRO HALLUCINATION : ne jamais compléter avec des connaissances générales non présentes dans les données extraites ou web.
@@ -130,7 +135,6 @@ RÈGLES ABSOLUES :
 - DOUBLE ORIENTATION : ne jamais écrire "double orientation" ou "traversant" sauf si explicitement confirmé dans les documents fournis (plan avec indication nord/sud/est/ouest).
 - TRAMWAY : ne mentionner le tramway que si explicitement indiqué dans la plaquette avec une ligne et un arrêt précis. Ne pas confondre bus et tramway.
 - ÉTAGE : R+2 = 2ème étage en français. Ne jamais écrire "3ème étage" pour un lot au R+2. Utiliser exactement "2ème étage (R+2)".
-- INFORMATIONS PERTINENTES AUTORISÉES : tu peux utiliser les données web marquées (CERTIFIÉ) ou (PROBABLE) pour enrichir l'annonce avec des faits locaux concrets (transports, commerces, écoles, projets urbains). Ces informations enrichissent sans inventer.
 - ZÉRO INVENTION ABSOLUE : toute information non présente dans les documents fournis ou les données web vérifiées doit être omise. En cas de doute, omettre plutôt qu'approximer.
 - ZÉRO FAUTE D'ORTHOGRAPHE, de grammaire, de typographie et d'accord — relis intégralement avant de retourner.
 
@@ -245,23 +249,40 @@ export async function POST(request: Request) {
     const webSearchVille = address?.split(",").pop()?.trim() || "commune du programme immobilier neuf";
     const webSearchQuartier = "";
 
-    const webSearchPrompt = `Tu es un analyste territorial français rigoureux. Tu dois enrichir une annonce immobilière avec des données locales VÉRIFIÉES et FIABLES.
+    const webSearchPrompt = `Tu es un analyste immobilier rigoureux. Tu dois enrichir une annonce avec des données locales OFFICIELLES et VÉRIFIABLES uniquement.
 
-LOCALISATION : ${webSearchVille}${webSearchQuartier ? `, ${webSearchQuartier}` : ""}${address ? `, ${address}` : ""}
+LOCALISATION : ${webSearchVille}${webSearchQuartier ? `, ${webSearchQuartier}` : ""}${address ? `, adresse : ${address}` : ""}
 
-RÈGLES DE RIGUEUR ABSOLUE :
-- Ne cite QUE des faits que tu peux vérifier via une source officielle ou reconnue
-- Pour chaque information, indique entre parenthèses ton niveau de certitude : (CERTIFIÉ) si source officielle, (PROBABLE) si source fiable non officielle, (INDICATIF) si estimation
-- N'invente JAMAIS un chiffre, une distance, un nom de commerce ou un projet
-- Si tu n'as pas de données fiables sur un point, mets null
-- Les loyers : utiliser le terme "loyer de marché estimé" jamais "loyer encadré" sauf si la ville est officiellement en zone d'encadrement
-- Les prix au m² : uniquement si source DVF ou notaires de France
-- Les projets urbains : uniquement si annoncés officiellement par la mairie ou métropole
+SOURCES AUTORISÉES UNIQUEMENT (par ordre de priorité) :
+1. DVF / data.gouv.fr — prix de vente réels au m²
+2. Observatoire local des loyers (OLAP ou observatoire agréé) — loyers de marché
+3. Site officiel mairie ou métropole du Havre — projets urbains annoncés
+4. INSEE — démographie, emploi, revenus médians
+5. SNCF / Transdev / Keolis — horaires et fréquences officiels transports
+6. Éducation nationale — établissements scolaires référencés
+
+RÈGLES ABSOLUES :
+- Cherche spécifiquement sur ces sources officielles
+- Chaque donnée chiffrée DOIT être accompagnée de sa source entre parenthèses : ex "loyer médian 11€/m² (Observatoire des loyers Le Havre 2024)"
+- Si tu ne trouves pas de source officielle pour une donnée, mets null
+- INTERDIT : "constat de marché observé", pourcentages sans source, estimations personnelles
+- INTERDIT : chiffres de commercialisation ("se loue X% plus vite"), rendements estimés sans source officielle
+- AUTORISÉ : faits vérifiables avec source citée, distances officielles, projets municipaux annoncés
 
 Retourne un JSON sans markdown :
-{"mobilite":null,"commerces_proximite":null,"ecoles":null,"bassin_emploi":null,"projets_urbains":null,"prix_m2_marche":null,"demande_locative":null,"atouts_quartier":null,"avertissements":[]}
+{
+  "prix_m2_source_officielle": null,
+  "loyer_marche_officiel": null,
+  "source_loyer": null,
+  "projets_urbains_officiels": null,
+  "source_projets": null,
+  "transports_officiels": null,
+  "donnees_insee": null,
+  "etablissements_scolaires": null,
+  "avertissements": []
+}
 
-Le champ "avertissements" liste les informations que tu n'as pas pu vérifier et qui ne doivent pas apparaître dans l'annonce.`;
+Le champ avertissements liste les données introuvables sur sources officielles — elles ne doivent PAS apparaître dans l'annonce.`;
 
     const [extractionCall, webSearchCall] = await Promise.all([
       callAnthropicWithRetry(apiKey, {
