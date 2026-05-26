@@ -126,6 +126,9 @@ RÈGLES ABSOLUES :
 - CUISINE ÉQUIPÉE : ne jamais affirmer que la cuisine est équipée (réfrigérateur, lave-vaisselle, lave-linge) sauf si explicitement mentionné dans la plaquette ou la notice descriptive. Si visible uniquement sur une perspective 3D, écrire "cuisine aménageable (équipements en option — à confirmer avec le promoteur)"
 - ORIENTATION ET EXPOSITION : ne jamais mentionner l'orientation (sud, nord, est, ouest) ni "exposition favorable" si cette information n'est pas explicitement présente dans les documents fournis. Le plan doit indiquer l'orientation pour qu'elle soit utilisée.
 - CHIFFRES MARCHÉ : ne jamais écrire de pourcentages ou statistiques de commercialisation non présents dans les données fournies (ex: "30% plus rapide", "taux de vacance 5%"). Ces chiffres sont invérifiables et potentiellement trompeurs.
+- NOMBRE DE CHAMBRES : utiliser uniquement le nombre de chambres présent dans les données extraites ou les plans. Ne jamais arrondir ou approximer. Si le plan indique 2 chambres, écrire 2 chambres, jamais 3.
+- DOUBLE ORIENTATION : ne jamais écrire "double orientation" ou "traversant" sauf si explicitement confirmé dans les documents fournis (plan avec indication nord/sud/est/ouest).
+- TRAMWAY : ne mentionner le tramway que si explicitement indiqué dans la plaquette avec une ligne et un arrêt précis. Ne pas confondre bus et tramway.
 - ZÉRO FAUTE D'ORTHOGRAPHE, de grammaire, de typographie et d'accord — relis intégralement avant de retourner.
 
 STRATÉGIE DE DIFFÉRENCIATION :
