@@ -85,30 +85,31 @@ SaaS d'automatisation pour agents immobiliers.
   - Emails de relance générés pour chaque prospect
   - Comptes-rendus de visite générés pour les acheteurs
 - Démarchage agences immobilières Le Havre commencé (20 mai 2026)
-- Feature Programmes neufs (`/programmes-neufs`) : plaquette PDF, annexes optionnelles, double génération programme global + lot si annexes, 3 plateformes par mode, bandeau validation avant publication
+- Feature Programmes neufs (`/programmes-neufs`) : pipeline complet extraction → web search → génération programme/lot, score différenciation /10, bandeau validation
 
-## Feature Programmes neufs
+## Feature Programmes neufs — État actuel (mai 2026)
 (`app/programmes-neufs/page.tsx` + `app/api/generate-programme-neuf/route.ts`)
-- Upload plaquette PDF promoteur (obligatoire)
-- Upload annexes : plans, photos, vues 3D (optionnel, 5 max, PDF ou images)
-- Champs : adresse, angle souhaité, profil prospect libre (textarea), ton, prix optionnel, infos complémentaires, annonces concurrentes (textarea)
-- 3 appels Anthropic en séquence : extraction PDF → web search enrichissement local → génération annonces
-- Si annexes présentes : appel supplémentaire extraction annexes + double génération (programme global + lot spécifique)
+
+- Upload plaquette PDF (obligatoire) + annexes plans/photos (optionnel, 5 max)
+- Champs : adresse, angle souhaité, profil prospect libre, ton, prix optionnel, infos complémentaires, annonces concurrentes
+- 4 appels Anthropic : extraction PDF (Haiku) → web search enrichissement local (sources officielles DVF/INSEE/mairie) → extraction annexes si présentes (Haiku) → génération annonces (Sonnet)
+- Double génération si annexes : programme global + lot spécifique
+- Score de différenciation /10 affiché après génération (Haiku)
+- Bandeau avertissement avant publication
+- `maxDuration = 300`, extraction PDF séquentielle avant web search
+- Règles prompts : zéro invention, zéro prix sans DVF, zéro orientation non confirmée, cuisine conditionnée, étage R+2 = 2ème étage, TVA conditions exactes plaquette, date livraison mot pour mot
+- Qualité actuelle : 8.5/10 programme global, 9.5/10 lot spécifique
 - Retourne 3 annonces (Leboncoin / SeLoger / Site propre) par mode
-- Prompts optimisés immobilier neuf : zéro invention, zéro prix si non confirmé, mentions légales obligatoires
-- Bandeau avertissement affiché avant publication
-- `maxDuration = 300` sur la route API
-- Extraction PDF et web search tournent en parallèle (`Promise.all`)
+
+### TODO restant (Programmes neufs)
+- Génération par lot sans re-upload plaquette
+- Export PDF des 3 annonces
+- Upgrade Anthropic tier 2 pour lever rate limit 30k tokens/min
 
 ## Prompts réécrits (21 mai 2026)
 - `app/api/generate-annonce/route.ts` : systemPrompt et userPrompt optimisés immobilier
 - `app/api/generate-compte-rendu/route.ts` : idem, structure 8 sections obligatoires
 - `app/api/generate-email/route.ts` : idem, expressions interdites, contrôle qualité
-
-## Prochaines étapes TODO (Programmes neufs)
-- Score de différenciation /10 après génération
-- Génération par lot (changer de lot sans re-uploader la plaquette)
-- Export PDF des 3 annonces
 
 ## ⏭️ Prochaine étape
 - Itérer sur le produit selon les retours des démos agences
@@ -139,4 +140,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : Session du 21 mai 2026
+- Dernière mise à jour : mai 2026 (feature Programmes neufs — pipeline et prompts stabilisés)
