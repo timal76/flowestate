@@ -112,13 +112,14 @@ DIFFÉRENCIATION ACTIVE : Si des annonces concurrentes sont fournies, tu dois le
 
 RÈGLES ABSOLUES :
 - DONNÉES PLAQUETTE : utilise mot pour mot les informations extraites. Pour la date de livraison : si extractedData.livraison contient une valeur, l'écrire exactement telle quelle. Jamais de placeholder comme [Date exacte selon plaquette].
-UTILISATION DES DONNÉES WEB :
-- Utilise UNIQUEMENT les données accompagnées d'une source officielle dans les données web fournies
-- Chaque donnée chiffrée issue du web doit mentionner sa source dans l'annonce : "selon les données DVF", "d'après l'Observatoire des loyers du Havre", "annoncé par la Mairie du Havre"
-- INTERDIT ABSOLUMENT : pourcentages de commercialisation sans source ("30% plus vite"), rendements bruts/nets sans prix confirmé, surloyers estimés sans source officielle ("+30-50€/mois"), "constat de marché observé" sans donnée sourcée
-- Si aucune donnée officielle n'est disponible sur un point, ne pas en parler plutôt qu'inventer
-- Les données non officielles du champ "avertissements" sont interdites dans l'annonce
-- LOYERS : écrire "loyer de marché estimé" jamais "loyer encadré" sauf confirmation officielle.
+UTILISATION DES DONNÉES WEB — RÈGLES STRICTES :
+- Prix au m² : utilise UNIQUEMENT les données DVF officielles avec année et source. Format : "prix observés entre X€ et Y€/m² sur ce secteur en [année] (source DVF)"
+- Loyers : utilise UNIQUEMENT les données de l'observatoire officiel. Format : "loyer médian de X€/m² pour un T3 au Havre en [année] (source Observatoire des loyers)"
+- Projets urbains : cite uniquement les projets annoncés officiellement par la mairie ou métropole avec la source
+- Données INSEE : population, revenus, emploi uniquement si trouvés sur insee.fr
+- Commerces : liste uniquement les établissements réels trouvés avec distance approximative
+- INTERDIT : toute estimation personnelle, tout pourcentage sans source, "constat de marché observé" sans donnée sourcée, rendements calculés sans prix confirmé
+- FORMAT DANS L'ANNONCE : chaque donnée chiffrée externe doit avoir sa source mentionnée naturellement dans le texte
 - ZÉRO INVENTION : si une information n'est pas dans les données fournies, ne pas l'écrire. Jamais de placeholder. Jamais d'approximation.
 - ZÉRO HALLUCINATION : ne jamais compléter avec des connaissances générales non présentes dans les données extraites ou web.
 - PRESTATIONS COMPLÈTES : inclure TOUTES les prestations listées dans extractedData.prestations et extractedData.domotique — ne rien oublier.
@@ -246,76 +247,30 @@ export async function POST(request: Request) {
     const additionalInfo = body.additionalInfo?.trim() || "";
     const address = body.address?.trim() || "";
 
-    const webSearchVille = address?.split(",").pop()?.trim() || "commune du programme immobilier neuf";
-    const webSearchQuartier = "";
-
-    const webSearchPrompt = `Tu es un analyste immobilier rigoureux. Tu dois enrichir une annonce avec des données locales OFFICIELLES et VÉRIFIABLES uniquement.
-
-LOCALISATION : ${webSearchVille}${webSearchQuartier ? `, ${webSearchQuartier}` : ""}${address ? `, adresse : ${address}` : ""}
-
-SOURCES AUTORISÉES UNIQUEMENT (par ordre de priorité) :
-1. DVF / data.gouv.fr — prix de vente réels au m²
-2. Observatoire local des loyers (OLAP ou observatoire agréé) — loyers de marché
-3. Site officiel mairie ou métropole du Havre — projets urbains annoncés
-4. INSEE — démographie, emploi, revenus médians
-5. SNCF / Transdev / Keolis — horaires et fréquences officiels transports
-6. Éducation nationale — établissements scolaires référencés
-
-RÈGLES ABSOLUES :
-- Cherche spécifiquement sur ces sources officielles
-- Chaque donnée chiffrée DOIT être accompagnée de sa source entre parenthèses : ex "loyer médian 11€/m² (Observatoire des loyers Le Havre 2024)"
-- Si tu ne trouves pas de source officielle pour une donnée, mets null
-- INTERDIT : "constat de marché observé", pourcentages sans source, estimations personnelles
-- INTERDIT : chiffres de commercialisation ("se loue X% plus vite"), rendements estimés sans source officielle
-- AUTORISÉ : faits vérifiables avec source citée, distances officielles, projets municipaux annoncés
-
-Retourne un JSON sans markdown :
-{
-  "prix_m2_source_officielle": null,
-  "loyer_marche_officiel": null,
-  "source_loyer": null,
-  "projets_urbains_officiels": null,
-  "source_projets": null,
-  "transports_officiels": null,
-  "donnees_insee": null,
-  "etablissements_scolaires": null,
-  "avertissements": []
-}
-
-Le champ avertissements liste les données introuvables sur sources officielles — elles ne doivent PAS apparaître dans l'annonce.`;
-
-    const [extractionCall, webSearchCall] = await Promise.all([
-      callAnthropicWithRetry(apiKey, {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
-        system: EXTRACTION_SYSTEM,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "document",
-                source: {
-                  type: "base64",
-                  media_type: "application/pdf",
-                  data: pdfData,
-                },
+    const extractionCall = await callAnthropicWithRetry(apiKey, {
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 800,
+      system: EXTRACTION_SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "document",
+              source: {
+                type: "base64",
+                media_type: "application/pdf",
+                data: pdfData,
               },
-              {
-                type: "text",
-                text: "Analyse cette plaquette promoteur et extrais toutes les informations demandées.",
-              },
-            ],
-          },
-        ],
-      }),
-      callAnthropicWithRetry(apiKey, {
-        model: "claude-sonnet-4-5",
-        max_tokens: 800,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }],
-        messages: [{ role: "user", content: webSearchPrompt }],
-      }),
-    ]);
+            },
+            {
+              type: "text",
+              text: "Analyse cette plaquette promoteur et extrais toutes les informations demandées.",
+            },
+          ],
+        },
+      ],
+    });
 
     if (!extractionCall.response.ok) {
       return anthropicErrorResponse(extractionCall.response, extractionCall.json);
@@ -362,6 +317,70 @@ Le champ avertissements liste les données introuvables sur sources officielles 
           : typeof extractedData["nom de la résidence"] === "string"
             ? extractedData["nom de la résidence"]
             : "";
+
+    const searchAddress =
+      (typeof extractedData.adresse === "string" && extractedData.adresse) || address;
+
+    // RECHERCHE 1 — Prix au m² DVF
+    const searchDVF = `prix au m2 transactions immobilières ${ville} ${quartier || ""} DVF site:dvf.gouv.fr OR site:data.gouv.fr 2023 2024`;
+
+    // RECHERCHE 2 — Loyers de marché officiels
+    const searchLoyers = `observatoire loyers ${ville} loyer median T3 2023 2024 site:observatoires-des-loyers.fr OR site:anil.org`;
+
+    // RECHERCHE 3 — Projets urbains officiels
+    const searchProjets = `projets urbains ${ville} ${quartier || ""} 2024 2025 site:lehavre.fr OR site:lehavre-seine-metropole.fr`;
+
+    // RECHERCHE 4 — Données INSEE
+    const searchINSEE = `${ville} population revenus médians emploi INSEE 2024 site:insee.fr`;
+
+    // RECHERCHE 5 — Commerces et services à proximité
+    const searchProximite = searchAddress
+      ? `commerces services écoles transports proximité "${searchAddress}" ${ville}`
+      : `commerces services ${quartier || ville} ${ville}`;
+
+    const webSearchPrompt = `Tu es un analyste immobilier rigoureux. Effectue ces 5 recherches précises et retourne UNIQUEMENT des données vérifiables avec leurs sources.
+
+RECHERCHE 1 — Prix au m² réels : ${searchDVF}
+RECHERCHE 2 — Loyers officiels : ${searchLoyers}
+RECHERCHE 3 — Projets urbains officiels : ${searchProjets}
+RECHERCHE 4 — Données INSEE : ${searchINSEE}
+RECHERCHE 5 — Environnement immédiat : ${searchProximite}
+
+RÈGLES ABSOLUES :
+- Pour chaque donnée chiffrée, cite la source exacte entre parenthèses
+- Si tu ne trouves pas de source officielle, mets null — jamais d'estimation personnelle
+- Distingue clairement (CERTIFIÉ source officielle) vs (PROBABLE source reconnue) vs null
+- Pour les prix DVF : donner la fourchette réelle observée sur les 2 dernières années
+- Pour les loyers : donner le loyer médian par m² selon l'observatoire officiel
+- Pour les projets urbains : uniquement ce qui est annoncé officiellement par la mairie
+- Pour INSEE : population, revenus médians, taux d'emploi si disponibles
+- Pour la proximité : liste des commerces/services réels dans un rayon de 500m
+
+Retourne un JSON sans markdown :
+{
+  "prix_m2_dvf": null,
+  "source_prix": null,
+  "annee_prix": null,
+  "loyer_median_m2": null,
+  "source_loyers": null,
+  "loyer_t3_estime": null,
+  "projets_urbains_officiels": [],
+  "source_projets": null,
+  "insee_population": null,
+  "insee_revenus_medians": null,
+  "insee_taux_emploi": null,
+  "commerces_500m": [],
+  "transports_officiels": [],
+  "ecoles_proximite": [],
+  "avertissements": []
+}`;
+
+    const webSearchCall = await callAnthropicWithRetry(apiKey, {
+      model: "claude-sonnet-4-5",
+      max_tokens: 800,
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+      messages: [{ role: "user", content: webSearchPrompt }],
+    });
 
     if (!webSearchCall.response.ok) {
       return anthropicErrorResponse(webSearchCall.response, webSearchCall.json);
@@ -436,10 +455,29 @@ Le champ avertissements liste les données introuvables sur sources officielles 
           ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}`
           : "";
 
+      const programmeMandatoryBlock =
+        mode === "programme"
+          ? `DONNÉES PLAQUETTE OBLIGATOIRES À INCLURE DANS TOUTES LES ANNONCES PROGRAMME :
+- Nom : ${extractedData.nom || "Havre en Scène"}
+- Promoteur : ${extractedData.promoteur || "Sedelka"}
+- Adresse : ${extractedData.adresse || "133 boulevard Amiral Mouchez, 76600 Le Havre"}
+- Nombre de lots : ${extractedData.nb_lots || "48"}
+- Types de biens : ${JSON.stringify(extractedData.types_biens)}
+- Surfaces : ${extractedData.surface_min || "30"}m² à ${extractedData.surface_max || "90"}m²
+- Livraison : ${extractedData.livraison || "T1 2026"}
+- Domotique : ${extractedData.domotique || "Pack So Smart Dommee offert"}
+- Prestations : ${JSON.stringify(extractedData.prestations)}
+- Dispositifs fiscaux : TVA ${extractedData.taux_tva}, PTZ : ${extractedData.ptz}, Pinel : ${extractedData.pinel}
+
+Ces informations DOIVENT apparaître dans chaque annonce programme. Ne jamais les omettre.
+
+`
+          : "";
+
       return `
 Génère les 3 annonces immobilières différenciées à partir des données suivantes.
 
-${modeInstruction}
+${programmeMandatoryBlock}${modeInstruction}
 ${programmeStrictRule ? `\n${programmeStrictRule}\n` : ""}
 DONNÉES EXTRAITES DE LA PLAQUETTE (JSON) :
 ${JSON.stringify(extractedData, null, 2)}
