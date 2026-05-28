@@ -150,7 +150,7 @@ DIFFÉRENCIATION ACTIVE : Si des annonces concurrentes sont fournies, tu dois le
 RÈGLES ABSOLUES :
 - DONNÉES PLAQUETTE : utilise mot pour mot les informations extraites. Pour la date de livraison : si extractedData.livraison contient une valeur, l'écrire exactement telle quelle. Jamais de placeholder comme [Date exacte selon plaquette].
 UTILISATION DES DONNÉES WEB — RÈGLES STRICTES :
-- Prix au m² : utilise UNIQUEMENT les données DVF officielles avec année et source. Format : "prix observés entre X€ et Y€/m² sur ce secteur en [année] (source DVF)"
+- PRIX AU M² : n'utiliser que des données DVF officielles (dvf.gouv.fr) ou notaires de France avec année et source explicite. Format obligatoire : "X€/m² (source DVF [année])". Si aucune donnée DVF disponible dans les données web, ne pas mentionner de prix au m². INTERDIT : "estimation marché local", "selon estimation", tout prix sans source DVF ou notaires.
 - Loyers : utilise UNIQUEMENT les données de l'observatoire officiel. Format : "loyer médian de X€/m² pour un T3 au Havre en [année] (source Observatoire des loyers)"
 - Projets urbains : cite uniquement les projets annoncés officiellement par la mairie ou métropole avec la source
 - Données INSEE : population, revenus, emploi uniquement si trouvés sur insee.fr
@@ -167,11 +167,10 @@ UTILISATION DES DONNÉES WEB — RÈGLES STRICTES :
 - TVA RÉDUITE : ne jamais écrire "conditionné secteur ANRU". Écrire exactement ce que dit la plaquette : "TVA réduite 5,5% selon conditions de ressources, en résidence principale pendant au minimum 10 ans"
 - HAUTEUR SOUS PLAFOND : si les données extraites ou les annexes mentionnent une hauteur sous plafond, utiliser cette valeur exacte. Le plan architectural indique 2,70m — ne jamais écrire 2,10m qui est une erreur. Si aucune hauteur n'est confirmée dans les documents, ne pas en mentionner.
 - CUISINE ÉQUIPÉE : ne jamais affirmer que la cuisine est livrée équipée (réfrigérateur, lave-vaisselle, lave-linge, four) sauf si explicitement écrit dans la plaquette ou la notice descriptive. Si visible uniquement sur une perspective 3D ou un plan, écrire uniquement "cuisine aménageable (équipements optionnels — à confirmer avec le promoteur lors de la signature)".
-- ORIENTATION ET EXPOSITION : ne jamais mentionner l'orientation (sud, nord, est, ouest) ni "exposition favorable" si cette information n'est pas explicitement présente dans les documents fournis. Le plan doit indiquer l'orientation pour qu'elle soit utilisée.
+- DOUBLE EXPOSITION / ORIENTATION : ces termes sont INTERDITS sauf si le plan architectural fourni indique explicitement les points cardinaux (N/S/E/O). Le plan B204 ne précise pas l'orientation — ne jamais écrire "double exposition", "exposition sud", "orientation favorable". Écrire uniquement "multiples ouvertures" ou "nombreuses portes-fenêtres" basé sur les faits du plan.
 - CHIFFRES MARCHÉ : ne jamais écrire de pourcentages ou statistiques de commercialisation non présents dans les données fournies (ex: "30% plus rapide", "taux de vacance 5%"). Ces chiffres sont invérifiables et potentiellement trompeurs.
 - NOMBRE DE CHAMBRES : utiliser uniquement le nombre de chambres présent dans les données extraites ou les plans. Ne jamais arrondir ou approximer. Si le plan indique 2 chambres, écrire 2 chambres, jamais 3.
-- DOUBLE ORIENTATION : ne jamais écrire "double orientation" ou "traversant" sauf si explicitement confirmé dans les documents fournis (plan avec indication nord/sud/est/ouest).
-- TRAMWAY : ne mentionner le tramway que si explicitement indiqué dans la plaquette avec une ligne et un arrêt précis. Ne pas confondre bus et tramway.
+- TRAMWAY : écrire "tramway" uniquement si la plaquette ou une source officielle de la mairie confirme explicitement un arrêt de tramway. La plaquette Havre en Scène mentionne uniquement le bus ligne 3. Si une extension de tramway est mentionnée dans les données web avec source officielle mairie/métropole, écrire "projet d'extension du tramway annoncé par la métropole (à confirmer)".
 - ÉTAGE : R+2 = 2ème étage en français. Ne jamais écrire "3ème étage" pour un lot au R+2. Utiliser exactement "2ème étage (R+2)".
 - ZÉRO INVENTION ABSOLUE : toute information non présente dans les documents fournis ou les données web vérifiées doit être omise. En cas de doute, omettre plutôt qu'approximer.
 - ZÉRO FAUTE D'ORTHOGRAPHE, de grammaire, de typographie et d'accord — relis intégralement avant de retourner.
