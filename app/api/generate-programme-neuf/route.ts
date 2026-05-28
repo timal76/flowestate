@@ -90,6 +90,43 @@ function cleanPdfBase64(input: string): string {
   return trimmed;
 }
 
+const ESSENTIAL_EXTRACTION_KEYS = [
+  "nom",
+  "promoteur",
+  "ville",
+  "quartier",
+  "adresse",
+  "types_biens",
+  "surface_min",
+  "surface_max",
+  "nb_lots",
+  "prix_min",
+  "prix_max",
+  "taux_tva",
+  "ptz",
+  "pinel",
+  "lmnp",
+  "livraison",
+  "prestations",
+  "domotique",
+  "stationnement",
+  "re2020",
+  "transports",
+  "commerces",
+  "ecoles",
+] as const;
+
+function compactExtractedData(data: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const key of ESSENTIAL_EXTRACTION_KEYS) {
+    const value = data[key];
+    if (value === null || value === undefined || value === "") continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    result[key] = value;
+  }
+  return result;
+}
+
 const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
 
 Format exact :
@@ -265,7 +302,7 @@ export async function POST(request: Request) {
             },
             {
               type: "text",
-              text: "Analyse cette plaquette promoteur et extrais toutes les informations demandées.",
+              text: 'Sois ultra concis. Retourne uniquement le JSON avec les champs non-null. Maximum 500 tokens.\n\nAnalyse cette plaquette promoteur et extrais toutes les informations demandées.',
             },
           ],
         },
@@ -318,67 +355,15 @@ export async function POST(request: Request) {
             ? extractedData["nom de la résidence"]
             : "";
 
-    const searchAddress =
-      (typeof extractedData.adresse === "string" && extractedData.adresse) || address;
-
-    // RECHERCHE 1 — Prix au m² DVF
-    const searchDVF = `prix au m2 transactions immobilières ${ville} ${quartier || ""} DVF site:dvf.gouv.fr OR site:data.gouv.fr 2023 2024`;
-
-    // RECHERCHE 2 — Loyers de marché officiels
-    const searchLoyers = `observatoire loyers ${ville} loyer median T3 2023 2024 site:observatoires-des-loyers.fr OR site:anil.org`;
-
-    // RECHERCHE 3 — Projets urbains officiels
-    const searchProjets = `projets urbains ${ville} ${quartier || ""} 2024 2025 site:lehavre.fr OR site:lehavre-seine-metropole.fr`;
-
-    // RECHERCHE 4 — Données INSEE
-    const searchINSEE = `${ville} population revenus médians emploi INSEE 2024 site:insee.fr`;
-
-    // RECHERCHE 5 — Commerces et services à proximité
-    const searchProximite = searchAddress
-      ? `commerces services écoles transports proximité "${searchAddress}" ${ville}`
-      : `commerces services ${quartier || ville} ${ville}`;
-
-    const webSearchPrompt = `Tu es un analyste immobilier rigoureux. Effectue ces 5 recherches précises et retourne UNIQUEMENT des données vérifiables avec leurs sources.
-
-RECHERCHE 1 — Prix au m² réels : ${searchDVF}
-RECHERCHE 2 — Loyers officiels : ${searchLoyers}
-RECHERCHE 3 — Projets urbains officiels : ${searchProjets}
-RECHERCHE 4 — Données INSEE : ${searchINSEE}
-RECHERCHE 5 — Environnement immédiat : ${searchProximite}
-
-RÈGLES ABSOLUES :
-- Pour chaque donnée chiffrée, cite la source exacte entre parenthèses
-- Si tu ne trouves pas de source officielle, mets null — jamais d'estimation personnelle
-- Distingue clairement (CERTIFIÉ source officielle) vs (PROBABLE source reconnue) vs null
-- Pour les prix DVF : donner la fourchette réelle observée sur les 2 dernières années
-- Pour les loyers : donner le loyer médian par m² selon l'observatoire officiel
-- Pour les projets urbains : uniquement ce qui est annoncé officiellement par la mairie
-- Pour INSEE : population, revenus médians, taux d'emploi si disponibles
-- Pour la proximité : liste des commerces/services réels dans un rayon de 500m
-
-Retourne un JSON sans markdown :
-{
-  "prix_m2_dvf": null,
-  "source_prix": null,
-  "annee_prix": null,
-  "loyer_median_m2": null,
-  "source_loyers": null,
-  "loyer_t3_estime": null,
-  "projets_urbains_officiels": [],
-  "source_projets": null,
-  "insee_population": null,
-  "insee_revenus_medians": null,
-  "insee_taux_emploi": null,
-  "commerces_500m": [],
-  "transports_officiels": [],
-  "ecoles_proximite": [],
-  "avertissements": []
-}`;
+    const webSearchPrompt = `Recherche rapide et concise sur ${ville} ${quartier || ""} ${address || ""}.
+Retourne UNIQUEMENT ce JSON sans markdown, ultra concis :
+{"prix_m2_dvf":null,"loyer_median_m2":null,"source_loyers":null,"projets_officiels":[],"commerces_500m":[],"transports":[],"avertissements":[]}
+Utilise uniquement des sources officielles. Maximum 3 recherches web. Sois bref.`;
 
     const webSearchCall = await callAnthropicWithRetry(apiKey, {
       model: "claude-sonnet-4-5",
-      max_tokens: 800,
-      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+      max_tokens: 500,
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }],
       messages: [{ role: "user", content: webSearchPrompt }],
     });
 
@@ -437,6 +422,8 @@ Retourne un JSON sans markdown :
       }
     }
 
+    const essentialExtractedData = compactExtractedData(extractedData);
+
     const buildGenerationUserPrompt = (mode: "programme" | "lot") => {
       const modeInstruction =
         mode === "programme"
@@ -480,7 +467,7 @@ Génère les 3 annonces immobilières différenciées à partir des données sui
 ${programmeMandatoryBlock}${modeInstruction}
 ${programmeStrictRule ? `\n${programmeStrictRule}\n` : ""}
 DONNÉES EXTRAITES DE LA PLAQUETTE (JSON) :
-${JSON.stringify(extractedData, null, 2)}
+${JSON.stringify(essentialExtractedData)}
 
 DONNÉES WEB LOCALES (enrichissement) :
 ${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}
@@ -657,7 +644,7 @@ Retourne uniquement le JSON. Commence par {`;
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 400,
+        max_tokens: 300,
         messages: [{ role: "user", content: scoringPrompt }],
       });
 
