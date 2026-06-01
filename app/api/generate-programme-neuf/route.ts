@@ -857,55 +857,40 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
 
     let scoring = null;
     try {
-      const scoringPrompt = `Tu es un expert en rédaction immobilière. Évalue ces annonces selon des critères réalistes et professionnels.
+      const scoringInput = `{"annonces":{"leboncoin_titre":"${annonces.leboncoin.titre.replace(/"/g, "'")}","seloger_titre":"${annonces.seloger.titre.replace(/"/g, "'")}","site_titre":"${annonces.siteAgence.titre.replace(/"/g, "'")}","leboncoin_extrait":"${annonces.leboncoin.corps.substring(0, 150).replace(/"/g, "'")}"},"angle":"${angle.replace(/"/g, "'")}","profil":"${(prospectProfile || "").replace(/"/g, "'")}","arguments_promoteur":${JSON.stringify((Array.isArray(extractedData.arguments_promoteur) ? extractedData.arguments_promoteur : []).slice(0, 3))}}`;
 
-ANNONCES :
-Leboncoin: ${annonces.leboncoin.titre} — ${annonces.leboncoin.corps.substring(0, 300)}
-SeLoger: ${annonces.seloger.titre} — ${annonces.seloger.corps.substring(0, 300)}
-Site: ${annonces.siteAgence.titre} — ${annonces.siteAgence.corps.substring(0, 300)}
-
-ANGLE : ${angle}
-PROFIL PROSPECT : ${prospectProfile || "Non précisé"}
-ARGUMENTS PROMOTEUR À ÉVITER : ${JSON.stringify(extractedData.arguments_promoteur || []).substring(0, 200)}
-
-Critères de scoring adaptés au contexte immobilier neuf /10 :
-- Différenciation vs discours promoteur standard (3pts) : l'annonce dit-elle autre chose que la plaquette ?
-- Cohérence avec le profil prospect et l'angle (3pts) : l'annonce parle-t-elle vraiment au prospect cible ?
-- Ancrage factuel et données réelles (2pts) : présence de faits concrets, distances, données vérifiables
-- Qualité rédactionnelle et accroche (2pts) : accroche mémorable, structure claire, zéro cliché
-
-IMPORTANT : Note de manière juste et encourageante. Une annonce qui tient bien son angle prospect, utilise des données réelles de la plaquette et évite les clichés mérite un 7 ou 8. Réserve les notes basses (< 6) aux annonces vraiment génériques ou incohérentes avec le profil. Réserve le 9-10 aux annonces exceptionnellement différenciantes avec données officielles sourcées.
-
-Retourne UNIQUEMENT ce JSON sans texte avant ou après, commence par { :
-{"score":7,"verdict":"Une phrase courte de verdict","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion concrète 1","suggestion concrète 2","suggestion concrète 3"]}`;
+      const scoringSystemPrompt = `Tu es un expert en marketing immobilier. Tu évalues des annonces immobilières.
+Retourne UNIQUEMENT ce JSON valide, rien d'autre, pas de backtick, pas de texte :
+{"score":7,"verdict":"verdict en une phrase","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}`;
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 400,
-        messages: [{ role: "user", content: scoringPrompt }],
+        max_tokens: 350,
+        system: scoringSystemPrompt,
+        messages: [
+          {
+            role: "user",
+            content: `Évalue ces annonces immobilières selon ces critères (10pts total) : différenciation vs promoteur (3pts), cohérence profil prospect (3pts), données factuelles réelles (2pts), qualité rédactionnelle (2pts). Données : ${scoringInput}`,
+          },
+        ],
       });
 
       if (scoringCall.response.ok) {
         const scoringText = extractTextFromAnthropic(scoringCall.json);
-        console.log("SCORING RAW FULL:", scoringText);
-        if (scoringText && scoringText.trim().length > 0) {
+        console.log("SCORING RAW:", scoringText?.substring(0, 200));
+        if (scoringText?.trim()) {
           try {
             const parsed = parseJsonFromText(scoringText);
-            if (parsed && typeof parsed === "object" && "score" in parsed) {
+            if (parsed && typeof parsed === "object" && "score" in parsed && "verdict" in parsed) {
               scoring = parsed;
-            } else {
-              console.error("SCORING: JSON parsé mais structure invalide", parsed);
             }
           } catch (e) {
-            console.error("SCORING PARSE ERROR:", e, "RAW:", scoringText?.substring(0, 200));
+            console.error("SCORING PARSE ERROR:", e);
           }
-        } else {
-          console.error("SCORING: texte vide retourné par Haiku");
         }
       }
     } catch (e) {
       console.error("SCORING ERROR:", e);
-      scoring = null;
     }
 
     return NextResponse.json({
