@@ -366,12 +366,33 @@ Avant de retourner les annonces, vérifier :
 - VIS-À-VIS : ne jamais affirmer "sans vis-à-vis" ou "vue dégagée" sauf si explicitement confirmé dans les plans ou documents fournis.
 - "HAVRE DE PAIX" : cette expression reste INTERDITE sous toutes ses formes. "Votre havre normand" ou "refuge normand" sont acceptés car ils font référence à la ville.
 
-STRATÉGIE DE DIFFÉRENCIATION :
-- Utilise les données terrain locales (web search) pour ancrer l'annonce dans la réalité
-- Utilise les plans et documents annexes pour parler d'agencement concret, pas de généralités
-- Construis l'annonce autour du profil acquéreur cible : ce qui change concrètement dans SA vie
-- Privilégie les faits précis et chiffrés aux adjectifs creux
-- L'accroche doit être inattendue — jamais commencer par le nom de la résidence ou le type de bien
+STRATÉGIE DE DIFFÉRENCIATION — MÉTHODOLOGIE OBLIGATOIRE :
+
+Étape 1 — Analyse des arguments promoteur :
+Identifie tous les arguments de la plaquette dans extractedData.arguments_promoteur. Ces arguments sont INTERDITS dans tes annonces sous cette forme. Tu dois les reformuler ou les contourner.
+
+Étape 2 — Construction de l'angle opposé :
+Pour chaque argument promoteur identifié, construis l'argument inverse centré sur le quotidien de l'acheteur.
+Exemple : Promoteur dit "résidence moderne" → toi tu dis "14 trains quotidiens Paris Saint-Lazare, premier départ 5h14 (source SNCF Connect)"
+Exemple : Promoteur dit "prestations haut de gamme" → toi tu dis "prix médian secteur 2 400€/m² soit 15% sous le centre UNESCO (source L'Apporteur d'Immo déc. 2024)"
+Exemple : Promoteur dit "cadre de vie agréable" → toi tu dis "Halles Centrales ouvertes tous les jours, 22 commerçants, 5 min à pied"
+
+Étape 3 — Titres avec chiffres réels obligatoires :
+Chaque titre DOIT contenir au minimum UN chiffre réel sourcé.
+INTERDIT : "Appartement neuf Le Havre — résidence moderne"
+OBLIGATOIRE : "2h05 de Paris • T3 neuf 64m² • 2 400€/m² secteur • livraison T1 2026"
+Les chiffres disponibles : trajet train, prix au m², nombre de trains, surfaces exactes, loyer médian, date livraison, distance plage/centre.
+
+Étape 4 — Accroche inattendue obligatoire :
+L'accroche ne commence JAMAIS par le nom de la résidence, le type de bien, ou "Découvrez".
+Elle commence par une situation concrète de vie réelle selon le profil :
+- Retraité/résidence secondaire : "Vendredi 18h32, train direct depuis Saint-Lazare." ou "Depuis votre smartphone parisien, vous préchauffez l'appartement."
+- Investisseur : "Loyer médian 12€/m² dans ce secteur (source Observatoire Clameur 2026). Voici pourquoi ce T3 change l'équation."
+- Famille : "À 800m de l'école, à 14 min des plages. C'est ça, grandir au Havre."
+
+Étape 5 — Données hardcodées = arguments différenciants :
+Les données Le Havre fournies sont ton avantage concurrentiel principal. Aucune autre agence ne les utilisera avec leurs sources précises. Cite-les avec leurs sources dans chaque annonce.
+Au minimum dans chaque annonce : 1 donnée marché immobilier sourcée + 1 donnée transport sourcée + 1 projet urbain sourcé.
 
 ADAPTATION AU PROFIL PROSPECT — RÈGLE ABSOLUE :
 L'angle et le profil prospect définis par l'agent immobilier sont LA priorité absolue de chaque annonce. Toutes les informations (web, plaquette, annexes) doivent être filtrées et présentées uniquement sous l'angle du profil prospect.
@@ -765,6 +786,15 @@ Ces informations ne sont PAS dans les documents fournis et ne doivent JAMAIS app
 
 Ces interdictions sont absolues et priment sur toute autre instruction.
 
+RÈGLES OBLIGATOIRES POUR LES TITRES :
+- Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train. Ex: "2h05 Paris • T3 64m² neuf • Livraison T1 2026"
+- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"
+- Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"
+
+RÈGLE ABSOLUE ACCROCHE :
+Le premier mot du corps de chaque annonce NE PEUT PAS être : "Découvrez", "Bienvenue", le nom de la résidence, "Ce", "Cet", "Cette".
+L'accroche doit projeter le lecteur dans une situation concrète de sa vie future.
+
 Consignes finales :
 - Adapter chaque annonce au profil acquéreur et à l'angle demandé
 - Ne pas reprendre les formulations marketing du promoteur listées dans les arguments promoteur
@@ -904,16 +934,34 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
 
     let scoring = null;
     try {
-      const scoringPrompt = `Évalue ces annonces immobilières. Retourne UNIQUEMENT ce JSON, commence OBLIGATOIREMENT par { et termine par } :
-{"score":7,"verdict":"verdict court","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}
+      const scoringPrompt = `Tu es expert marketing immobilier. Évalue ces annonces sur 4 critères précis.
 
-Programme Leboncoin titre: ${annonces.leboncoin.titre.substring(0, 100).replace(/"/g, "'")}
-Programme SeLoger titre: ${annonces.seloger.titre.substring(0, 100).replace(/"/g, "'")}
-Programme Site extrait: ${annonces.siteAgence.corps.substring(0, 300).replace(/"/g, "'")}
-Angle: ${angle.substring(0, 100).replace(/"/g, "'")}
-Profil: ${(prospectProfile || "").substring(0, 100).replace(/"/g, "'")}
+ANNONCES À ÉVALUER :
+Leboncoin titre: ${annonces.leboncoin.titre.substring(0, 120).replace(/"/g, "'")}
+Leboncoin extrait: ${annonces.leboncoin.corps.substring(0, 200).replace(/"/g, "'")}
+SeLoger extrait: ${annonces.seloger.corps.substring(0, 200).replace(/"/g, "'")}
+Site extrait: ${annonces.siteAgence.corps.substring(0, 400).replace(/"/g, "'")}
 
-Score /10 : différenciation promoteur (3pts) + cohérence profil (3pts) + données factuelles (2pts) + qualité rédactionnelle (2pts).`;
+ANGLE AGENT: ${angle.substring(0, 80).replace(/"/g, "'")}
+PROFIL PROSPECT: ${(prospectProfile || "").substring(0, 80).replace(/"/g, "'")}
+
+CRITÈRES DE NOTATION (score global = moyenne pondérée) :
+1. Différenciation vs promoteur (3pts) : L'annonce évite-t-elle les formules génériques ? Contient-elle des angles que le promoteur n'utilise pas ?
+2. Cohérence profil prospect (3pts) : L'angle est-il tenu du début à la fin ? Les arguments correspondent-ils exactement au profil ?
+3. Données factuelles sourcées (2pts) : Y a-t-il des prix au m² sourcés, des horaires de train précis, des projets urbains avec sources ? Si oui : 2pts automatiques.
+4. Qualité rédactionnelle (2pts) : L'accroche est-elle inattendue ? Les titres contiennent-ils des chiffres réels ?
+
+BARÈME :
+- 8-10 : Annonces publiables immédiatement, différenciation forte, données sourcées présentes
+- 6-7 : Bonnes annonces avec 1-2 axes d'amélioration identifiés
+- 4-5 : Annonces correctes mais trop proches du discours promoteur
+- 1-3 : Annonces génériques non différenciées
+
+Si les annonces contiennent des données chiffrées sourcées (prix m², horaires train, projets datés) → score minimum 7.
+Si les titres contiennent des chiffres réels → bonus +1 sur qualité rédactionnelle.
+
+Retourne UNIQUEMENT ce JSON (commence par {, termine par }) :
+{"score":8,"verdict":"Une phrase courte et précise","points_forts":["point fort 1 concret","point fort 2 concret","point fort 3 concret"],"suggestions":["amélioration 1 actionnable","amélioration 2 actionnable"]}`;
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
