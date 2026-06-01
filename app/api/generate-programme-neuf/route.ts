@@ -709,6 +709,19 @@ DONNÉES CRITIQUES À INCLURE OBLIGATOIREMENT :
           : [],
       )}
 
+LISTE NOIRE — INFORMATIONS INTERDITES DANS CETTE GÉNÉRATION :
+Ces informations ne sont PAS dans les documents fournis et ne doivent JAMAIS apparaître :
+- Orientation (sud, nord, est, ouest, plein sud, façade sud/est) : NON CONFIRMÉ dans les plans
+- Cuisine équipée (réfrigérateur, lave-vaisselle, lave-linge, four, hotte) : NON CONFIRMÉ dans la plaquette — écrire uniquement "cuisine aménageable (équipements à confirmer avec le promoteur)"
+- Ventilation double flux : NON MENTIONNÉ dans la plaquette
+- Double exposition ou traversant : NON CONFIRMÉ dans les plans
+- Baigné de lumière : EXPRESSION INTERDITE
+- Havre de paix : EXPRESSION INTERDITE
+- Taux d'économie d'énergie chiffrés (divisé par 2, par 3) : NON SOURCÉ
+- Vis-à-vis : NON CONFIRMÉ dans les plans
+
+Ces interdictions sont absolues et priment sur toute autre instruction.
+
 Consignes finales :
 - Adapter chaque annonce au profil acquéreur et à l'angle demandé
 - Ne pas reprendre les formulations marketing du promoteur listées dans les arguments promoteur
