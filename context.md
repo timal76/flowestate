@@ -35,9 +35,9 @@ SaaS d'automatisation pour agents immobiliers.
 - Templates sauvegardés : table Supabase, API CRUD complète, modale save/load, page /templates, intégration boutons dans annonces/emails/comptes-rendus
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
-- Stripe : checkout, plans Starter(30 gen)/Pro(1 user), mensuel + annuel,
+- Stripe : checkout, plans Essentiel / Pro / Expert, mensuel + annuel,
   essai 14 jours, webhooks local + production, portail client
-- Limite 30 générations/mois pour Starter
+- Limites générations : Essentiel 100/mois, Pro et Expert illimités (`lib/check-generation-limit.ts`)
 - Domaine flowestate.fr connecté à Vercel ✅
 - Resend domaine flowestate.fr vérifié ✅
 - SUPABASE_SERVICE_ROLE_KEY ajouté sur Vercel et .env.local ✅
@@ -86,6 +86,25 @@ SaaS d'automatisation pour agents immobiliers.
   - Comptes-rendus de visite générés pour les acheteurs
 - Démarchage agences immobilières Le Havre commencé (20 mai 2026)
 - Feature Programmes neufs (`/programmes-neufs`) : pipeline complet extraction → web search → génération programme/lot, score différenciation /10, bandeau validation
+- CRM Kanban prospects + timeline fiche prospect + toggle Liste/Kanban (juin 2026)
+- Refonte plans tarifaires Essentiel / Pro / Expert + landing, dashboard, historique, tarifs (juin 2026)
+
+## CRM AMÉLIORATIONS (1 juin 2026)
+- Vue Kanban ajoutée : `app/prospects/kanban/page.tsx` avec drag & drop entre colonnes (HTML5 natif, PATCH statut)
+- Timeline prospect ajoutée sur la fiche : chronologie emails / comptes-rendus / relances / création (`app/prospects/[id]/page.tsx`)
+- Toggle Liste / Kanban sur `app/prospects/page.tsx` (lien « Vue Kanban »)
+
+## PLANS ET TARIFS (1 juin 2026)
+- 3 nouveaux plans : **Essentiel** 74,99€/mois (100 gen), **Pro** 149,99€/mois (illimité), **Expert** 299,99€/mois (illimité + Programmes neufs)
+- Price IDs Stripe mis à jour dans `lib/stripe.ts`
+- Programmes neufs réservé au plan Expert avec upgrade wall (`app/programmes-neufs/page.tsx`)
+- `check-generation-limit.ts` mis à jour avec logique Essentiel / Pro / Expert
+
+## PAGES MISES À JOUR (1 juin 2026)
+- **Landing page** (`app/home-client.tsx`) : 4 features + 3 nouveaux plans
+- **Dashboard** (`app/dashboard/page.tsx`) : stat Programmes neufs + accès rapide + plan Essentiel 100 gen
+- **Historique** (`app/historique/page.tsx`) : filtre Programmes neufs ajouté
+- **Tarifs** (`app/tarifs/page.tsx`) : 3 plans avec toggle annuel / mensuel
 
 ## Feature Programmes neufs — État actuel (mai 2026)
 (`app/programmes-neufs/page.tsx` + `app/api/generate-programme-neuf/route.ts`)
@@ -100,6 +119,7 @@ SaaS d'automatisation pour agents immobiliers.
 - Règles prompts : zéro invention, zéro prix sans DVF, zéro orientation non confirmée, cuisine conditionnée, étage R+2 = 2ème étage, TVA conditions exactes plaquette, date livraison mot pour mot
 - Qualité actuelle : 8.5/10 programme global, 9.5/10 lot spécifique
 - Retourne 3 annonces (Leboncoin / SeLoger / Site propre) par mode
+- Accès réservé plan Expert (active / trialing / trial) — écran upgrade si non éligible (juin 2026)
 
 ### TODO restant (Programmes neufs)
 - Génération par lot sans re-upload plaquette
@@ -134,10 +154,10 @@ SaaS d'automatisation pour agents immobiliers.
 - Export statistiques dashboard
 
 ### Phase 3
-- CRM léger, relances programmées, score annonce, multi-langue
+- CRM : Kanban + timeline faits ; relances programmées et score annonce en place ; multi-langue à venir
 
 ### Phase 4
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : mai 2026 (feature Programmes neufs — pipeline et prompts stabilisés)
+- Dernière mise à jour : 1 juin 2026 (CRM Kanban + timeline, plans Essentiel/Pro/Expert, pages landing/dashboard/historique/tarifs)
