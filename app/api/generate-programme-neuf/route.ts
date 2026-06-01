@@ -331,6 +331,10 @@ UTILISATION DES DONNÉES WEB — RÈGLES STRICTES :
 - TAUX D'INTÉRÊT / CONTEXTE MARCHÉ FINANCIER : ne jamais mentionner l'évolution des taux de crédit, contexte macroéconomique ou conjoncture financière — ces informations sont datées et non vérifiables.
 - ÉQUIPEMENTS CUISINE : jamais "lave-vaisselle, lave-linge, réfrigérateur, four" sauf si explicitement dans la plaquette. Écrire "cuisine aménageable (équipements en option — à confirmer avec le promoteur)"
 - ORIENTATION / EXPOSITION : INTERDITS sauf si indiqués explicitement dans les plans avec points cardinaux.
+- "HAVRE DE PAIX" : expression ABSOLUMENT INTERDITE dans toutes les annonces, titres et corps de texte. Remplacer par "refuge normand", "pied-à-terre", "escapade maritime" ou toute formulation originale.
+- VUE MER LOT SPÉCIFIQUE : si l'agent mentionne "vue mer sur X lots" dans les infos complémentaires, ne jamais affirmer que le lot spécifique analysé a la vue mer sauf si explicitement confirmé pour ce lot précis. Écrire "parmi les lots avec vue mer disponibles dans ce programme" sans l'attribuer au lot spécifique.
+- NOMS PROPRES : Auguste Perret (architecte havrais) s'écrit PERRET et non Perrot. Vérifier l'orthographe de tous les noms propres avant de retourner le texte.
+- SOURCES UNESCO : pour toute référence au patrimoine UNESCO du Havre, citer "inscrit au patrimoine mondial de l'UNESCO en 2005" sans source SNCF. La source correcte est l'UNESCO ou la ville du Havre.
 
 STRATÉGIE DE DIFFÉRENCIATION :
 - Utilise les données terrain locales (web search) pour ancrer l'annonce dans la réalité
