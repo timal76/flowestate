@@ -151,6 +151,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   let annoncesCeMois = 0;
   let emailsCeMois = 0;
   let comptesRendusCeMois = 0;
+  let programmesNeufsCeMois = 0;
   let recentGenerations: GenerationRow[] = [];
 
   if (url && key) {
@@ -164,10 +165,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .eq("user_id", userId)
         .gte("created_at", fromIso);
 
-    const [annRes, emailRes, crRes, recentRes] = await Promise.all([
+    const [annRes, emailRes, crRes, pnRes, recentRes] = await Promise.all([
       countThisMonth("annonce"),
       countThisMonth("email"),
       countThisMonth("compte-rendu"),
+      supabase
+        .from("generations")
+        .select("*", { count: "exact", head: true })
+        .eq("type", "programme-neuf")
+        .eq("user_id", userId)
+        .gte("created_at", fromIso),
       supabase
         .from("generations")
         .select("id,type,description,created_at,content")
@@ -182,6 +189,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     else emailsCeMois = emailRes.count ?? 0;
     if (crRes.error) console.error("[dashboard] generations count compte-rendu", crRes.error);
     else comptesRendusCeMois = crRes.count ?? 0;
+    if (pnRes.error) console.error("[dashboard] generations count programme-neuf", pnRes.error);
+    else programmesNeufsCeMois = pnRes.count ?? 0;
 
     if (recentRes.error) {
       console.error("[dashboard] generations recent", recentRes.error);
@@ -191,13 +200,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   const minutesEconomisees =
-    annoncesCeMois * 15 + emailsCeMois * 10 + comptesRendusCeMois * 20;
+    annoncesCeMois * 15 +
+    emailsCeMois * 10 +
+    comptesRendusCeMois * 20 +
+    programmesNeufsCeMois * 45;
   const tempsEconomiseLabel = formatSavedTimeMinutes(minutesEconomisees);
 
   const totalGenCeMois = annoncesCeMois + emailsCeMois + comptesRendusCeMois;
-  const generationsRestantes = Math.max(0, 30 - totalGenCeMois);
+  const generationLimit = userData?.plan === "starter" ? 30 : 100;
+  const generationsRestantes = Math.max(0, generationLimit - totalGenCeMois);
   const showGenerationsRestantesCard =
-    userData?.plan === "starter" && userData?.subscription_status === "active";
+    (userData?.plan === "starter" || userData?.plan === "essentiel") &&
+    userData?.subscription_status === "active";
   const showOnboardingModal = userData?.onboarding_completed !== true;
   const generationsRestantesColorClass =
     generationsRestantes <= 5
@@ -250,7 +264,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <div className="rounded-xl border border-[#C9A96E]/40 bg-[#C9A96E]/15 px-6 py-4 text-[#C9A96E] font-medium">
               <span aria-hidden>⏱</span> Essai gratuit — {trialDaysLeft} jour
               {trialDaysLeft > 1 ? "s" : ""} restant{trialDaysLeft > 1 ? "s" : ""}. Votre plan{" "}
-              {userData.plan === "pro" ? "Pro" : "Starter"} sera activé automatiquement.
+              {userData.plan === "expert"
+                ? "Expert"
+                : userData.plan === "pro"
+                  ? "Pro"
+                  : "Essentiel"}{" "}
+              sera activé automatiquement.
             </div>
           ) : null}
           <p className="text-base capitalize text-[#A0A0A0] md:text-lg">{dateLabel}</p>
@@ -342,6 +361,33 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
             </article>
 
+            <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <span className="text-sm font-medium text-[#A0A0A0]">Programmes neufs</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#C9A96E]/30 bg-[#C9A96E]/10 text-[#C9A96E]">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={18}
+                    height={18}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                </span>
+              </div>
+              <p className="text-3xl font-semibold tracking-tight text-[#B8965A] md:text-4xl">
+                {programmesNeufsCeMois}
+              </p>
+              <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
+            </article>
+
             {showGenerationsRestantesCard ? (
               <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6">
                 <div className="mb-4 flex items-start justify-between gap-3">
@@ -406,7 +452,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         {/* Outils */}
         <section aria-label="Accès rapide aux outils">
           <h2 className="mb-6 text-xl font-semibold text-[#F5F5F0] md:text-2xl">Accès rapide</h2>
-          <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 md:items-stretch">
             <Link
               href="/annonces"
               className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-inherit no-underline outline-none transition-all duration-300 hover:border-[#C9A96E]/75 hover:bg-white/[0.055] hover:shadow-[0_0_32px_-12px_rgba(201,169,110,0.38)] focus-visible:ring-2 focus-visible:ring-[#C9A96E]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] md:h-full"
@@ -500,6 +546,40 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 Accéder <span aria-hidden>→</span>
               </span>
             </Link>
+
+            <Link
+              href="/programmes-neufs"
+              className="flex min-h-0 flex-col rounded-2xl border border-[#C9A96E]/30 bg-[#C9A96E]/5 p-8 text-inherit no-underline outline-none transition-all duration-300 hover:border-[#C9A96E]/75 hover:bg-white/[0.055] hover:shadow-[0_0_32px_-12px_rgba(201,169,110,0.38)] focus-visible:ring-2 focus-visible:ring-[#C9A96E]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] md:h-full"
+            >
+              <div className="mb-4 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
+                Plan Expert
+              </div>
+              <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={22}
+                  height={22}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <h3 className="mb-3 text-xl font-semibold">Programmes neufs</h3>
+              <p className="mb-8 flex-1 text-sm leading-relaxed text-[#A0A0A0]">
+                Analysez une plaquette promoteur PDF et générez 6 annonces différenciantes pour
+                Leboncoin, SeLoger et votre site.
+              </p>
+              <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-[#B8965A]">
+                Accéder <span aria-hidden>→</span>
+              </span>
+            </Link>
           </div>
         </section>
 
@@ -516,10 +596,38 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <ClickableGenerationsList
               items={recentGenerations.map((row): ClickableGenerationItem => {
                 const description = row.description?.trim() || "Génération enregistrée";
-                const full =
-                  row.content?.trim() ||
-                  row.description?.trim() ||
-                  "Aucun contenu détaillé disponible pour cette génération.";
+                const full = (() => {
+                  if (row.type === "programme-neuf" && row.content) {
+                    try {
+                      const parsed = JSON.parse(row.content) as {
+                        leboncoin?: { titre?: string; corps?: string };
+                        seloger?: { titre?: string; corps?: string };
+                        siteAgence?: { titre?: string; corps?: string };
+                      };
+                      const parts: string[] = [];
+                      if (parsed.leboncoin?.titre)
+                        parts.push(
+                          `LEBONCOIN\n${parsed.leboncoin.titre}\n\n${parsed.leboncoin.corps || ""}`,
+                        );
+                      if (parsed.seloger?.titre)
+                        parts.push(
+                          `SELOGER\n${parsed.seloger.titre}\n\n${parsed.seloger.corps || ""}`,
+                        );
+                      if (parsed.siteAgence?.titre)
+                        parts.push(
+                          `SITE PROPRE\n${parsed.siteAgence.titre}\n\n${parsed.siteAgence.corps || ""}`,
+                        );
+                      return parts.join("\n\n---\n\n") || row.content;
+                    } catch {
+                      return row.content;
+                    }
+                  }
+                  return (
+                    row.content?.trim() ||
+                    row.description?.trim() ||
+                    "Aucun contenu détaillé disponible pour cette génération."
+                  );
+                })();
                 return {
                   id: row.id,
                   type: row.type,
