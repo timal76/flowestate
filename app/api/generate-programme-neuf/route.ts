@@ -591,7 +591,7 @@ export async function POST(request: Request) {
       (address?.toLowerCase().includes("havre") ?? false) ||
       (address?.toLowerCase().includes("76600") ?? false);
 
-    const hardcodedData = isLeHavre ? getLeHavreDataForPrompt(quartier) : null;
+    const hardcodedData = isLeHavre ? getLeHavreDataForPrompt(quartier, prospectProfile) : null;
 
     const nomResidence =
       typeof extractedData.nom === "string"

@@ -79,6 +79,70 @@ export const LEHAVRE_DATA = {
       "Docks Vauban — centre commercial et loisirs",
     ],
   },
+  services_medicaux: {
+    groupe_hospitalier_havre: {
+      nom: "Groupe Hospitalier du Havre (GHH)",
+      sites: [
+        "Hôpital Jacques Monod — 29 avenue Pierre Mendès France, 76290 Montivilliers (urgences adultes et pédiatriques, chirurgie, maternité, 24h/24)",
+        "Hôpital Flaubert — Le Havre (gériatrie, psychiatrie, soins longue durée)",
+        "Hôpital Pierre Janet — Le Havre (psychiatrie)",
+        "Clinique des Ormeaux — Le Havre (200 lits, urgences 24h/24, chirurgie, plateau technique complet)",
+      ],
+      source: "GHH ch-havre.fr / FHF 2024",
+    },
+    urgences:
+      "Urgences adultes : Hôpital Jacques Monod (Montivilliers) ou Clinique des Ormeaux (Le Havre) — toutes deux 24h/24",
+  },
+  marches: {
+    liste: [
+      {
+        nom: "Marché Thiers",
+        lieu: "Place Thiers / Avenue René Coty",
+        horaires: "Vendredi matin 7h30 à 13h30",
+        type: "Alimentaire — poissons, volailles, produits laitiers, charcuterie, huîtres",
+        source: "lehavre.fr",
+      },
+      {
+        nom: "Halles Centrales du Havre",
+        lieu: "14 Place des Halles Centrales",
+        horaires: "Ouvert tous les jours de la semaine",
+        type: "Marché couvert permanent — 22 commerçants, primeur, poisson, boucherie, fromagerie, boulangerie",
+        source: "Pages Jaunes / lehavre.fr",
+      },
+      {
+        nom: "Marché aux Poissons",
+        lieu: "Quai de l'Île",
+        horaires: "8h30 à 13h30 (sauf avis de tempête)",
+        type: "Poissons et fruits de mer normands",
+        source: "lehavre.fr",
+      },
+      {
+        nom: "Marché de Graville",
+        lieu: "Place de la Médaille Militaire",
+        horaires: "7h30 à 13h30",
+        type: "Alimentaire",
+        source: "lehavre.fr",
+      },
+    ],
+    note: "Gastronomie normande : huîtres, coquilles Saint-Jacques, soles, harengs, fromages, cidre disponibles sur les marchés",
+  },
+  gastronomie: {
+    specialites: [
+      "Huîtres",
+      "Coquilles Saint-Jacques (saison automne-hiver)",
+      "Soles",
+      "Harengs fumés",
+      "Fromages normands (Camembert, Livarot, Pont-l'Évêque)",
+      "Cidre normand",
+    ],
+    cafe: "Le Havre est le premier port importateur de café en France (60% du trafic national)",
+    source: "Office du tourisme Le Havre / Ville du Havre",
+  },
+  monet: {
+    lien: "Claude Monet est né au Havre en 1840. Il a peint le port et la lumière havraise de nombreuses fois, dont l'œuvre fondatrice de l'impressionnisme 'Impression, soleil levant' (1872) représentant le port du Havre.",
+    musee: "MuMa (Musée d'Art Moderne André Malraux) — une des plus grandes collections impressionnistes de France",
+    source: "MuMa Le Havre / Ville du Havre",
+  },
   transports: {
     train_paris: {
       trajet: "2h05 minimum (Intercités/TER Normandie)",
@@ -104,13 +168,23 @@ export const LEHAVRE_DATA = {
   },
 } as const;
 
-export function getLeHavreDataForPrompt(quartier?: string): string {
+export function getLeHavreDataForPrompt(quartier?: string, prospectProfile?: string): string {
   const data = LEHAVRE_DATA;
 
   const quartierData =
     quartier?.toLowerCase().includes("arcole") || quartier?.toLowerCase().includes("brindeau")
       ? data.quartier_arcole_brindeau
       : null;
+
+  const isRetraite =
+    prospectProfile?.toLowerCase().includes("retrait") ||
+    prospectProfile?.toLowerCase().includes("senior") ||
+    prospectProfile?.toLowerCase().includes("résidence secondaire");
+
+  const isInvestisseur =
+    prospectProfile?.toLowerCase().includes("invest") ||
+    prospectProfile?.toLowerCase().includes("locatif") ||
+    prospectProfile?.toLowerCase().includes("rendement");
 
   return `
 DONNÉES OFFICIELLES VÉRIFIÉES — LE HAVRE (à utiliser directement dans les annonces) :
@@ -155,6 +229,39 @@ CHIFFRES OFFICIELS (source : Ville du Havre) :
 - ${data.chiffres_ville.littoral} de littoral
 - ${data.chiffres_ville.espaces_verts}
 - ${data.chiffres_ville.ecoles_publiques} écoles publiques, ${data.chiffres_ville.ecoles_privees} écoles privées
+
+${
+  isRetraite
+    ? `
+SERVICES MÉDICAUX (source : GHH ch-havre.fr) :
+- Groupe Hospitalier du Havre (GHH) : urgences adultes 24h/24 à l'Hôpital Jacques Monod (Montivilliers) et Clinique des Ormeaux (Le Havre)
+- Services disponibles : cardiologie, gériatrie, chirurgie, maternité, oncologie, imagerie
+
+MARCHÉS ET VIE LOCALE (source : lehavre.fr) :
+- Halles Centrales : 14 Place des Halles Centrales, ouvertes tous les jours, 22 commerçants permanents
+- Marché Thiers : Place Thiers, vendredi matin 7h30-13h30, spécialité poissons et huîtres
+- Marché aux Poissons : Quai de l'Île, 8h30-13h30
+- Gastronomie normande : huîtres, coquilles Saint-Jacques, fromages, cidre
+
+CULTURE ET PATRIMOINE :
+- Claude Monet né au Havre en 1840 — "Impression, soleil levant" (1872) peint depuis le port du Havre, œuvre fondatrice de l'impressionnisme
+- MuMa : une des plus grandes collections impressionnistes de France
+- Le Havre premier port importateur de café en France (60% du trafic national)
+`
+    : ""
+}
+
+${
+  isInvestisseur
+    ? `
+DONNÉES INVESTISSEMENT (sources officielles) :
+- Loyer médian T3 : ${data.marche_locatif.par_type.T3.loyer_median_m2}€/m² soit environ ${Math.round(data.marche_locatif.par_type.T3.loyer_median_m2 * data.marche_locatif.par_type.T3.surface_moyenne)}€/mois (source : Observatoire Clameur / SeLoger 2026)
+- Evolution loyers : ${data.marche_locatif.evolution}
+- 20 000 étudiants sur l'agglomération = demande locative étudiante structurelle
+- Port autonome = salariés en mobilité, demande locative stable toute l'année
+`
+    : ""
+}
 
 RÈGLE D'UTILISATION : Ces données sont officielles et vérifiées. Tu peux les citer directement avec leur source entre parenthèses. Ne jamais inventer de données supplémentaires.
 `.trim();
