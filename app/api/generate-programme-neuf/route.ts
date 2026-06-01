@@ -353,6 +353,9 @@ Avant de retourner les annonces, vérifier :
 - PINEL HORS ANGLE INVESTISSEUR : si l'angle ou le profil prospect contient "retraite", "résidence secondaire", "pied-à-terre", "senior", "bord de mer", ne jamais mentionner le dispositif Pinel ni le rendement locatif. Ces mentions sont INTERDITES sur ces angles.
 - TRAIN PARIS-LE HAVRE : la liaison Paris Saint-Lazare - Le Havre est un Intercités ou TER Normandie. Ne jamais écrire "TGV" pour cette liaison. Écrire "train direct" ou "Intercités".
 - TARIFS TRANSPORT : ne jamais indiquer de prix de billets de train sans source officielle SNCF confirmée. Écrire "tarifs variables selon disponibilités — voir sncf-connect.com" si nécessaire.
+- RE2020 ÉCONOMIES : ne jamais écrire "factures divisées par X" sans source officielle. Écrire uniquement "charges énergétiques maîtrisées grâce aux normes RE2020" ou "performance énergétique optimisée RE2020".
+- VIS-À-VIS : ne jamais affirmer "sans vis-à-vis" ou "vue dégagée" sauf si explicitement confirmé dans les plans ou documents fournis.
+- "HAVRE DE PAIX" : cette expression reste INTERDITE sous toutes ses formes. "Votre havre normand" ou "refuge normand" sont acceptés car ils font référence à la ville.
 
 STRATÉGIE DE DIFFÉRENCIATION :
 - Utilise les données terrain locales (web search) pour ancrer l'annonce dans la réalité
