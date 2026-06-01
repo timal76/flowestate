@@ -896,22 +896,37 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
 
     let scoring = null;
     try {
-      const scoringInput = `{"annonces":{"leboncoin_titre":"${annonces.leboncoin.titre.replace(/"/g, "'")}","seloger_titre":"${annonces.seloger.titre.replace(/"/g, "'")}","site_titre":"${annonces.siteAgence.titre.replace(/"/g, "'")}","leboncoin_extrait":"${annonces.leboncoin.corps.substring(0, 150).replace(/"/g, "'")}"},"angle":"${angle.replace(/"/g, "'")}","profil":"${(prospectProfile || "").replace(/"/g, "'")}","arguments_promoteur":${JSON.stringify((Array.isArray(extractedData.arguments_promoteur) ? extractedData.arguments_promoteur : []).slice(0, 3))}}`;
+      const scoringPrompt = `Tu es un expert en marketing immobilier. Évalue ces annonces selon des critères professionnels réalistes.
 
-      const scoringSystemPrompt = `Tu es un expert en marketing immobilier. Tu évalues des annonces immobilières.
-Retourne UNIQUEMENT ce JSON valide, rien d'autre, pas de backtick, pas de texte :
-{"score":7,"verdict":"verdict en une phrase","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}`;
+ANNONCES COMPLÈTES :
+Programme Leboncoin: ${annonces.leboncoin.titre}
+${annonces.leboncoin.corps.substring(0, 400)}
+
+Programme SeLoger: ${annonces.seloger.titre}
+${annonces.seloger.corps.substring(0, 400)}
+
+Programme Site: ${annonces.siteAgence.titre}
+${annonces.siteAgence.corps.substring(0, 600)}
+
+ANGLE : ${angle}
+PROFIL : ${prospectProfile || "Non précisé"}
+ARGUMENTS PROMOTEUR À ÉVITER : ${JSON.stringify(extractedData.arguments_promoteur || []).substring(0, 200)}
+
+Critères /10 :
+- Différenciation vs promoteur (3pts) : utilise-t-il des données et angles que le promoteur n'a pas ?
+- Cohérence profil prospect (3pts) : parle-t-il vraiment au prospect cible du début à la fin ?
+- Données factuelles vérifiées (2pts) : prix au m², sources officielles, chiffres concrets présents ?
+- Qualité rédactionnelle (2pts) : accroche mémorable, structure claire, zéro cliché ?
+
+IMPORTANT : Si l'annonce contient des prix au m² sourcés, des données officielles citées, des projets urbains avec sources — donner au moins 7/10 sur le critère données factuelles. Une annonce qui tient son angle prospect du début à la fin mérite au moins 7/10 global.
+
+Retourne UNIQUEMENT ce JSON, commence par { :
+{"score":7,"verdict":"Une phrase courte","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}`;
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
         max_tokens: 350,
-        system: scoringSystemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: `Évalue ces annonces immobilières selon ces critères (10pts total) : différenciation vs promoteur (3pts), cohérence profil prospect (3pts), données factuelles réelles (2pts), qualité rédactionnelle (2pts). Données : ${scoringInput}`,
-          },
-        ],
+        messages: [{ role: "user", content: scoringPrompt }],
       });
 
       if (scoringCall.response.ok) {
