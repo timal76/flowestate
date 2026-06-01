@@ -333,6 +333,11 @@ export default function ProgrammesNeufsPage() {
       const payload = (await response.json()) as GeneratedResult & { error?: string };
 
       if (!response.ok) {
+        if (response.status === 403 && payload?.error?.includes("plan Expert")) {
+          setGenerationError("plan Expert");
+          toast.error("Cette feature est réservée au plan Expert.");
+          return;
+        }
         toast.error(payload.error || "Erreur lors de la génération.");
         return;
       }
@@ -424,6 +429,9 @@ export default function ProgrammesNeufsPage() {
           const message = "Le service est momentanément surchargé. Réessayez dans quelques secondes.";
           setGenerationError(message);
           toast.error(message);
+        } else if (response.status === 403 && payload?.error?.includes("plan Expert")) {
+          setGenerationError("plan Expert");
+          toast.error("Cette feature est réservée au plan Expert.");
         } else {
           const message = payload.error || "Une erreur est survenue. Veuillez réessayer.";
           setGenerationError(message);
@@ -872,7 +880,21 @@ export default function ProgrammesNeufsPage() {
             <div className="flex h-full min-h-[20rem] flex-col rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8 lg:min-h-0">
               <h2 className="text-xl font-semibold text-[#F5F5F0]">Vos annonces</h2>
 
-              {generationError ? (
+              {generationError?.includes("plan Expert") ? (
+                <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-[#C9A96E]/30 bg-[#C9A96E]/5 p-8 text-center">
+                  <p className="text-lg font-semibold text-[#F5F5F0]">Feature réservée au plan Expert</p>
+                  <p className="mt-2 text-sm text-[#A0A0A0]">
+                    La génération d&apos;annonces depuis une plaquette promoteur est disponible
+                    uniquement avec le plan Expert.
+                  </p>
+                  <a
+                    href="/tarifs"
+                    className="mt-6 inline-flex items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90"
+                  >
+                    Voir le plan Expert
+                  </a>
+                </div>
+              ) : generationError ? (
                 <div
                   role="alert"
                   className="mt-8 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200"
