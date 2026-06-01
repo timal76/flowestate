@@ -174,6 +174,11 @@ UTILISATION DES DONNÉES WEB — RÈGLES STRICTES :
 - ÉTAGE : R+2 = 2ème étage en français. Ne jamais écrire "3ème étage" pour un lot au R+2. Utiliser exactement "2ème étage (R+2)".
 - ZÉRO INVENTION ABSOLUE : toute information non présente dans les documents fournis ou les données web vérifiées doit être omise. En cas de doute, omettre plutôt qu'approximer.
 - ZÉRO FAUTE D'ORTHOGRAPHE, de grammaire, de typographie et d'accord — relis intégralement avant de retourner.
+- SALLE DE BAIN : utiliser uniquement ce qui est indiqué dans les plans. Si le plan mentionne "paroi douche" ou "douche italienne", écrire uniquement "douche à l'italienne". Ne jamais écrire "baignoire" sauf si explicitement indiqué dans les documents.
+- CONSTAT DE MARCHÉ / TENDANCE OBSERVÉE : ces formules sont INTERDITES sans chiffre officiel sourcé (DVF, observatoire des loyers, INSEE). Les remplacer par des faits concrets tirés des documents ou supprimer.
+- TAUX D'INTÉRÊT / CONTEXTE MARCHÉ FINANCIER : ne jamais mentionner l'évolution des taux de crédit, contexte macroéconomique ou conjoncture financière — ces informations sont datées et non vérifiables.
+- ÉQUIPEMENTS CUISINE : jamais "lave-vaisselle, lave-linge, réfrigérateur, four" sauf si explicitement dans la plaquette. Écrire "cuisine aménageable (équipements en option — à confirmer avec le promoteur)"
+- ORIENTATION / EXPOSITION : INTERDITS sauf si indiqués explicitement dans les plans avec points cardinaux.
 
 STRATÉGIE DE DIFFÉRENCIATION :
 - Utilise les données terrain locales (web search) pour ancrer l'annonce dans la réalité
@@ -623,34 +628,40 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
 
     let scoring = null;
     try {
-      const scoringPrompt = `Tu es un expert en marketing immobilier. Analyse ces annonces et retourne UNIQUEMENT ce JSON sans markdown :
-{"score":8,"verdict":"Une phrase de verdict","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}
+      const scoringPrompt = `Analyse ces annonces immobilières et retourne UNIQUEMENT ce JSON valide sans aucun texte avant ou après, commence par { :
+{"score":7,"verdict":"Une phrase courte de verdict","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}
 
-ANNONCES :
-${JSON.stringify(annonces, null, 2)}
+ANNONCES PROGRAMME :
+Leboncoin: ${programmeAnnonces.leboncoin.titre} — ${programmeAnnonces.leboncoin.corps.substring(0, 200)}
+SeLoger: ${programmeAnnonces.seloger.titre} — ${programmeAnnonces.seloger.corps.substring(0, 200)}
+Site: ${programmeAnnonces.siteAgence.titre} — ${programmeAnnonces.siteAgence.corps.substring(0, 200)}
 
 ANGLE : ${angle}
-PROFIL PROSPECT : ${prospectProfile || "Non précisé"}
-ARGUMENTS PROMOTEUR À ÉVITER : ${JSON.stringify(extractedData.arguments_promoteur || [])}
+ARGUMENTS PROMOTEUR À ÉVITER : ${JSON.stringify(extractedData.arguments_promoteur || []).substring(0, 200)}
 
-Critères de scoring :
-- Différenciation vs angle promoteur (3 points)
-- Ancrage dans les données réelles et vérifiées (3 points)
-- Adaptation au profil prospect (2 points)
-- Qualité rédactionnelle et accroche (2 points)
+Critères scoring /10 :
+- Différenciation vs promoteur (3pts)
+- Données réelles vérifiées (3pts)  
+- Adaptation profil prospect (2pts)
+- Qualité rédactionnelle (2pts)
 
 Retourne uniquement le JSON. Commence par {`;
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
+        max_tokens: 400,
         messages: [{ role: "user", content: scoringPrompt }],
       });
 
       if (scoringCall.response.ok) {
         const scoringText = extractTextFromAnthropic(scoringCall.json);
-        console.log("SCORING RAW:", scoringText?.substring(0, 300));
-        scoring = parseJsonFromText(scoringText);
+        console.log("SCORING RAW:", scoringText?.substring(0, 200));
+        try {
+          scoring = parseJsonFromText(scoringText);
+        } catch (e) {
+          console.error("SCORING PARSE ERROR:", e, scoringText?.substring(0, 100));
+          scoring = null;
+        }
       }
     } catch (e) {
       console.error("SCORING ERROR:", e);
