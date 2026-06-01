@@ -851,20 +851,30 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
         : "Programme neuf");
     const generationDescription = `Programme neuf — ${residenceLabel} — ${ville}`.replace(/\s+/g, " ").trim();
 
-    const recordContent = JSON.stringify({
-      programme: programmeAnnonces,
-      lot: lotAnnonces,
-    });
-
-    await recordGenerationFromRequest(request, {
-      type: "programme-neuf",
-      description: generationDescription,
-      prospectName: null,
-      prospectId: null,
-      content: recordContent,
-    });
-
     const annonces = lotAnnonces ?? programmeAnnonces;
+
+    console.log("[programme-neuf] attempting to record generation for userId:", effectiveUserId);
+
+    const recordContent = JSON.stringify({
+      leboncoin: annonces.leboncoin,
+      seloger: annonces.seloger,
+      siteAgence: annonces.siteAgence,
+    });
+
+    console.log("[programme-neuf] content length:", recordContent.length);
+
+    try {
+      await recordGenerationFromRequest(request, {
+        type: "programme-neuf",
+        description: generationDescription,
+        prospectName: null,
+        prospectId: null,
+        content: recordContent.substring(0, 10000),
+      });
+      console.log("[programme-neuf] generation recorded successfully");
+    } catch (e) {
+      console.error("[programme-neuf] recordGeneration failed:", e);
+    }
 
     let scoring = null;
     try {
