@@ -127,6 +127,158 @@ function compactExtractedData(data: Record<string, unknown>): Record<string, unk
   return result;
 }
 
+function buildWebSearchPrompt(
+  ville: string,
+  quartier: string,
+  address: string,
+  angle: string,
+  prospectProfile: string,
+): string {
+  const location = `${ville}${quartier ? `, ${quartier}` : ""}${address ? `, ${address}` : ""}`;
+
+  // Détection du profil dominant
+  const angleLC = (angle + " " + prospectProfile).toLowerCase();
+
+  const isRetraite =
+    angleLC.includes("retrait") ||
+    angleLC.includes("senior") ||
+    angleLC.includes("personnes âgées") ||
+    angleLC.includes("bord de mer") ||
+    angleLC.includes("résidence secondaire");
+
+  const isInvestisseur =
+    angleLC.includes("invest") ||
+    angleLC.includes("pinel") ||
+    angleLC.includes("lmnp") ||
+    angleLC.includes("rendement") ||
+    angleLC.includes("locatif") ||
+    angleLC.includes("rentabil");
+
+  const isFamille =
+    angleLC.includes("famil") ||
+    angleLC.includes("enfant") ||
+    angleLC.includes("école") ||
+    angleLC.includes("primo") ||
+    angleLC.includes("accédant");
+
+  const isResidenceSecondaire =
+    angleLC.includes("résidence secondaire") ||
+    angleLC.includes("pied-à-terre") ||
+    angleLC.includes("week-end") ||
+    angleLC.includes("vacances");
+
+  let specificSearches = "";
+  let specificFields = "";
+
+  if (isRetraite) {
+    specificSearches = `
+RECHERCHES PRIORITAIRES PROFIL RETRAITÉ :
+1. Services médicaux : "médecins généralistes ${location}" OR "cabinet médical ${ville} ${quartier}" OR "hôpital ${ville} distance"
+2. Mobilité sans voiture : "bus ${ville} ${quartier} fréquence" OR "lignes bus ${ville} site:reseau-astuce.fr"
+3. Activités seniors : "associations seniors ${ville}" OR "clubs retraités ${ville}" OR "activités personnes âgées ${ville}"
+4. Qualité de vie : "espaces verts ${ville} ${quartier}" OR "promenades bord mer ${ville}" OR "plages ${ville} accessibilité PMR"
+5. Commerces de proximité : "marché ${ville} ${quartier} horaires" OR "commerces alimentaires ${ville} ${quartier}"`;
+
+    specificFields = `
+  "services_medicaux_proximite": null,
+  "mobilite_sans_voiture": null,
+  "activites_seniors": null,
+  "espaces_verts_promenades": null,
+  "marches_commerces_proximite": null,
+  "accessibilite_pmr": null,`;
+  }
+
+  if (isInvestisseur) {
+    specificSearches = `
+RECHERCHES PRIORITAIRES PROFIL INVESTISSEUR :
+1. Prix marché : "prix m2 ${ville} ${quartier} DVF 2024" OR site:dvf.gouv.fr "${ville}"
+2. Loyers officiels : "loyer median ${ville} T3 observatoire 2024" OR site:observatoires-des-loyers.fr "${ville}"
+3. Demande locative : "vacance locative ${ville} 2024" OR "tension locative ${ville}" OR site:insee.fr "${ville} logement"
+4. Projets valorisation : "projet urbain ${ville} ${quartier} 2025 2026" OR site:lehavre.fr "Arcole Brindeau"
+5. Rendement : "rendement locatif ${ville} neuf 2024" OR "investissement immobilier ${ville} rentabilité"`;
+
+    specificFields = `
+  "prix_m2_dvf": null,
+  "source_prix": null,
+  "loyer_median_officiel": null,
+  "source_loyers": null,
+  "taux_vacance_locative": null,
+  "projets_valorisation": null,
+  "rendement_moyen_secteur": null,`;
+  }
+
+  if (isFamille) {
+    specificSearches = `
+RECHERCHES PRIORITAIRES PROFIL FAMILLE/PRIMO-ACCÉDANT :
+1. Écoles : "écoles maternelles élémentaires ${ville} ${quartier} distance" OR "carte scolaire ${ville} ${quartier}"
+2. Crèches : "crèches ${ville} ${quartier}" OR "halte garderie ${ville} ${quartier}"
+3. Espaces jeux : "aires de jeux ${ville} ${quartier}" OR "parcs familiaux ${ville} ${quartier}"
+4. Transports scolaires : "transport scolaire ${ville}" OR "bus scolaire ${ville}"
+5. Sécurité : "quartier familial ${ville} ${quartier}" OR "sécurité ${ville} ${quartier} statistiques"`;
+
+    specificFields = `
+  "ecoles_maternelles_primaires": null,
+  "colleges_lycees": null,
+  "creches_proximite": null,
+  "aires_jeux_parcs": null,
+  "transport_scolaire": null,`;
+  }
+
+  if (isResidenceSecondaire) {
+    specificSearches = `
+RECHERCHES PRIORITAIRES RÉSIDENCE SECONDAIRE :
+1. Accessibilité Paris : "train ${ville} Paris horaires fréquence" OR site:sncf.com "${ville} Paris"
+2. Activités loisirs : "activités nautiques ${ville}" OR "sports bord mer ${ville}" OR "loisirs ${ville} tourisme"
+3. Restaurants gastronomie : "restaurants ${ville} ${quartier} fruits de mer" OR "gastronomie normande ${ville}"
+4. Culture patrimoine : "musées ${ville}" OR "patrimoine UNESCO ${ville}" OR "visites culturelles ${ville}"
+5. Location saisonnière potentiel : "location saisonnière ${ville} prix semaine" OR "Airbnb ${ville} rentabilité"`;
+
+    specificFields = `
+  "accessibilite_paris": null,
+  "activites_nautiques_loisirs": null,
+  "restaurants_gastronomie": null,
+  "culture_patrimoine": null,
+  "potentiel_location_saisonniere": null,`;
+  }
+
+  // Si aucun profil détecté, recherches génériques
+  if (!isRetraite && !isInvestisseur && !isFamille && !isResidenceSecondaire) {
+    specificSearches = `
+RECHERCHES GÉNÉRALES :
+1. "prix m2 ${location} 2024" OR site:dvf.gouv.fr
+2. "commerces services ${location}"
+3. "transports ${location} bus tram"
+4. "projets urbains ${ville} 2025" OR site:lehavre.fr
+5. "qualité de vie ${ville} ${quartier}"`;
+
+    specificFields = `
+  "prix_m2": null,
+  "commerces": null,
+  "transports": null,
+  "projets_urbains": null,`;
+  }
+
+  return `Tu es un analyste immobilier rigoureux. Effectue des recherches ciblées pour enrichir une annonce immobilière.
+
+LOCALISATION : ${location}
+ANGLE AGENT : ${angle}
+PROFIL PROSPECT : ${prospectProfile}
+
+${specificSearches}
+
+RÈGLES ABSOLUES :
+- Cite la source exacte pour chaque donnée chiffrée
+- Niveau de certitude : (CERTIFIÉ source officielle) ou (PROBABLE source reconnue) ou null si introuvable
+- INTERDIT : estimations personnelles, pourcentages sans source, "constat de marché observé"
+- Maximum 3 recherches web, sois précis et concis
+
+Retourne un JSON sans markdown :
+{${specificFields}
+  "donnees_communes": null,
+  "avertissements": []
+}`;
+}
+
 const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
 
 Format exact :
@@ -186,6 +338,33 @@ STRATÉGIE DE DIFFÉRENCIATION :
 - Construis l'annonce autour du profil acquéreur cible : ce qui change concrètement dans SA vie
 - Privilégie les faits précis et chiffrés aux adjectifs creux
 - L'accroche doit être inattendue — jamais commencer par le nom de la résidence ou le type de bien
+
+ADAPTATION AU PROFIL PROSPECT — RÈGLE ABSOLUE :
+L'angle et le profil prospect définis par l'agent immobilier sont LA priorité absolue de chaque annonce. Toutes les informations (web, plaquette, annexes) doivent être filtrées et présentées uniquement sous l'angle du profil prospect.
+
+PROFIL RETRAITÉ/SENIOR : 
+- Mettre en avant services médicaux, mobilité sans voiture, accessibilité PMR, activités culturelles, espaces verts, sécurité
+- Ton rassurant et humain, projections sur le quotidien paisible
+- Arguments : "douche à l'italienne (sécurité)", "volets électriques (confort)", "domotique (facilité du quotidien)", "stationnement inclus (indépendance)"
+- Ne jamais mentionner rendement locatif, Pinel, investissement dans les annonces orientées retraite
+
+PROFIL INVESTISSEUR :
+- Mettre en avant prix au m² DVF, loyers médians officiels, dispositifs fiscaux, potentiel de valorisation
+- Ton factuel et chiffré, arguments de rentabilité vérifiables
+- Arguments : rendement, fiscalité, vacance locative, valorisation quartier
+- Ne jamais mentionner lifestyle ou émotions
+
+PROFIL FAMILLE/PRIMO-ACCÉDANT :
+- Mettre en avant écoles, crèches, espaces de jeux, sécurité du quartier, transport scolaire
+- Ton chaleureux et concret sur le quotidien familial
+- Arguments : PTZ, frais notaire réduits, espace extérieur pour les enfants
+
+PROFIL RÉSIDENCE SECONDAIRE :
+- Mettre en avant accessibilité Paris, loisirs, gastronomie normande, culture, activités nautiques
+- Ton aspirationnel sur les week-ends et vacances
+- Arguments : train direct Paris, plage, patrimoine UNESCO, pack domotique pour gestion à distance
+
+Ne jamais mélanger les angles dans une même annonce. L'angle défini par l'agent est UNIQUE et EXCLUSIF du début à la fin.
 
 ANNONCE 1 — LEBONCOIN :
 - Titre : 60 caractères max, percutant, sans majuscules excessives
@@ -359,10 +538,13 @@ export async function POST(request: Request) {
             ? extractedData["nom de la résidence"]
             : "";
 
-    const webSearchPrompt = `Recherche rapide et concise sur ${ville} ${quartier || ""} ${address || ""}.
-Retourne UNIQUEMENT ce JSON sans markdown, ultra concis :
-{"prix_m2_dvf":null,"loyer_median_m2":null,"source_loyers":null,"projets_officiels":[],"commerces_500m":[],"transports":[],"avertissements":[]}
-Utilise uniquement des sources officielles. Maximum 3 recherches web. Sois bref.`;
+    const webSearchPrompt = buildWebSearchPrompt(
+      ville,
+      quartier,
+      address,
+      angle,
+      prospectProfile || "",
+    );
 
     const webSearchCall = await callAnthropicWithRetry(apiKey, {
       model: "claude-sonnet-4-5",
