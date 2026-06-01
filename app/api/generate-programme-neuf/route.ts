@@ -808,30 +808,31 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
       content: recordContent,
     });
 
-    const annonces = lotAnnonces
-      ? { programme: programmeAnnonces, lot: lotAnnonces }
-      : programmeAnnonces;
+    const annonces = lotAnnonces ?? programmeAnnonces;
 
     let scoring = null;
     try {
-      const scoringPrompt = `Analyse ces annonces immobilières et retourne UNIQUEMENT ce JSON valide sans aucun texte avant ou après, commence par { :
-{"score":7,"verdict":"Une phrase courte de verdict","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}
+      const scoringPrompt = `Tu es un expert en rédaction immobilière. Évalue ces annonces selon des critères réalistes et professionnels.
 
-ANNONCES PROGRAMME :
-Leboncoin: ${programmeAnnonces.leboncoin.titre} — ${programmeAnnonces.leboncoin.corps.substring(0, 200)}
-SeLoger: ${programmeAnnonces.seloger.titre} — ${programmeAnnonces.seloger.corps.substring(0, 200)}
-Site: ${programmeAnnonces.siteAgence.titre} — ${programmeAnnonces.siteAgence.corps.substring(0, 200)}
+ANNONCES :
+Leboncoin: ${annonces.leboncoin.titre} — ${annonces.leboncoin.corps.substring(0, 300)}
+SeLoger: ${annonces.seloger.titre} — ${annonces.seloger.corps.substring(0, 300)}
+Site: ${annonces.siteAgence.titre} — ${annonces.siteAgence.corps.substring(0, 300)}
 
 ANGLE : ${angle}
+PROFIL PROSPECT : ${prospectProfile || "Non précisé"}
 ARGUMENTS PROMOTEUR À ÉVITER : ${JSON.stringify(extractedData.arguments_promoteur || []).substring(0, 200)}
 
-Critères scoring /10 :
-- Différenciation vs promoteur (3pts)
-- Données réelles vérifiées (3pts)  
-- Adaptation profil prospect (2pts)
-- Qualité rédactionnelle (2pts)
+Critères de scoring adaptés au contexte immobilier neuf /10 :
+- Différenciation vs discours promoteur standard (3pts) : l'annonce dit-elle autre chose que la plaquette ?
+- Cohérence avec le profil prospect et l'angle (3pts) : l'annonce parle-t-elle vraiment au prospect cible ?
+- Ancrage factuel et données réelles (2pts) : présence de faits concrets, distances, données vérifiables
+- Qualité rédactionnelle et accroche (2pts) : accroche mémorable, structure claire, zéro cliché
 
-Retourne uniquement le JSON. Commence par {`;
+IMPORTANT : Note de manière juste et encourageante. Une annonce qui tient bien son angle prospect, utilise des données réelles de la plaquette et évite les clichés mérite un 7 ou 8. Réserve les notes basses (< 6) aux annonces vraiment génériques ou incohérentes avec le profil. Réserve le 9-10 aux annonces exceptionnellement différenciantes avec données officielles sourcées.
+
+Retourne UNIQUEMENT ce JSON sans texte avant ou après, commence par { :
+{"score":7,"verdict":"Une phrase courte de verdict","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion concrète 1","suggestion concrète 2","suggestion concrète 3"]}`;
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
