@@ -54,10 +54,10 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-7xl">
           <div className="mb-14 max-w-2xl space-y-4">
             <h2 className="text-3xl font-semibold md:text-4xl">Automatisez l&apos;essentiel, gardez l&apos;humain.</h2>
-            <p className="mt-4 text-[#A0A0A0]">Trois modules pensés pour les agences exigeantes.</p>
+            <p className="mt-4 text-[#A0A0A0]">Quatre modules pensés pour les agences exigeantes.</p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 md:items-stretch">
             <Link href="/annonces" className={featureCardClass}>
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
@@ -135,6 +135,38 @@ export default function HomePage() {
                 et acquéreurs.
               </p>
             </Link>
+
+            <Link
+              href="/programmes-neufs"
+              className={featureCardClass}
+              style={{ border: "1px solid rgba(201,169,110,0.3)", background: "rgba(201,169,110,0.03)" }}
+            >
+              <div className="mb-4 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
+                Nouveau — Plan Expert
+              </div>
+              <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={22}
+                  height={22}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+                </svg>
+              </div>
+              <h3 className="mb-3 text-xl font-semibold">Programmes neufs</h3>
+              <p className="flex-1 text-sm leading-relaxed text-[#A0A0A0]">
+                Analysez une plaquette promoteur PDF et générez automatiquement 6 annonces
+                différenciantes pour Leboncoin, SeLoger et votre site.
+              </p>
+            </Link>
           </div>
         </div>
       </section>
@@ -144,16 +176,17 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-7xl">
           <div className="mb-14 max-w-2xl space-y-4">
             <h2 className="text-3xl font-semibold md:text-4xl">Des plans simples et efficaces.</h2>
-            <p className="text-[#A0A0A0]">Choisissez le niveau d&apos;automatisation adapté à votre équipe.</p>
+            <p className="text-[#A0A0A0]">
+              Trois plans adaptés à votre activité. 14 jours gratuits sans engagement.
+            </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+          <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
-              <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Starter</p>
+              <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Essentiel</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                49€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+                74,99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
-
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
@@ -161,21 +194,30 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Accès aux 3 outils</span>
+                  <span>Annonces, emails, comptes rendus</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>30 générations/mois</span>
+                  <span>100 générations/mois</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>CRM Prospects</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-red-400/60">✗</span>
+                  <span className="text-[#A0A0A0]/50">Programmes neufs</span>
                 </li>
               </ul>
-
               <StripePlanCheckoutButton
                 plan="essentiel"
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-70"
               >
-                Essayer Starter gratuitement
+                Essayer gratuitement
               </StripePlanCheckoutButton>
-              <p className="mt-2 text-center text-xs text-[#A0A0A0]">14 jours gratuits, puis 49€/mois</p>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
+                14 jours gratuits, puis 74,99€/mois
+              </p>
             </article>
 
             <article
@@ -187,9 +229,8 @@ export default function HomePage() {
               </div>
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Pro</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+                149,99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
-
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
@@ -197,7 +238,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Accès aux 3 outils</span>
+                  <span>Tout le plan Essentiel</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
@@ -205,17 +246,71 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
+                  <span>Export PDF</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
                   <span>Support prioritaire</span>
                 </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-red-400/60">✗</span>
+                  <span className="text-[#A0A0A0]/50">Programmes neufs</span>
+                </li>
               </ul>
-
               <StripePlanCheckoutButton
                 plan="pro"
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-[#B8943F] bg-[#B8943F] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90 disabled:cursor-wait disabled:opacity-70"
               >
                 Essayer Pro gratuitement
               </StripePlanCheckoutButton>
-              <p className="mt-2 text-center text-xs text-[#A0A0A0]">14 jours gratuits, puis 99€/mois</p>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
+                14 jours gratuits, puis 149,99€/mois
+              </p>
+            </article>
+
+            <article className="flex flex-col rounded-2xl border border-white/15 bg-white/[0.02] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+              <div className="mb-3 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
+                Programmes neufs inclus
+              </div>
+              <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Expert</p>
+              <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
+                299,99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+              </p>
+              <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>1 utilisateur</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>Tout le plan Pro</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>Programmes neufs (plaquette PDF → 6 annonces)</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>Analyse annonces concurrentes</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>Score de différenciation</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>Support dédié + onboarding</span>
+                </li>
+              </ul>
+              <StripePlanCheckoutButton
+                plan="expert"
+                className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-70"
+              >
+                Essayer Expert gratuitement
+              </StripePlanCheckoutButton>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
+                14 jours gratuits, puis 299,99€/mois
+              </p>
             </article>
           </div>
         </div>
