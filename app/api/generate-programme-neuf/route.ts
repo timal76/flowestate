@@ -610,24 +610,27 @@ export async function POST(request: Request) {
       prospectProfile || "",
     );
 
-    const webSearchCall = await callAnthropicWithRetry(apiKey, {
-      model: "claude-sonnet-4-5",
-      max_tokens: 500,
-      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }],
-      messages: [{ role: "user", content: webSearchPrompt }],
-    });
+    let webData: unknown = null;
+    if (!isLeHavre) {
+      const webSearchCall = await callAnthropicWithRetry(apiKey, {
+        model: "claude-sonnet-4-5",
+        max_tokens: 500,
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }],
+        messages: [{ role: "user", content: webSearchPrompt }],
+      });
 
-    if (!webSearchCall.response.ok) {
-      return anthropicErrorResponse(webSearchCall.response, webSearchCall.json);
-    }
+      if (!webSearchCall.response.ok) {
+        return anthropicErrorResponse(webSearchCall.response, webSearchCall.json);
+      }
 
-    const webSearchText = extractTextFromAnthropic(webSearchCall.json);
-    let webData: unknown = webSearchText;
-    if (webSearchText) {
-      try {
-        webData = parseJsonFromText(webSearchText);
-      } catch {
-        webData = webSearchText;
+      const webSearchText = extractTextFromAnthropic(webSearchCall.json);
+      webData = webSearchText;
+      if (webSearchText) {
+        try {
+          webData = parseJsonFromText(webSearchText);
+        } catch {
+          webData = webSearchText;
+        }
       }
     }
 
@@ -807,9 +810,14 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
       return annonces;
     };
 
-    const generationParams = {
+    const programmeGenerationParams = {
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2500,
+      system: GENERATION_SYSTEM,
+    };
+    const lotGenerationParams = {
       model: "claude-sonnet-4-5",
-      max_tokens: 5000,
+      max_tokens: 3000,
       system: GENERATION_SYSTEM,
     };
 
@@ -821,11 +829,11 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
     if (hasAnnexes) {
       const [programmeCall, lotCall] = await Promise.all([
         callAnthropicWithRetry(apiKey, {
-          ...generationParams,
+          ...programmeGenerationParams,
           messages: [{ role: "user", content: buildGenerationUserPrompt("programme") }],
         }),
         callAnthropicWithRetry(apiKey, {
-          ...generationParams,
+          ...lotGenerationParams,
           messages: [{ role: "user", content: buildGenerationUserPrompt("lot") }],
         }),
       ]);
@@ -848,7 +856,7 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
       lotAnnonces = lotParsed;
     } else {
       const programmeCall = await callAnthropicWithRetry(apiKey, {
-        ...generationParams,
+        ...programmeGenerationParams,
         messages: [{ role: "user", content: buildGenerationUserPrompt("programme") }],
       });
 
@@ -909,7 +917,7 @@ Score /10 : différenciation promoteur (3pts) + cohérence profil (3pts) + donn�
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 250,
+        max_tokens: 200,
         messages: [{ role: "user", content: scoringPrompt }],
       });
 
