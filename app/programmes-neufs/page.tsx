@@ -613,7 +613,7 @@ export default function ProgrammesNeufsPage() {
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Annonces concurrentes (optionnel)</span>
                   <span className="block text-xs text-[#A0A0A0]">
-                    Collez ici des annonces d&apos;autres agences pour ce même programme — Claude
+                    Collez ici des annonces d&apos;autres agences pour ce même programme — FlowEstate
                     s&apos;en différenciera activement
                   </span>
                   <textarea
