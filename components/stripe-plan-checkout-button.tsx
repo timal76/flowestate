@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-export type StripePlan = "essentiel" | "pro" | "expert";
+export type StripePlan = "starter" | "essentiel" | "pro" | "expert";
 
 type StripePlanCheckoutButtonProps = {
   plan: StripePlan;
@@ -33,10 +33,11 @@ export default function StripePlanCheckoutButton({
 
     setLoading(true);
     try {
+      const checkoutPlan = plan === "starter" ? "essentiel" : plan;
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, billing: billing ?? "monthly" }),
+        body: JSON.stringify({ plan: checkoutPlan, billing: billing ?? "monthly" }),
       });
 
       const payload = (await response.json()) as { url?: string; error?: string };
