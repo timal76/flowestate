@@ -93,6 +93,14 @@ async function fileToBase64(file: File): Promise<string> {
   return base64;
 }
 
+function cleanMarkdown(text: string) {
+  return text
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .trim();
+}
+
 export default function ProgrammesNeufsPage() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
@@ -977,7 +985,7 @@ export default function ProgrammesNeufsPage() {
               ) : result ? (
                 <div className="mt-6 flex flex-1 flex-col">
                   {result.scoring ? (
-                    <div className="mt-6 rounded-2xl border border-[#C9A96E]/30 bg-white/[0.02] p-6">
+                    <div className="mb-8 mt-6 rounded-2xl border border-[#C9A96E]/30 bg-white/[0.02] p-6">
                       <div className="mb-4 flex items-center gap-4">
                         <div
                           className="text-4xl font-bold"
@@ -1025,7 +1033,7 @@ export default function ProgrammesNeufsPage() {
                   ) : null}
                   <div
                     role="alert"
-                    className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-950/60 p-5 text-sm text-amber-100"
+                    className="mb-8 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-950/60 p-5 text-sm text-amber-100"
                   >
                     <span className="shrink-0 text-lg" aria-hidden>
                       ⚠️
@@ -1146,7 +1154,7 @@ export default function ProgrammesNeufsPage() {
                           </button>
                         </div>
                   ) : null}
-                  <div className={result.lot ? "space-y-10" : ""}>
+                  <div className={result.lot ? "mt-8 space-y-10" : "mt-8"}>
                     <div>
                       {result.lot ? (
                         <h3 className="mb-4 text-base font-semibold text-[#C9A96E]">Programme global</h3>
@@ -1177,7 +1185,7 @@ export default function ProgrammesNeufsPage() {
                             {activeProgrammeBlock.titre}
                           </h3>
                           <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                            {activeProgrammeBlock.corps}
+                            {cleanMarkdown(activeProgrammeBlock.corps)}
                           </p>
                           <div className="mt-8">
                             <button
@@ -1221,7 +1229,7 @@ export default function ProgrammesNeufsPage() {
                               {activeLotBlock.titre}
                             </h3>
                             <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                              {activeLotBlock.corps}
+                              {cleanMarkdown(activeLotBlock.corps)}
                             </p>
                             <div className="mt-8">
                               <button
