@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 const goldRgb = "201, 169, 110";
 
-type ActivityType = "annonce" | "email" | "compte-rendu";
+type ActivityType = "annonce" | "email" | "compte-rendu" | "programme-neuf";
 
 type GenerationRow = {
   id: string;
@@ -27,7 +27,8 @@ type TypeFilter = "all" | ActivityType;
 const PAGE_SIZE = 20;
 
 function parseTypeFilter(raw: string | undefined): TypeFilter {
-  if (raw === "annonce" || raw === "email" || raw === "compte-rendu") return raw;
+  if (raw === "annonce" || raw === "email" || raw === "compte-rendu" || raw === "programme-neuf")
+    return raw;
   return "all";
 }
 
@@ -189,6 +190,13 @@ export default async function HistoriquePage({ searchParams }: HistoriquePagePro
           >
             Comptes-rendus
           </Link>
+          <Link
+            href={filterHref("programme-neuf", searchTrim)}
+            className={typeFilter === "programme-neuf" ? filterActiveClass : filterInactiveClass}
+            aria-current={typeFilter === "programme-neuf" ? "true" : undefined}
+          >
+            Programmes neufs
+          </Link>
         </div>
 
         <form method="get" action="/historique" className="mb-2 space-y-2">
@@ -225,10 +233,38 @@ export default async function HistoriquePage({ searchParams }: HistoriquePagePro
           <ClickableGenerationsList
             items={rows.map((row): ClickableGenerationItem => {
               const description = row.description?.trim() || "Génération enregistrée";
-              const full =
-                row.content?.trim() ||
-                row.description?.trim() ||
-                "Aucun contenu détaillé disponible pour cette génération.";
+              const full = (() => {
+                if (row.type === "programme-neuf" && row.content) {
+                  try {
+                    const parsed = JSON.parse(row.content) as {
+                      leboncoin?: { titre?: string; corps?: string };
+                      seloger?: { titre?: string; corps?: string };
+                      siteAgence?: { titre?: string; corps?: string };
+                    };
+                    const parts: string[] = [];
+                    if (parsed.leboncoin?.titre)
+                      parts.push(
+                        `LEBONCOIN\n${parsed.leboncoin.titre}\n\n${parsed.leboncoin.corps || ""}`,
+                      );
+                    if (parsed.seloger?.titre)
+                      parts.push(
+                        `SELOGER\n${parsed.seloger.titre}\n\n${parsed.seloger.corps || ""}`,
+                      );
+                    if (parsed.siteAgence?.titre)
+                      parts.push(
+                        `SITE PROPRE\n${parsed.siteAgence.titre}\n\n${parsed.siteAgence.corps || ""}`,
+                      );
+                    return parts.join("\n\n---\n\n") || row.content;
+                  } catch {
+                    return row.content;
+                  }
+                }
+                return (
+                  row.content?.trim() ||
+                  row.description?.trim() ||
+                  "Aucun contenu détaillé disponible pour cette génération."
+                );
+              })();
               return {
                 id: row.id,
                 type: row.type,
