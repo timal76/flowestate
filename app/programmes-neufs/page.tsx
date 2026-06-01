@@ -119,6 +119,31 @@ export default function ProgrammesNeufsPage() {
   const [lotReference, setLotReference] = useState("");
   const [isLoadingNewLot, setIsLoadingNewLot] = useState(false);
   const [isDraggingNewLot, setIsDraggingNewLot] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const checkAccess = async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("plan, subscription_status")
+        .eq("id", session.user.id)
+        .single();
+
+      const hasAccess =
+        data?.plan === "expert" &&
+        (data?.subscription_status === "active" ||
+          data?.subscription_status === "trialing" ||
+          data?.subscription_status === "trial");
+
+      if (!hasAccess) {
+        setShowUpgrade(true);
+      }
+    };
+
+    void checkAccess();
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -592,6 +617,53 @@ export default function ProgrammesNeufsPage() {
 
   const activeProgrammeBlock = result ? result.programme[activeProgrammeTab] : null;
   const activeLotBlock = result?.lot ? result.lot[activeLotTab] : null;
+
+  if (showUpgrade) {
+    return (
+      <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
+        <SiteHeader />
+        <section className="flex min-h-screen items-center justify-center px-6">
+          <div className="mx-auto max-w-lg space-y-6 text-center">
+            <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={28}
+                height={28}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                aria-hidden
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+              </svg>
+            </div>
+            <h1 className="text-3xl font-semibold text-[#F5F5F0]">Programmes neufs</h1>
+            <p className="text-lg text-[#A0A0A0]">
+              Cette feature est réservée au plan Expert. Analysez une plaquette promoteur PDF et
+              générez 6 annonces différenciantes en quelques secondes.
+            </p>
+            <div className="space-y-3">
+              <a
+                href="/tarifs"
+                className="inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90"
+              >
+                Passer au plan Expert — 299,99€/mois
+              </a>
+              <a
+                href="/dashboard"
+                className="inline-flex w-full items-center justify-center rounded-full border border-white/10 px-8 py-3 text-sm font-medium text-[#A0A0A0] transition hover:border-white/20 hover:text-[#F5F5F0]"
+              >
+                Retour au dashboard
+              </a>
+            </div>
+            <p className="text-xs text-[#555]">14 jours gratuits — sans engagement</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
