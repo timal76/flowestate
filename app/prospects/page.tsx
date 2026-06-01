@@ -114,9 +114,17 @@ export default function ProspectsPage() {
       <div className="mx-auto w-full max-w-7xl px-6 pb-24 pt-32 md:px-10">
         <header className="mb-6 flex items-center justify-between gap-4">
           <h1 className="text-2xl font-semibold text-[#F5F5F0]">Mes prospects</h1>
-          <button type="button" onClick={() => setModalOpen(true)} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition duration-200 hover:bg-[#C9A96E] hover:text-[#0A0A0A]">
-            Nouveau prospect
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/prospects/kanban"
+              className="rounded-full border border-white/10 px-4 py-2 text-sm text-[#A0A0A0] transition hover:border-[#C9A96E]/40 hover:text-[#C9A96E]"
+            >
+              Vue Kanban
+            </Link>
+            <button type="button" onClick={() => setModalOpen(true)} className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition duration-200 hover:bg-[#C9A96E] hover:text-[#0A0A0A]">
+              Nouveau prospect
+            </button>
+          </div>
         </header>
 
         <div className="mb-4 flex flex-wrap gap-2">

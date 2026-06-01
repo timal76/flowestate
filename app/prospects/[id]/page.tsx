@@ -197,6 +197,66 @@ export default function ProspectDetailPage() {
     };
   }, [prospect]);
 
+  const timelineItems = useMemo(() => {
+    const items: Array<{
+      id: string;
+      date: string;
+      type: "creation" | "email" | "compte-rendu" | "relance";
+      label: string;
+      sublabel?: string;
+      badge?: string;
+      badgeClass?: string;
+    }> = [];
+
+    if (prospect) {
+      items.push({
+        id: "creation",
+        date: prospect.created_at,
+        type: "creation",
+        label: "Prospect ajouté",
+        sublabel: prospect.nom,
+      });
+    }
+
+    for (const g of emailGenerations) {
+      items.push({
+        id: g.id,
+        date: g.created_at,
+        type: "email",
+        label: "Email généré",
+        sublabel: g.description ?? undefined,
+      });
+    }
+
+    for (const g of crGenerations) {
+      items.push({
+        id: g.id,
+        date: g.created_at,
+        type: "compte-rendu",
+        label: "Compte-rendu généré",
+        sublabel: g.description ?? undefined,
+      });
+    }
+
+    for (const r of relances) {
+      items.push({
+        id: r.id,
+        date: r.scheduled_at,
+        type: "relance",
+        label: r.titre,
+        badge: r.statut,
+        badgeClass:
+          r.statut === "planifiée"
+            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+            : r.statut === "envoyée"
+              ? "bg-green-500/10 text-green-400 border-green-500/20"
+              : "bg-red-500/10 text-red-400 border-red-500/20",
+      });
+    }
+
+    return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [prospect, emailGenerations, crGenerations, relances]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0]">
@@ -400,6 +460,58 @@ export default function ProspectDetailPage() {
           <p className="text-xs uppercase tracking-wider text-[#555]">Notes</p>
           <p className="mt-2 text-sm leading-relaxed text-[#A0A0A0]">{prospect.notes || "Aucune note"}</p>
         </div>
+
+        <section className="mt-6">
+          <h2 className="mb-4 text-lg font-semibold">Timeline</h2>
+          <div className="relative rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+            <div className="absolute left-[2.1rem] top-5 bottom-5 w-px bg-[#C9A96E]/15" aria-hidden />
+            <ul className="space-y-4">
+              {timelineItems.map((item) => {
+                const iconColor =
+                  item.type === "creation"
+                    ? "bg-[#C9A96E]/20 text-[#C9A96E]"
+                    : item.type === "email"
+                      ? "bg-blue-500/20 text-blue-400"
+                      : item.type === "compte-rendu"
+                        ? "bg-purple-500/20 text-purple-400"
+                        : "bg-orange-500/20 text-orange-400";
+
+                const icon =
+                  item.type === "creation" ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  ) : item.type === "email" ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  ) : item.type === "compte-rendu" ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  );
+
+                return (
+                  <li key={item.id} className="flex items-start gap-4">
+                    <span className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconColor}`}>
+                      {icon}
+                    </span>
+                    <div className="flex-1 pt-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm text-[#F5F5F0]">{item.label}</p>
+                        {item.badge ? (
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${item.badgeClass}`}>
+                            {item.badge}
+                          </span>
+                        ) : null}
+                      </div>
+                      {item.sublabel ? (
+                        <p className="mt-0.5 text-xs text-[#A0A0A0] line-clamp-1">{item.sublabel}</p>
+                      ) : null}
+                      <p className="mt-0.5 text-xs text-[#555]">{formatDate(item.date)}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
           <p className="text-xs uppercase tracking-wider text-[#555]">Statut</p>
