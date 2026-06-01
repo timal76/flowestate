@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getLeHavreDataForPrompt } from "@/lib/data/le-havre";
 import { checkGenerationLimit, checkProgrammesNeufsAccess } from "@/lib/check-generation-limit";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
@@ -576,6 +577,14 @@ export async function POST(request: Request) {
       typeof extractedData.quartier === "string" && extractedData.quartier
         ? extractedData.quartier
         : "";
+
+    const isLeHavre =
+      ville.toLowerCase().includes("havre") ||
+      (address?.toLowerCase().includes("havre") ?? false) ||
+      (address?.toLowerCase().includes("76600") ?? false);
+
+    const hardcodedData = isLeHavre ? getLeHavreDataForPrompt(quartier) : null;
+
     const nomResidence =
       typeof extractedData.nom === "string"
         ? extractedData.nom
@@ -702,8 +711,9 @@ ${programmeStrictRule ? `\n${programmeStrictRule}\n` : ""}
 DONNÉES EXTRAITES DE LA PLAQUETTE (JSON) :
 ${JSON.stringify(essentialExtractedData)}
 
-DONNÉES WEB LOCALES (enrichissement) :
-${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}
+${hardcodedData ? `DONNÉES LOCALES OFFICIELLES VÉRIFIÉES (Le Havre) :
+${hardcodedData}` : `DONNÉES WEB LOCALES :
+${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}`}
 
 ${addressBlock ? `${addressBlock}\n` : ""}${annexesBlock ? `${annexesBlock}\n` : ""}
 PARAMÈTRES AGENT :
