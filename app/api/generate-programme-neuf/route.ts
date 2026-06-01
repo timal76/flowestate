@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { checkGenerationLimit } from "@/lib/check-generation-limit";
+import { checkProgrammesNeufsAccess } from "@/lib/check-programmes-neufs-access";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
 export const maxDuration = 300;
@@ -470,6 +471,17 @@ export async function POST(request: Request) {
 
     const effectiveUserId = await resolveGenerationUserId(request);
     if (effectiveUserId) {
+      const hasProgrammesNeufsAccess = await checkProgrammesNeufsAccess(effectiveUserId);
+      if (!hasProgrammesNeufsAccess) {
+        return NextResponse.json(
+          {
+            error:
+              "Le plan Expert est requis pour accéder aux Programmes neufs. Passez au plan Expert sur la page Tarifs.",
+          },
+          { status: 403 },
+        );
+      }
+
       const { allowed, reason } = await checkGenerationLimit(effectiveUserId);
       if (!allowed) {
         return NextResponse.json({ error: reason }, { status: 403 });

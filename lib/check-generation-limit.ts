@@ -17,7 +17,8 @@ export async function checkGenerationLimit(userId: string): Promise<{
     user.subscription_status === "trialing" ||
     user.subscription_status === "trial" ||
     user.plan === "pro" ||
-    (user.subscription_status === "active" && user.plan === "pro")
+    user.plan === "expert" ||
+    (user.subscription_status === "active" && (user.plan === "pro" || user.plan === "expert"))
   ) {
     return { allowed: true };
   }
