@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
+import { getStripePriceId, stripe, type StripePlanId } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
-import { stripe } from "@/lib/stripe";
 
 type CheckoutBody = {
   plan?: string;
   billing?: string;
 };
+
+const VALID_PLANS: StripePlanId[] = ["essentiel", "pro", "expert"];
 
 export async function POST(request: Request) {
   try {
@@ -19,35 +21,12 @@ export async function POST(request: Request) {
     const body = (await request.json()) as CheckoutBody;
     const { plan, billing } = body;
 
-    if (plan !== "starter" && plan !== "pro") {
+    if (!plan || !VALID_PLANS.includes(plan as StripePlanId)) {
       return NextResponse.json({ error: "Plan invalide." }, { status: 400 });
     }
 
-    const PRICE_IDS = {
-      starter: {
-        monthly: process.env.STRIPE_STARTER_PRICE_ID,
-        annual: process.env.STRIPE_STARTER_ANNUAL_PRICE_ID,
-      },
-      pro: {
-        monthly: process.env.STRIPE_PRO_PRICE_ID,
-        annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
-      },
-    };
-
     const billingPeriod = billing === "annual" ? "annual" : "monthly";
-    const priceId = PRICE_IDS[plan as "starter" | "pro"]?.[billingPeriod];
-
-    if (!priceId) {
-      return NextResponse.json(
-        {
-          error:
-            billingPeriod === "annual"
-              ? "Identifiant de prix annuel Stripe manquant (STRIPE_*_ANNUAL_PRICE_ID)."
-              : "Identifiant de prix Stripe manquant dans la configuration.",
-        },
-        { status: 500 }
-      );
-    }
+    const priceId = getStripePriceId(plan as StripePlanId, billingPeriod);
 
     const baseUrl = (process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
 

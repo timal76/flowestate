@@ -2,8 +2,28 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { sendTrialEndingEmail } from "@/lib/email";
-import { stripe } from "@/lib/stripe";
+import { planFromStripePriceId, stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
+
+function resolvePlanFromSubscription(subscription: Stripe.Subscription): string {
+  const metadataPlan = subscription.metadata?.plan;
+  if (
+    metadataPlan === "essentiel" ||
+    metadataPlan === "pro" ||
+    metadataPlan === "expert" ||
+    metadataPlan === "starter"
+  ) {
+    return metadataPlan === "starter" ? "essentiel" : metadataPlan;
+  }
+
+  const priceId = subscription.items.data[0]?.price?.id;
+  if (priceId) {
+    const fromPrice = planFromStripePriceId(priceId);
+    if (fromPrice) return fromPrice;
+  }
+
+  return "essentiel";
+}
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -80,14 +100,14 @@ export async function POST(request: Request) {
       if (!userId) break;
 
       const status = subscription.status;
-      const plan = subscription.metadata?.plan || "starter";
+      const plan = resolvePlanFromSubscription(subscription);
 
       await supabase
         .from("users")
         .update({
           subscription_status: status,
           stripe_subscription_id: subscription.id,
-          plan: (status === "active" || status === "trialing") ? plan : "free",
+          plan: status === "active" || status === "trialing" ? plan : "free",
         })
         .eq("id", userId);
       break;
@@ -111,7 +131,15 @@ export async function POST(request: Request) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.userId;
-      const plan = session.metadata?.plan;
+      const metadataPlan = session.metadata?.plan;
+      const plan =
+        metadataPlan === "essentiel" ||
+        metadataPlan === "pro" ||
+        metadataPlan === "expert"
+          ? metadataPlan
+          : metadataPlan === "starter"
+            ? "essentiel"
+            : "essentiel";
       if (!userId) break;
 
       await supabase
@@ -119,7 +147,7 @@ export async function POST(request: Request) {
         .update({
           stripe_customer_id: session.customer as string,
           subscription_status: "trial",
-          plan: plan || "starter",
+          plan,
         })
         .eq("id", userId);
       break;
