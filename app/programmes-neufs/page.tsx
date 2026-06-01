@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DragEvent, FormEvent, useCallback, useEffect, useState } from "react";
+import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import SiteHeader from "@/components/site-header";
@@ -32,6 +32,7 @@ type GeneratedResult = {
   programme: AnnoncesSet;
   lot: AnnoncesSet | null;
   scoring: ScoringResult | null;
+  extractedData?: Record<string, unknown>;
 };
 
 type FormState = {
@@ -109,6 +110,14 @@ export default function ProgrammesNeufsPage() {
   const [generationsUsed, setGenerationsUsed] = useState<number | null>(null);
   const [userPlan, setUserPlan] = useState<string>("");
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>("");
+  const [extractedProgramData, setExtractedProgramData] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const [showNewLot, setShowNewLot] = useState(false);
+  const [newLotFiles, setNewLotFiles] = useState<File[]>([]);
+  const [lotReference, setLotReference] = useState("");
+  const [isLoadingNewLot, setIsLoadingNewLot] = useState(false);
+  const [isDraggingNewLot, setIsDraggingNewLot] = useState(false);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -240,6 +249,115 @@ export default function ProgrammesNeufsPage() {
     setAnnexFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
+  const acceptNewLotFiles = useCallback((fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    const valid = files.filter((file) =>
+      ACCEPTED_ANNEX_TYPES.includes(file.type as (typeof ACCEPTED_ANNEX_TYPES)[number]),
+    );
+    if (valid.length !== files.length) {
+      toast.error("Formats acceptés : PDF, JPEG, PNG, WebP.");
+    }
+    const oversized = valid.filter((file) => file.size > MAX_ANNEX_SIZE);
+    if (oversized.length > 0) {
+      toast.error("Chaque fichier doit faire 10 Mo maximum.");
+      return;
+    }
+    setNewLotFiles((prev) => {
+      const combined = [...prev, ...valid];
+      if (combined.length > MAX_ANNEX_FILES) {
+        toast.error("Maximum 5 fichiers annexes.");
+        return prev;
+      }
+      return combined;
+    });
+  }, []);
+
+  function handleNewLotAnnexInputChange(event: ChangeEvent<HTMLInputElement>) {
+    if (event.target.files) acceptNewLotFiles(event.target.files);
+    event.target.value = "";
+  }
+
+  function handleNewLotAnnexDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingNewLot(true);
+  }
+
+  function handleNewLotAnnexDragLeave() {
+    setIsDraggingNewLot(false);
+  }
+
+  function handleNewLotAnnexDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingNewLot(false);
+    acceptNewLotFiles(event.dataTransfer.files);
+  }
+
+  function handleRemoveNewLotFile(index: number) {
+    setNewLotFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleGenerateNewLot() {
+    if (newLotFiles.length === 0 || !extractedProgramData) return;
+
+    setIsLoadingNewLot(true);
+    try {
+      const annexes = await Promise.all(
+        newLotFiles.map(async (file) => ({
+          data: await fileToBase64(file),
+          mediaType: file.type,
+          name: file.name,
+        })),
+      );
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.user?.id) headers["x-user-id"] = session.user.id;
+
+      const response = await fetch("/api/generate-programme-neuf", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          extractedProgramData,
+          annexes,
+          lotReference: lotReference || undefined,
+          angle: form.angle,
+          prospectProfile: form.prospectProfile || undefined,
+          tone: form.tone,
+          priceFrom: form.priceFrom || undefined,
+          additionalInfo: form.additionalInfo || undefined,
+          competitorAds: form.competitorAds || undefined,
+          address: form.address || undefined,
+        }),
+      });
+
+      const payload = (await response.json()) as GeneratedResult & { error?: string };
+
+      if (!response.ok) {
+        toast.error(payload.error || "Erreur lors de la génération.");
+        return;
+      }
+
+      if (!payload.lot?.leboncoin || !payload.lot?.seloger || !payload.lot?.siteAgence) {
+        toast.error("Les annonces lot n'ont pas été générées correctement.");
+        return;
+      }
+
+      setResult((prev) => ({
+        programme: prev?.programme ?? payload.programme,
+        lot: payload.lot ?? null,
+        scoring: payload.scoring ?? null,
+      }));
+      setShowNewLot(false);
+      setNewLotFiles([]);
+      setLotReference("");
+      setActiveLotTab("leboncoin");
+      toast.success("Annonces générées pour le nouveau lot !");
+    } catch {
+      toast.error("Une erreur est survenue. Veuillez réessayer.");
+    } finally {
+      setIsLoadingNewLot(false);
+    }
+  }
+
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setGenerationError(null);
@@ -343,6 +461,9 @@ export default function ProgrammesNeufsPage() {
         lot: payload.lot ?? null,
         scoring: payload.scoring ?? null,
       });
+      if (payload.extractedData) {
+        setExtractedProgramData(payload.extractedData);
+      }
       setActiveProgrammeTab("leboncoin");
       setActiveLotTab("leboncoin");
       setGenerationError(null);
@@ -738,6 +859,92 @@ export default function ProgrammesNeufsPage() {
                       une annonce sans validation préalable.
                     </p>
                   </div>
+                  {extractedProgramData ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setShowNewLot(!showNewLot)}
+                        className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#C9A96E]/50 bg-transparent px-5 py-2 text-sm font-medium text-[#C9A96E] transition hover:border-[#C9A96E] hover:bg-[#C9A96E]/10"
+                      >
+                        {showNewLot ? "Annuler" : "Générer pour un autre lot"}
+                      </button>
+                      {showNewLot ? (
+                        <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                          <h3 className="mb-1 text-lg font-semibold text-[#F5F5F0]">
+                            Nouveau lot — même programme
+                          </h3>
+                          <p className="mb-6 text-sm text-[#A0A0A0]">
+                            La plaquette est déjà analysée. Uploadez uniquement le plan du nouveau lot.
+                          </p>
+                          <div
+                            onDragOver={handleNewLotAnnexDragOver}
+                            onDragLeave={handleNewLotAnnexDragLeave}
+                            onDrop={handleNewLotAnnexDrop}
+                            className={`rounded-xl border-2 border-dashed p-6 text-center transition-all duration-300 ${
+                              isDraggingNewLot
+                                ? "border-[#C9A96E] bg-[#C9A96E]/10"
+                                : "border-white/15 bg-[#121212]/50 hover:border-white/25"
+                            }`}
+                          >
+                            <p className="text-sm text-[#A0A0A0]">Glissez-déposez le plan du lot ici</p>
+                            <label className="mt-3 inline-flex cursor-pointer items-center justify-center rounded-full border border-[#C9A96E] bg-transparent px-5 py-2 text-sm font-semibold text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]">
+                              Ajouter des fichiers
+                              <input
+                                type="file"
+                                accept="application/pdf,image/jpeg,image/png,image/webp"
+                                multiple
+                                className="sr-only"
+                                onChange={handleNewLotAnnexInputChange}
+                              />
+                            </label>
+                            <p className="mt-3 text-xs text-[#A0A0A0]">
+                              PDF, JPEG, PNG, WebP — 10 Mo max par fichier
+                            </p>
+                          </div>
+                          {newLotFiles.length > 0 ? (
+                            <ul className="mt-4 space-y-2">
+                              {newLotFiles.map((file, index) => (
+                                <li
+                                  key={`${file.name}-${index}`}
+                                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#121212] px-4 py-2 text-sm text-[#F5F5F0]"
+                                >
+                                  <span className="truncate pr-3">{file.name}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveNewLotFile(index)}
+                                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 text-[#A0A0A0] transition hover:border-red-400/50 hover:text-red-300"
+                                    aria-label={`Supprimer ${file.name}`}
+                                  >
+                                    ✕
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
+                          <label className="mt-4 block space-y-2">
+                            <span className="text-sm text-[#A0A0A0]">Référence du lot (optionnel)</span>
+                            <input
+                              type="text"
+                              value={lotReference}
+                              onChange={(e) => setLotReference(e.target.value)}
+                              className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                              placeholder="Ex : A103, C205, T3-nord..."
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            disabled={isLoadingNewLot || newLotFiles.length === 0}
+                            onClick={() => void handleGenerateNewLot()}
+                            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90 disabled:opacity-50"
+                          >
+                            {isLoadingNewLot
+                              ? "Génération en cours..."
+                              : "Générer les annonces pour ce lot"}
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
                   <div className={result.lot ? "space-y-10" : ""}>
                     <div>
                       {result.lot ? (

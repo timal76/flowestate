@@ -422,6 +422,8 @@ DERNIER RAPPEL ABSOLU : Ta réponse doit commencer par { et se terminer par }. A
 
 type GenerateProgrammeNeufPayload = {
   pdfBase64?: string;
+  extractedProgramData?: Record<string, unknown>;
+  lotReference?: string;
   address?: string;
   annexes?: Array<{ data: string; mediaType: string; name: string }>;
   angle?: string;
@@ -476,14 +478,21 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as GenerateProgrammeNeufPayload;
 
-    if (!body.pdfBase64?.trim()) {
+    // Si extractedProgramData est fourni, on saute l'extraction PDF
+    let extractedData: Record<string, unknown> = {};
+    let skipPdfExtraction = false;
+
+    if (body.extractedProgramData && Object.keys(body.extractedProgramData).length > 0) {
+      extractedData = body.extractedProgramData;
+      skipPdfExtraction = true;
+    } else if (!body.pdfBase64?.trim()) {
       return NextResponse.json({ error: "Le PDF est requis." }, { status: 400 });
     }
+
     if (!body.angle?.trim()) {
       return NextResponse.json({ error: "L'angle souhaité est requis." }, { status: 400 });
     }
 
-    const pdfData = cleanPdfBase64(body.pdfBase64);
     const angle = body.angle.trim();
     const prospectProfile = body.prospectProfile?.trim() || "";
     const competitorAds = body.competitorAds?.trim() || "";
@@ -492,6 +501,8 @@ export async function POST(request: Request) {
     const additionalInfo = body.additionalInfo?.trim() || "";
     const address = body.address?.trim() || "";
 
+    if (!skipPdfExtraction) {
+    const pdfData = cleanPdfBase64(body.pdfBase64!);
     const extractionCall = await callAnthropicWithRetry(apiKey, {
       model: "claude-haiku-4-5-20251001",
       max_tokens: 800,
@@ -530,7 +541,6 @@ export async function POST(request: Request) {
       );
     }
 
-    let extractedData: Record<string, unknown>;
     try {
       extractedData = parseJsonFromText(extractionText) as Record<string, unknown>;
     } catch (e) {
@@ -544,6 +554,7 @@ export async function POST(request: Request) {
         types_biens: null,
         arguments_promoteur: [],
       };
+    }
     }
 
     const ville =
@@ -901,6 +912,7 @@ Retourne UNIQUEMENT ce JSON sans texte avant ou après, commence par { :
       programme: programmeAnnonces,
       lot: lotAnnonces,
       scoring,
+      extractedData,
     });
   } catch {
     return NextResponse.json(
