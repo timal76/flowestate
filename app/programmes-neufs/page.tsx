@@ -336,20 +336,14 @@ export default function ProgrammesNeufsPage() {
         return;
       }
 
-      if (!payload.lot?.leboncoin || !payload.lot?.seloger || !payload.lot?.siteAgence) {
-        toast.error("Les annonces lot n'ont pas été générées correctement.");
-        return;
-      }
-
-      setResult((prev) => ({
-        programme: prev?.programme ?? payload.programme,
-        lot: payload.lot ?? null,
-        scoring: payload.scoring ?? null,
-      }));
+      setResult({
+        programme: payload.programme,
+        lot: payload.lot || null,
+        scoring: payload.scoring || null,
+      });
       setShowNewLot(false);
       setNewLotFiles([]);
       setLotReference("");
-      setActiveLotTab("leboncoin");
       toast.success("Annonces générées pour le nouveau lot !");
     } catch {
       toast.error("Une erreur est survenue. Veuillez réessayer.");
@@ -859,7 +853,7 @@ export default function ProgrammesNeufsPage() {
                       une annonce sans validation préalable.
                     </p>
                   </div>
-                  {extractedProgramData ? (
+                  {result && extractedProgramData ? (
                     <>
                       <button
                         type="button"
