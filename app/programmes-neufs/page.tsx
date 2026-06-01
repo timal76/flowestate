@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { jsPDF } from "jspdf";
 import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -492,6 +493,95 @@ export default function ProgrammesNeufsPage() {
     toast.success("Annonce copiée !");
   }
 
+  function handleExportPDF() {
+    if (!result) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const maxWidth = pageWidth - margin * 2;
+    let y = 20;
+
+    const addSection = (
+      platformTitle: string,
+      block: { titre: string; corps: string },
+      isNew: boolean,
+    ) => {
+      if (isNew) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(201, 169, 110);
+      doc.text(platformTitle, margin, y);
+      y += 8;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 0, 0);
+      const titreLines = doc.splitTextToSize(block.titre, maxWidth);
+      doc.text(titreLines, margin, y);
+      y += titreLines.length * 6 + 4;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      const corpsLines = doc.splitTextToSize(block.corps, maxWidth);
+
+      corpsLines.forEach((line: string) => {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(line, margin, y);
+        y += 5;
+      });
+
+      y += 10;
+    };
+
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(201, 169, 110);
+    doc.text("FlowEstate — Annonces générées", margin, y);
+    y += 8;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Généré le ${new Date().toLocaleDateString("fr-FR")}`, margin, y);
+    y += 15;
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text("PROGRAMME GLOBAL", margin, y);
+    y += 10;
+
+    addSection("Leboncoin", result.programme.leboncoin, false);
+    addSection("SeLoger", result.programme.seloger, true);
+    addSection("Site propre", result.programme.siteAgence, true);
+
+    if (result.lot) {
+      doc.addPage();
+      y = 20;
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 0, 0);
+      doc.text("LOT SPÉCIFIQUE", margin, y);
+      y += 10;
+
+      addSection("Leboncoin", result.lot.leboncoin, false);
+      addSection("SeLoger", result.lot.seloger, true);
+      addSection("Site propre", result.lot.siteAgence, true);
+    }
+
+    doc.save(`FlowEstate-Annonces-${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success("PDF exporté !");
+  }
+
   const activeProgrammeBlock = result ? result.programme[activeProgrammeTab] : null;
   const activeLotBlock = result?.lot ? result.lot[activeLotTab] : null;
 
@@ -853,16 +943,41 @@ export default function ProgrammesNeufsPage() {
                       une annonce sans validation préalable.
                     </p>
                   </div>
-                  {result && extractedProgramData ? (
-                    <>
+                  {result ? (
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
                       <button
                         type="button"
-                        onClick={() => setShowNewLot(!showNewLot)}
-                        className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#C9A96E]/50 bg-transparent px-5 py-2 text-sm font-medium text-[#C9A96E] transition hover:border-[#C9A96E] hover:bg-[#C9A96E]/10"
+                        onClick={handleExportPDF}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-transparent px-5 py-2 text-sm font-medium text-[#F5F5F0] transition hover:border-white/40 hover:bg-white/5"
                       >
-                        {showNewLot ? "Annuler" : "Générer pour un autre lot"}
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        Exporter en PDF
                       </button>
-                      {showNewLot ? (
+                      {extractedProgramData ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowNewLot(!showNewLot)}
+                          className="inline-flex items-center gap-2 rounded-full border border-[#C9A96E]/50 bg-transparent px-5 py-2 text-sm font-medium text-[#C9A96E] transition hover:border-[#C9A96E] hover:bg-[#C9A96E]/10"
+                        >
+                          {showNewLot ? "Annuler" : "Générer pour un autre lot"}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {result && extractedProgramData && showNewLot ? (
                         <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
                           <h3 className="mb-1 text-lg font-semibold text-[#F5F5F0]">
                             Nouveau lot — même programme
@@ -936,8 +1051,6 @@ export default function ProgrammesNeufsPage() {
                               : "Générer les annonces pour ce lot"}
                           </button>
                         </div>
-                      ) : null}
-                    </>
                   ) : null}
                   <div className={result.lot ? "space-y-10" : ""}>
                     <div>
