@@ -350,6 +350,10 @@ Avant de retourner les annonces, vérifier :
 5. Noms propres corrects
 6. Données techniques exactes (RE2020, étage, surfaces, nombre de trains)
 
+- PINEL HORS ANGLE INVESTISSEUR : si l'angle ou le profil prospect contient "retraite", "résidence secondaire", "pied-à-terre", "senior", "bord de mer", ne jamais mentionner le dispositif Pinel ni le rendement locatif. Ces mentions sont INTERDITES sur ces angles.
+- TRAIN PARIS-LE HAVRE : la liaison Paris Saint-Lazare - Le Havre est un Intercités ou TER Normandie. Ne jamais écrire "TGV" pour cette liaison. Écrire "train direct" ou "Intercités".
+- TARIFS TRANSPORT : ne jamais indiquer de prix de billets de train sans source officielle SNCF confirmée. Écrire "tarifs variables selon disponibilités — voir sncf-connect.com" si nécessaire.
+
 STRATÉGIE DE DIFFÉRENCIATION :
 - Utilise les données terrain locales (web search) pour ancrer l'annonce dans la réalité
 - Utilise les plans et documents annexes pour parler d'agencement concret, pas de généralités
