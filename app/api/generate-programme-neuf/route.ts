@@ -302,6 +302,14 @@ DIFFÉRENCIATION ACTIVE : Si des annonces concurrentes sont fournies, tu dois le
 
 RÈGLES ABSOLUES — ZÉRO EXCEPTION :
 
+⚠️ RÈGLES CRITIQUES — VIOLATION = ANNONCE INUTILISABLE :
+
+1. DATE DE LIVRAISON : La date de livraison du programme est celle de la PLAQUETTE uniquement. Le tramway ligne C est prévu pour 2027 — ce n'est PAS la date de livraison du programme. Ne jamais confondre. Si extractedData.livraison contient "T1 2026" ou "2026", écrire exactement cette valeur. INTERDIT d'écrire "Livraison 2027" pour un programme dont la plaquette indique T1 2026.
+
+2. NOMBRE DE CHAMBRES : Utiliser UNIQUEMENT le nombre de chambres du plan architectural fourni. Le plan B204 indique EXPLICITEMENT 2 chambres (9,60m² et 13,18m²). Jamais 3 chambres pour ce lot. Si le plan indique 2 chambres, écrire 2 chambres partout, dans le titre, le corps, et les descriptions.
+
+3. MARKDOWN : Ne jamais utiliser # pour les titres dans les annonces. Les sous-titres doivent être en texte normal, en majuscules ou en gras via la convention de la plateforme, jamais avec des dièses #.
+
 DONNÉES TECHNIQUES :
 - RE2020 (pas RT2020, pas BBC, pas HQE) : utiliser exactement le terme présent dans la plaquette
 - Nombre de trains/transports : utiliser UNIQUEMENT le chiffre présent dans la plaquette ou les données web sourcées. Ne jamais inventer ni arrondir.
