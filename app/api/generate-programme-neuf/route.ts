@@ -842,12 +842,20 @@ Retourne UNIQUEMENT ce JSON sans texte avant ou après, commence par { :
 
       if (scoringCall.response.ok) {
         const scoringText = extractTextFromAnthropic(scoringCall.json);
-        console.log("SCORING RAW:", scoringText?.substring(0, 200));
-        try {
-          scoring = parseJsonFromText(scoringText);
-        } catch (e) {
-          console.error("SCORING PARSE ERROR:", e, scoringText?.substring(0, 100));
-          scoring = null;
+        console.log("SCORING RAW FULL:", scoringText);
+        if (scoringText && scoringText.trim().length > 0) {
+          try {
+            const parsed = parseJsonFromText(scoringText);
+            if (parsed && typeof parsed === "object" && "score" in parsed) {
+              scoring = parsed;
+            } else {
+              console.error("SCORING: JSON parsé mais structure invalide", parsed);
+            }
+          } catch (e) {
+            console.error("SCORING PARSE ERROR:", e, "RAW:", scoringText?.substring(0, 200));
+          }
+        } else {
+          console.error("SCORING: texte vide retourné par Haiku");
         }
       }
     } catch (e) {
