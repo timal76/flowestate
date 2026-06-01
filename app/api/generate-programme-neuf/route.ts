@@ -896,50 +896,41 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
 
     let scoring = null;
     try {
-      const scoringPrompt = `Tu es un expert en marketing immobilier. Évalue ces annonces selon des critères professionnels réalistes.
+      const scoringPrompt = `Évalue ces annonces immobilières. Retourne UNIQUEMENT ce JSON, commence OBLIGATOIREMENT par { et termine par } :
+{"score":7,"verdict":"verdict court","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}
 
-ANNONCES COMPLÈTES :
-Programme Leboncoin: ${annonces.leboncoin.titre}
-${annonces.leboncoin.corps.substring(0, 400)}
+Programme Leboncoin titre: ${annonces.leboncoin.titre.substring(0, 100).replace(/"/g, "'")}
+Programme SeLoger titre: ${annonces.seloger.titre.substring(0, 100).replace(/"/g, "'")}
+Programme Site extrait: ${annonces.siteAgence.corps.substring(0, 300).replace(/"/g, "'")}
+Angle: ${angle.substring(0, 100).replace(/"/g, "'")}
+Profil: ${(prospectProfile || "").substring(0, 100).replace(/"/g, "'")}
 
-Programme SeLoger: ${annonces.seloger.titre}
-${annonces.seloger.corps.substring(0, 400)}
-
-Programme Site: ${annonces.siteAgence.titre}
-${annonces.siteAgence.corps.substring(0, 600)}
-
-ANGLE : ${angle}
-PROFIL : ${prospectProfile || "Non précisé"}
-ARGUMENTS PROMOTEUR À ÉVITER : ${JSON.stringify(extractedData.arguments_promoteur || []).substring(0, 200)}
-
-Critères /10 :
-- Différenciation vs promoteur (3pts) : utilise-t-il des données et angles que le promoteur n'a pas ?
-- Cohérence profil prospect (3pts) : parle-t-il vraiment au prospect cible du début à la fin ?
-- Données factuelles vérifiées (2pts) : prix au m², sources officielles, chiffres concrets présents ?
-- Qualité rédactionnelle (2pts) : accroche mémorable, structure claire, zéro cliché ?
-
-IMPORTANT : Si l'annonce contient des prix au m² sourcés, des données officielles citées, des projets urbains avec sources — donner au moins 7/10 sur le critère données factuelles. Une annonce qui tient son angle prospect du début à la fin mérite au moins 7/10 global.
-
-Retourne UNIQUEMENT ce JSON, commence par { :
-{"score":7,"verdict":"Une phrase courte","points_forts":["point 1","point 2","point 3"],"suggestions":["suggestion 1","suggestion 2","suggestion 3"]}`;
+Score /10 : différenciation promoteur (3pts) + cohérence profil (3pts) + données factuelles (2pts) + qualité rédactionnelle (2pts).`;
 
       const scoringCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 350,
+        max_tokens: 250,
         messages: [{ role: "user", content: scoringPrompt }],
       });
 
       if (scoringCall.response.ok) {
-        const scoringText = extractTextFromAnthropic(scoringCall.json);
-        console.log("SCORING RAW:", scoringText?.substring(0, 200));
-        if (scoringText?.trim()) {
+        const raw = extractTextFromAnthropic(scoringCall.json)?.trim() ?? "";
+        console.log("SCORING RAW:", raw.substring(0, 150));
+        const start = raw.indexOf("{");
+        const end = raw.lastIndexOf("}");
+        if (start !== -1 && end !== -1 && end > start) {
           try {
-            const parsed = parseJsonFromText(scoringText);
-            if (parsed && typeof parsed === "object" && "score" in parsed && "verdict" in parsed) {
+            const parsed = JSON.parse(raw.slice(start, end + 1)) as {
+              score?: number;
+              verdict?: string;
+              points_forts?: string[];
+              suggestions?: string[];
+            };
+            if (typeof parsed.score === "number") {
               scoring = parsed;
             }
-          } catch (e) {
-            console.error("SCORING PARSE ERROR:", e);
+          } catch {
+            console.error("SCORING PARSE FAILED:", raw.substring(0, 100));
           }
         }
       }
