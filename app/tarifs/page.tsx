@@ -5,6 +5,25 @@ import { useState } from "react";
 import SiteHeader from "@/components/site-header";
 import StripePlanCheckoutButton from "@/components/stripe-plan-checkout-button";
 
+function PlanFeature({
+  included,
+  children,
+}: {
+  included: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <li
+      className={`flex items-start gap-3 py-2.5 ${included ? "text-[#A0A0A0]" : "text-[#555555]"}`}
+    >
+      <span className={`mt-0.5 shrink-0 ${included ? "text-[#C9A96E]" : "text-[#555555]"}`}>
+        {included ? "✓" : "✗"}
+      </span>
+      <span>{children}</span>
+    </li>
+  );
+}
+
 export default function TarifsPage() {
   const [annuel, setAnnuel] = useState(false);
 
@@ -53,29 +72,27 @@ export default function TarifsPage() {
             </span>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+          <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+            {/* Essentiel */}
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">
-                Starter
+                Essentiel
               </p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                {annuel ? "44€" : "49€"}
+                {annuel ? "67€" : "74,99€"}
                 <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
 
-              <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-[#C9A96E]">✓</span>
-                  <span>1 utilisateur</span>
-                </li>
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-[#C9A96E]">✓</span>
-                  <span>Accès aux 3 outils</span>
-                </li>
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-[#C9A96E]">✓</span>
-                  <span>30 générations/mois</span>
-                </li>
+              <ul className="mt-6 divide-y divide-white/10 text-sm">
+                <PlanFeature included>1 utilisateur</PlanFeature>
+                <PlanFeature included>Générateur d&apos;annonces</PlanFeature>
+                <PlanFeature included>Emails de relance</PlanFeature>
+                <PlanFeature included>Comptes rendus de visite</PlanFeature>
+                <PlanFeature included>CRM Prospects</PlanFeature>
+                <PlanFeature included>Templates (5 max)</PlanFeature>
+                <PlanFeature included>100 générations/mois</PlanFeature>
+                <PlanFeature included>Support par email</PlanFeature>
+                <PlanFeature included={false}>Programmes neufs</PlanFeature>
               </ul>
 
               <StripePlanCheckoutButton
@@ -83,15 +100,16 @@ export default function TarifsPage() {
                 billing={annuel ? "annual" : "monthly"}
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-70"
               >
-                Essayer Starter gratuitement
+                Essayer gratuitement
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                {annuel ? "529€/an — 14 jours gratuits" : "14 jours gratuits, puis 49€/mois"}
+                {annuel ? "804€/an — 14 jours gratuits" : "14 jours gratuits, puis 74,99€/mois"}
               </p>
             </article>
 
+            {/* Pro */}
             <article
-              className="flex flex-col rounded-2xl border border-[#C9A96E] bg-white/[0.03] p-8 transition-all duration-300 hover:border-[#C9A96E] hover:bg-white/[0.05]"
+              className="relative flex flex-col rounded-2xl border border-[#C9A96E] bg-white/[0.03] p-8 transition-all duration-300 hover:border-[#C9A96E] hover:bg-white/[0.05]"
               style={{ boxShadow: "0 0 28px rgba(201, 169, 110, 0.18)" }}
             >
               <div className="mb-3 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
@@ -99,27 +117,20 @@ export default function TarifsPage() {
               </div>
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Pro</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                {annuel ? "89€" : "99€"}
+                {annuel ? "134€" : "149,99€"}
                 <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
 
-              <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-[#C9A96E]">✓</span>
-                  <span>{"1\u00a0utilisateur"}</span>
-                </li>
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-[#C9A96E]">✓</span>
-                  <span>Accès aux 3 outils</span>
-                </li>
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-[#C9A96E]">✓</span>
-                  <span>Générations illimitées</span>
-                </li>
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-[#C9A96E]">✓</span>
-                  <span>Support prioritaire</span>
-                </li>
+              <ul className="mt-6 divide-y divide-white/10 text-sm">
+                <PlanFeature included>1 utilisateur</PlanFeature>
+                <PlanFeature included>Tout le plan Essentiel</PlanFeature>
+                <PlanFeature included>Générations illimitées</PlanFeature>
+                <PlanFeature included>Templates illimités</PlanFeature>
+                <PlanFeature included>Export PDF</PlanFeature>
+                <PlanFeature included>Historique complet</PlanFeature>
+                <PlanFeature included>Relances automatiques</PlanFeature>
+                <PlanFeature included>Support prioritaire</PlanFeature>
+                <PlanFeature included={false}>Programmes neufs</PlanFeature>
               </ul>
 
               <StripePlanCheckoutButton
@@ -130,7 +141,50 @@ export default function TarifsPage() {
                 Essayer Pro gratuitement
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                {annuel ? "1 069€/an — 14 jours gratuits" : "14 jours gratuits, puis 99€/mois"}
+                {annuel
+                  ? "1 608€/an — 14 jours gratuits"
+                  : "14 jours gratuits, puis 149,99€/mois"}
+              </p>
+            </article>
+
+            {/* Expert */}
+            <article className="flex flex-col rounded-2xl border border-white/20 bg-white/[0.02] p-8 transition-all duration-300 hover:border-white/30 hover:bg-white/[0.04]">
+              <div className="mb-3 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
+                Programmes neufs inclus
+              </div>
+              <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">
+                Expert
+              </p>
+              <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
+                {annuel ? "269€" : "299,99€"}
+                <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+              </p>
+
+              <ul className="mt-6 divide-y divide-white/10 text-sm">
+                <PlanFeature included>1 utilisateur</PlanFeature>
+                <PlanFeature included>Tout le plan Pro</PlanFeature>
+                <PlanFeature included>
+                  Programmes neufs (plaquette PDF → 6 annonces différenciantes)
+                </PlanFeature>
+                <PlanFeature included>Génération par lot</PlanFeature>
+                <PlanFeature included>Analyse annonces concurrentes</PlanFeature>
+                <PlanFeature included>Enrichissement web données officielles</PlanFeature>
+                <PlanFeature included>Score de différenciation</PlanFeature>
+                <PlanFeature included>Export PDF annonces programmes</PlanFeature>
+                <PlanFeature included>Support dédié + onboarding personnalisé</PlanFeature>
+              </ul>
+
+              <StripePlanCheckoutButton
+                plan="expert"
+                billing={annuel ? "annual" : "monthly"}
+                className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-white/30 bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:border-white/50 hover:bg-white/5 disabled:cursor-wait disabled:opacity-70"
+              >
+                Essayer Expert gratuitement
+              </StripePlanCheckoutButton>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
+                {annuel
+                  ? "3 228€/an — 14 jours gratuits"
+                  : "14 jours gratuits, puis 299,99€/mois"}
               </p>
             </article>
           </div>

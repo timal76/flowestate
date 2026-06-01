@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-export type StripePlan = "starter" | "pro";
+export type StripePlan = "starter" | "pro" | "expert";
 
 type StripePlanCheckoutButtonProps = {
   plan: StripePlan;
