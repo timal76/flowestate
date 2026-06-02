@@ -93,7 +93,24 @@ async function fileToBase64(file: File): Promise<string> {
   return base64;
 }
 
-function cleanMarkdown(text: string) {
+function cleanAnnonceCorps(text: string): string {
+  // Si le texte contient du JSON brut, extraire uniquement le corps
+  if (text.trim().startsWith("{") || text.trim().startsWith("```json")) {
+    try {
+      const cleaned = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleaned) as {
+        siteAgence?: { corps?: string };
+        seloger?: { corps?: string };
+        leboncoin?: { corps?: string };
+      };
+      if (parsed.siteAgence?.corps) return parsed.siteAgence.corps;
+      if (parsed.seloger?.corps) return parsed.seloger.corps;
+      if (parsed.leboncoin?.corps) return parsed.leboncoin.corps;
+    } catch {
+      // ignore
+    }
+  }
+  // Nettoyage markdown normal
   return text
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/\*\*(.*?)\*\*/g, "$1")
@@ -1185,7 +1202,7 @@ export default function ProgrammesNeufsPage() {
                             {activeProgrammeBlock.titre}
                           </h3>
                           <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                            {cleanMarkdown(activeProgrammeBlock.corps)}
+                            {cleanAnnonceCorps(activeProgrammeBlock.corps)}
                           </p>
                           <div className="mt-8">
                             <button
@@ -1229,7 +1246,7 @@ export default function ProgrammesNeufsPage() {
                               {activeLotBlock.titre}
                             </h3>
                             <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                              {cleanMarkdown(activeLotBlock.corps)}
+                              {cleanAnnonceCorps(activeLotBlock.corps)}
                             </p>
                             <div className="mt-8">
                               <button
