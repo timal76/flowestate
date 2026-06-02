@@ -128,8 +128,26 @@ function compactExtractedData(data: Record<string, unknown>): Record<string, unk
   return result;
 }
 
-function buildInterditsDynamiques(data: Record<string, unknown>): string {
+function buildInterditsDynamiques(
+  data: Record<string, unknown>,
+  angle: string,
+  prospectProfile: string,
+): string {
   const interdits: string[] = [];
+
+  const angleLC = (angle + " " + prospectProfile).toLowerCase();
+  const isPinelInterdit =
+    angleLC.includes("retrait") ||
+    angleLC.includes("résidence secondaire") ||
+    angleLC.includes("residence secondaire") ||
+    angleLC.includes("pied-à-terre") ||
+    angleLC.includes("senior");
+
+  if (isPinelInterdit) {
+    interdits.push(
+      "Loi Pinel : INTERDITE sur cet angle — ne jamais mentionner Pinel, rendement locatif ou investissement locatif",
+    );
+  }
 
   if (!data.baignoire)
     interdits.push(
@@ -814,7 +832,7 @@ DONNÉES CRITIQUES À INCLURE OBLIGATOIREMENT :
 
 LISTE NOIRE DYNAMIQUE — INFORMATIONS INTERDITES POUR CE PROGRAMME :
 Ces informations ne sont PAS confirmées dans les documents fournis et ne doivent JAMAIS apparaître :
-${buildInterditsDynamiques(extractedData)}
+${buildInterditsDynamiques(extractedData, angle, prospectProfile)}
 
 Ces interdictions sont absolues et priment sur toute autre instruction.
 
