@@ -851,36 +851,38 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
         );
       }
 
+      const textWithBrace = "{" + generationText.trim();
+
       let annonces: GeneratedAnnonces;
       try {
-        annonces = parseJsonFromText(generationText) as GeneratedAnnonces;
+        annonces = parseJsonFromText(textWithBrace) as GeneratedAnnonces;
       } catch {
         // Tentative de récupération : extraire manuellement les champs
-        console.error(`GENERATION PARSE ERROR ${label}:`, generationText?.substring(0, 500));
+        console.error(`GENERATION PARSE ERROR ${label}:`, textWithBrace?.substring(0, 500));
 
         try {
           // Cherche les titres et corps individuellement
           const leboncoinTitre =
-            generationText.match(/"leboncoin"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
+            textWithBrace.match(/"leboncoin"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
             "Annonce programme neuf";
           const leboncoinCorps =
-            generationText
+            textWithBrace
               .match(/"leboncoin"[\s\S]*?"corps"\s*:\s*"([\s\S]*?)"\s*\}/)?.[1]
-              ?.replace(/\\n/g, "\n") || generationText.substring(0, 500);
+              ?.replace(/\\n/g, "\n") || textWithBrace.substring(0, 500);
           const selogerTitre =
-            generationText.match(/"seloger"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
+            textWithBrace.match(/"seloger"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
             "Programme neuf Le Havre";
           const selogerCorps =
-            generationText
+            textWithBrace
               .match(/"seloger"[\s\S]*?"corps"\s*:\s*"([\s\S]*?)"\s*\}/)?.[1]
-              ?.replace(/\\n/g, "\n") || generationText.substring(0, 800);
+              ?.replace(/\\n/g, "\n") || textWithBrace.substring(0, 800);
           const siteAgenceTitre =
-            generationText.match(/"siteAgence"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
+            textWithBrace.match(/"siteAgence"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
             "Découvrez ce programme neuf";
           const siteAgenceCorps =
-            generationText
+            textWithBrace
               .match(/"siteAgence"[\s\S]*?"corps"\s*:\s*"([\s\S]*?)"\s*\}[\s\S]*?\}/)?.[1]
-              ?.replace(/\\n/g, "\n") || generationText.substring(0, 1200);
+              ?.replace(/\\n/g, "\n") || textWithBrace.substring(0, 1200);
 
           annonces = {
             leboncoin: { titre: leboncoinTitre, corps: leboncoinCorps },
@@ -937,11 +939,17 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
       const [programmeCall, lotCall] = await Promise.all([
         callAnthropicWithRetry(apiKey, {
           ...programmeGenerationParams,
-          messages: [{ role: "user", content: buildGenerationUserPrompt("programme") }],
+          messages: [
+            { role: "user", content: buildGenerationUserPrompt("programme") },
+            { role: "assistant", content: "{" },
+          ],
         }),
         callAnthropicWithRetry(apiKey, {
           ...lotGenerationParams,
-          messages: [{ role: "user", content: buildGenerationUserPrompt("lot") }],
+          messages: [
+            { role: "user", content: buildGenerationUserPrompt("lot") },
+            { role: "assistant", content: "{" },
+          ],
         }),
       ]);
 
@@ -964,7 +972,10 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
     } else {
       const programmeCall = await callAnthropicWithRetry(apiKey, {
         ...programmeGenerationParams,
-        messages: [{ role: "user", content: buildGenerationUserPrompt("programme") }],
+        messages: [
+          { role: "user", content: buildGenerationUserPrompt("programme") },
+          { role: "assistant", content: "{" },
+        ],
       });
 
       if (!programmeCall.response.ok) {
