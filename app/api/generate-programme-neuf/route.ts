@@ -892,8 +892,10 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
     };
     const lotGenerationParams = {
       model: "claude-sonnet-4-5",
-      max_tokens: 3000,
-      system: GENERATION_SYSTEM,
+      max_tokens: 4500,
+      system:
+        GENERATION_SYSTEM +
+        "\n\nRAPPEL FINAL ABSOLU : Commence ta réponse par { et termine par }. Aucun caractère avant ou après. Aucun backtick. Aucun ```json. Uniquement le JSON brut.",
     };
 
     const hasAnnexes = annexes.length > 0;

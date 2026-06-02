@@ -93,33 +93,29 @@ async function fileToBase64(file: File): Promise<string> {
   return base64;
 }
 
-const displayCorps = (corps: string): string => {
-  const trimmed = corps.trim();
-  // Si c'est du JSON brut, extraire le bon corps
-  if (trimmed.startsWith("{") || trimmed.startsWith("```")) {
+const safeCorps = (text: string): string => {
+  if (!text) return "";
+  const t = text.trim();
+  if (t.startsWith("{") || t.startsWith("`")) {
     try {
-      const clean = trimmed.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(clean) as {
-        siteAgence?: { corps?: string };
-        seloger?: { corps?: string };
-        leboncoin?: { corps?: string };
-      };
-      // Retourne le corps le plus long trouvé
-      const candidates = [parsed.siteAgence?.corps, parsed.seloger?.corps, parsed.leboncoin?.corps].filter(
-        Boolean,
-      ) as string[];
-      if (candidates.length > 0) {
-        return candidates.sort((a, b) => b.length - a.length)[0];
+      const clean = t.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+      const start = clean.indexOf("{");
+      const end = clean.lastIndexOf("}");
+      if (start !== -1 && end > start) {
+        const parsed = JSON.parse(clean.slice(start, end + 1)) as Record<
+          string,
+          { titre?: string; corps?: string }
+        >;
+        const bodies = Object.values(parsed)
+          .map((v) => v?.corps)
+          .filter(Boolean) as string[];
+        if (bodies.length > 0) return bodies.sort((a, b) => b.length - a.length)[0];
       }
     } catch {
-      // ignore
+      /* ignore */
     }
   }
-  // Nettoyage markdown standard
-  return trimmed
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/\*\*(.*?)\*\*/g, "$1")
-    .replace(/\*(.*?)\*/g, "$1");
+  return t.replace(/^#{1,6}\s+/gm, "").replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
 };
 
 export default function ProgrammesNeufsPage() {
@@ -1206,7 +1202,7 @@ export default function ProgrammesNeufsPage() {
                             {activeProgrammeBlock.titre}
                           </h3>
                           <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                            {displayCorps(activeProgrammeBlock.corps)}
+                            {safeCorps(activeProgrammeBlock.corps)}
                           </p>
                           <div className="mt-8">
                             <button
@@ -1250,7 +1246,7 @@ export default function ProgrammesNeufsPage() {
                               {activeLotBlock.titre}
                             </h3>
                             <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                              {displayCorps(activeLotBlock.corps)}
+                              {safeCorps(activeLotBlock.corps)}
                             </p>
                             <div className="mt-8">
                               <button
