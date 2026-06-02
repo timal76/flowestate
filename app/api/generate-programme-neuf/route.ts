@@ -936,9 +936,11 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
     }
 
     const programmeGenerationParams = {
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 4000,
-      system: GENERATION_SYSTEM,
+      model: "claude-sonnet-4-5",
+      max_tokens: 5000,
+      system:
+        GENERATION_SYSTEM +
+        "\n\nRAPPEL FINAL ABSOLU : Ta réponse commence OBLIGATOIREMENT par { et se termine par }. Zéro texte avant. Zéro texte après. Zéro backtick. JSON pur uniquement.",
     };
     const lotGenerationParams = {
       model: "claude-sonnet-4-5",
