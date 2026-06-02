@@ -791,26 +791,54 @@ export async function POST(request: Request) {
 
     const essentialExtractedData = compactExtractedData(extractedData);
 
-    const buildGenerationUserPrompt = (mode: "programme" | "lot") => {
-      const modeInstruction =
-        mode === "programme"
-          ? `MODE : Annonce programme global. Tu décris l'ensemble de la résidence (tous les types de lots, fourchette de surfaces et prix, prestations communes). Ne pas mentionner un lot spécifique. L'objectif est d'attirer un maximum de profils différents vers le programme.`
-          : `MODE : Annonce lot spécifique. Tu décris uniquement ce lot précis avec toutes ses caractéristiques détaillées (surfaces exactes, orientation, étage, balcon, agencement). C'est une annonce de vente directe pour ce lot.`;
+    const buildGenerationUserPrompt = (
+      mode: "programme" | "lot" | "programme-court" | "programme-site" | "lot-court" | "lot-site",
+    ) => {
+      const isProgramme =
+        mode === "programme" || mode === "programme-court" || mode === "programme-site";
+      const isLot = mode === "lot" || mode === "lot-court" || mode === "lot-site";
+      const isCourt = mode === "programme-court" || mode === "lot-court";
+      const isSiteOnly = mode === "programme-site" || mode === "lot-site";
 
-      const programmeStrictRule =
-        mode === "programme"
-          ? `RÈGLE ABSOLUE PROGRAMME GLOBAL : Tu disposes uniquement des données extraites de la plaquette promoteur. N'invente aucune information non présente dans ces données. Si une information n'est pas dans la plaquette (surface min/max, date de livraison, équipements, dispositifs fiscaux), utilise exactement ce qui est écrit dans la plaquette ou ne le mentionne pas. Zéro extrapolation.`
-          : "";
+      const modeInstruction = isProgramme
+        ? `MODE : Annonce programme global. Tu décris l'ensemble de la résidence (tous les types de lots, fourchette de surfaces et prix, prestations communes). Ne pas mentionner un lot spécifique. L'objectif est d'attirer un maximum de profils différents vers le programme.`
+        : `MODE : Annonce lot spécifique. Tu décris uniquement ce lot précis avec toutes ses caractéristiques détaillées (surfaces exactes, orientation, étage, balcon, agencement). C'est une annonce de vente directe pour ce lot.`;
 
-      const addressBlock =
-        mode === "lot" && address ? `ADRESSE EXACTE DU PROGRAMME : ${address}` : "";
+      const programmeStrictRule = isProgramme
+        ? `RÈGLE ABSOLUE PROGRAMME GLOBAL : Tu disposes uniquement des données extraites de la plaquette promoteur. N'invente aucune information non présente dans ces données. Si une information n'est pas dans la plaquette (surface min/max, date de livraison, équipements, dispositifs fiscaux), utilise exactement ce qui est écrit dans la plaquette ou ne le mentionne pas. Zéro extrapolation.`
+        : "";
+
+      const addressBlock = isLot && address ? `ADRESSE EXACTE DU PROGRAMME : ${address}` : "";
       const annexesBlock =
-        mode === "lot" && annexesDescription
+        isLot && annexesDescription
           ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}`
           : "";
 
-      const programmeMandatoryBlock =
-        mode === "programme"
+      const introLine = isCourt
+        ? "Génère UNIQUEMENT les annonces leboncoin et seloger différenciées à partir des données suivantes."
+        : isSiteOnly
+          ? "Génère UNIQUEMENT l'annonce siteAgence à partir des données suivantes."
+          : "Génère les 3 annonces immobilières différenciées à partir des données suivantes.";
+
+      const titleRulesBlock = isCourt
+        ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
+- Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train. Ex: "2h05 Paris • T3 64m² neuf • Livraison T1 2026"
+- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"`
+        : isSiteOnly
+          ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
+- Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"`
+          : `RÈGLES OBLIGATOIRES POUR LES TITRES :
+- Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train. Ex: "2h05 Paris • T3 64m² neuf • Livraison T1 2026"
+- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"
+- Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"`;
+
+      const formatJson = isCourt
+        ? '{"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."}}'
+        : isSiteOnly
+          ? '{"siteAgence":{"titre":"...","corps":"..."}}'
+          : '{"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}';
+
+      const programmeMandatoryBlock = isProgramme
           ? `DONNÉES PLAQUETTE OBLIGATOIRES À INCLURE DANS TOUTES LES ANNONCES PROGRAMME :
 - Nom : ${extractedData.nom || "Havre en Scène"}
 - Promoteur : ${extractedData.promoteur || "Sedelka"}
@@ -829,7 +857,7 @@ Ces informations DOIVENT apparaître dans chaque annonce programme. Ne jamais le
           : "";
 
       return `
-Génère les 3 annonces immobilières différenciées à partir des données suivantes.
+${introLine}
 
 ${programmeMandatoryBlock}${modeInstruction}
 ${programmeStrictRule ? `\n${programmeStrictRule}\n` : ""}
@@ -872,10 +900,7 @@ ${buildInterditsDynamiques(extractedData, angle, prospectProfile)}
 
 Ces interdictions sont absolues et priment sur toute autre instruction.
 
-RÈGLES OBLIGATOIRES POUR LES TITRES :
-- Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train. Ex: "2h05 Paris • T3 64m² neuf • Livraison T1 2026"
-- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"
-- Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"
+${titleRulesBlock}
 
 RÈGLE ABSOLUE ACCROCHE :
 Le premier mot du corps de chaque annonce NE PEUT PAS être : "Découvrez", "Bienvenue", le nom de la résidence, "Ce", "Cet", "Cette".
@@ -890,7 +915,7 @@ Consignes finales :
 RAPPEL FINAL : Retourne uniquement le JSON. Pas de texte introductif, pas de commentaire, pas de backticks. Commence par { et termine par }.
 
 FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après, zéro backtick, zéro markdown :
-{"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}
+${formatJson}
 `.trim();
     };
 
@@ -971,19 +996,67 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
       return annonces;
     }
 
-    const programmeGenerationParams = {
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 5000,
-      system:
-        GENERATION_SYSTEM +
-        "\n\nRAPPEL FINAL ABSOLU : Ta réponse commence OBLIGATOIREMENT par { et se termine par }. Zéro texte avant. Zéro texte après. Zéro backtick. JSON pur uniquement.",
-    };
-    const lotGenerationParams = {
-      model: "claude-sonnet-4-5",
-      max_tokens: 4500,
-      system:
-        GENERATION_SYSTEM +
-        "\n\nRAPPEL FINAL ABSOLU : Commence ta réponse par { et termine par }. Aucun caractère avant ou après. Aucun backtick. JSON pur uniquement.",
+    const generateSplitAnnonces = async (
+      baseMode: "programme" | "lot",
+    ): Promise<GeneratedAnnonces | NextResponse> => {
+      const courtMode = baseMode === "programme" ? "programme-court" : "lot-court";
+      const siteMode = baseMode === "programme" ? "programme-site" : "lot-site";
+
+      const shortCall = await callAnthropicWithRetry(apiKey, {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2500,
+        system:
+          GENERATION_SYSTEM +
+          '\n\nRAPPEL : Retourne UNIQUEMENT {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."}}',
+        messages: [
+          {
+            role: "user",
+            content:
+              buildGenerationUserPrompt(courtMode) +
+              '\n\nGénère UNIQUEMENT leboncoin et seloger. Format: {"leboncoin":{...},"seloger":{...}}',
+          },
+          { role: "assistant", content: "{" },
+        ],
+      });
+
+      if (!shortCall.response.ok) {
+        return anthropicErrorResponse(shortCall.response, shortCall.json);
+      }
+
+      const siteCall = await callAnthropicWithRetry(apiKey, {
+        model: "claude-sonnet-4-5",
+        max_tokens: 3000,
+        system:
+          GENERATION_SYSTEM +
+          '\n\nRAPPEL : Retourne UNIQUEMENT {"siteAgence":{"titre":"...","corps":"..."}}',
+        messages: [
+          {
+            role: "user",
+            content:
+              buildGenerationUserPrompt(siteMode) +
+              '\n\nGénère UNIQUEMENT siteAgence. Format: {"siteAgence":{...}}',
+          },
+          { role: "assistant", content: "{" },
+        ],
+      });
+
+      if (!siteCall.response.ok) {
+        return anthropicErrorResponse(siteCall.response, siteCall.json);
+      }
+
+      const shortText = extractTextFromAnthropic(shortCall.json);
+      const shortParsed = parseGeneratedAnnonces(shortText, `${baseMode}-court`);
+      if (shortParsed instanceof NextResponse) return shortParsed;
+
+      const siteText = extractTextFromAnthropic(siteCall.json);
+      const siteParsed = parseGeneratedAnnonces(siteText, `${baseMode}-site`);
+      if (siteParsed instanceof NextResponse) return siteParsed;
+
+      return {
+        leboncoin: shortParsed.leboncoin,
+        seloger: shortParsed.seloger,
+        siteAgence: siteParsed.siteAgence,
+      };
     };
 
     const hasAnnexes = annexes.length > 0;
@@ -992,56 +1065,20 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
     let lotAnnonces: GeneratedAnnonces | null = null;
 
     if (hasAnnexes) {
-      const [programmeCall, lotCall] = await Promise.all([
-        callAnthropicWithRetry(apiKey, {
-          ...programmeGenerationParams,
-          messages: [
-            { role: "user", content: buildGenerationUserPrompt("programme") },
-            { role: "assistant", content: "{" },
-          ],
-        }),
-        callAnthropicWithRetry(apiKey, {
-          ...lotGenerationParams,
-          messages: [
-            { role: "user", content: buildGenerationUserPrompt("lot") },
-            { role: "assistant", content: "{" },
-          ],
-        }),
+      const [programmeResult, lotResult] = await Promise.all([
+        generateSplitAnnonces("programme"),
+        generateSplitAnnonces("lot"),
       ]);
 
-      if (!programmeCall.response.ok) {
-        return anthropicErrorResponse(programmeCall.response, programmeCall.json);
-      }
-      if (!lotCall.response.ok) {
-        return anthropicErrorResponse(lotCall.response, lotCall.json);
-      }
+      if (programmeResult instanceof NextResponse) return programmeResult;
+      programmeAnnonces = programmeResult;
 
-      const programmeText = extractTextFromAnthropic(programmeCall.json);
-      const programmeParsed = parseGeneratedAnnonces(programmeText, "programme");
-      if (programmeParsed instanceof NextResponse) return programmeParsed;
-      programmeAnnonces = programmeParsed;
-
-      const lotText = extractTextFromAnthropic(lotCall.json);
-      const lotParsed = parseGeneratedAnnonces(lotText, "lot");
-      if (lotParsed instanceof NextResponse) return lotParsed;
-      lotAnnonces = lotParsed;
+      if (lotResult instanceof NextResponse) return lotResult;
+      lotAnnonces = lotResult;
     } else {
-      const programmeCall = await callAnthropicWithRetry(apiKey, {
-        ...programmeGenerationParams,
-        messages: [
-          { role: "user", content: buildGenerationUserPrompt("programme") },
-          { role: "assistant", content: "{" },
-        ],
-      });
-
-      if (!programmeCall.response.ok) {
-        return anthropicErrorResponse(programmeCall.response, programmeCall.json);
-      }
-
-      const programmeText = extractTextFromAnthropic(programmeCall.json);
-      const programmeParsed = parseGeneratedAnnonces(programmeText, "programme");
-      if (programmeParsed instanceof NextResponse) return programmeParsed;
-      programmeAnnonces = programmeParsed;
+      const programmeResult = await generateSplitAnnonces("programme");
+      if (programmeResult instanceof NextResponse) return programmeResult;
+      programmeAnnonces = programmeResult;
     }
 
     const residenceLabel =
