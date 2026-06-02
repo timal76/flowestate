@@ -153,8 +153,9 @@ function buildInterditsDynamiques(
     interdits.push(
       "Baignoire : NON CONFIRMÉ dans ce programme — écrire uniquement 'douche' ou 'salle de bain'",
     );
-  if (!data.hauteur_plafond)
-    interdits.push("Hauteur sous plafond : NON CONFIRMÉE — ne jamais mentionner de hauteur chiffrée");
+  interdits.push(
+    "Hauteur sous plafond 2,10m : FAUSSE — le plan confirme H=2,7m via l'escalier. Si tu mentionnes la hauteur, écrire exactement '2,70m' ou ne pas mentionner.",
+  );
   if (!data.orientation)
     interdits.push("Orientation (sud, nord, est, ouest, plein sud) : NON CONFIRMÉE — INTERDITE");
   if (!data.vue) interdits.push("Vue (vue mer, vue dégagée, panoramique) : NON CONFIRMÉE — INTERDITE");
