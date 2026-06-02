@@ -947,7 +947,7 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
       max_tokens: 4500,
       system:
         GENERATION_SYSTEM +
-        "\n\nRAPPEL FINAL ABSOLU : Commence ta réponse par { et termine par }. Aucun caractère avant ou après. Aucun backtick. Aucun ```json. Uniquement le JSON brut.",
+        "\n\nRAPPEL FINAL ABSOLU : Commence ta réponse par { et termine par }. Aucun caractère avant ou après. Aucun backtick. JSON pur uniquement.",
     };
 
     const hasAnnexes = annexes.length > 0;
