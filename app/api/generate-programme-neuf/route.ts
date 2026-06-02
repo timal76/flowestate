@@ -128,6 +128,36 @@ function compactExtractedData(data: Record<string, unknown>): Record<string, unk
   return result;
 }
 
+function buildInterditsDynamiques(data: Record<string, unknown>): string {
+  const interdits: string[] = [];
+
+  if (!data.baignoire)
+    interdits.push(
+      "Baignoire : NON CONFIRMÉ dans ce programme — écrire uniquement 'douche' ou 'salle de bain'",
+    );
+  if (!data.hauteur_plafond)
+    interdits.push("Hauteur sous plafond : NON CONFIRMÉE — ne jamais mentionner de hauteur chiffrée");
+  if (!data.orientation)
+    interdits.push("Orientation (sud, nord, est, ouest, plein sud) : NON CONFIRMÉE — INTERDITE");
+  if (!data.vue) interdits.push("Vue (vue mer, vue dégagée, panoramique) : NON CONFIRMÉE — INTERDITE");
+  if (!data.cuisine_equipee)
+    interdits.push(
+      "Cuisine équipée (réfrigérateur, four, hotte, lave-vaisselle) : NON CONFIRMÉ — écrire 'cuisine aménageable (équipements à confirmer avec le promoteur)'",
+    );
+  if (!data.ascenseur) interdits.push("Ascenseur : NON CONFIRMÉ — ne pas mentionner");
+  if (!data.double_exposition)
+    interdits.push("Double exposition / traversant : NON CONFIRMÉ — INTERDIT");
+
+  // Interdits universels
+  interdits.push("Havre de paix : EXPRESSION INTERDITE");
+  interdits.push("Baigné de lumière : EXPRESSION INTERDITE");
+  interdits.push("Vis-à-vis (affirmer sans vis-à-vis) : NON CONFIRMÉ — INTERDIT");
+  interdits.push("Ventilation double flux : sauf si mentionné dans la plaquette");
+  interdits.push("Taux économie énergie chiffrés (divisé par X) : INTERDITS sans source");
+
+  return interdits.map((i) => `- ${i}`).join("\n");
+}
+
 function buildWebSearchPrompt(
   ville: string,
   quartier: string,
@@ -283,7 +313,7 @@ Retourne un JSON sans markdown :
 const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
 
 Format exact :
-{"nom":null,"promoteur":null,"ville":null,"quartier":null,"adresse":null,"types_biens":null,"surface_min":null,"surface_max":null,"nb_lots":null,"prix_min":null,"prix_max":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"re2020":null,"livraison":null,"prestations":[],"domotique":null,"stationnement":null,"commerces_rdc":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[]}
+{"nom":null,"promoteur":null,"ville":null,"quartier":null,"adresse":null,"types_biens":null,"surface_min":null,"surface_max":null,"nb_lots":null,"prix_min":null,"prix_max":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"re2020":null,"livraison":null,"prestations":[],"domotique":null,"stationnement":null,"commerces_rdc":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[],"baignoire":null,"hauteur_plafond":null,"orientation":null,"vue":null,"cuisine_equipee":null,"double_exposition":null,"ascenseur":null,"digicode":null,"interphone":null,"gardien":null,"piscine":null,"terrasse_confirmee":null,"balcon_confirme":null}
 
 RÈGLES ABSOLUES :
 - Copie mot pour mot les informations présentes dans le document, sans reformuler
@@ -291,6 +321,13 @@ RÈGLES ABSOLUES :
 - Pour "prestations" : liste exhaustive de TOUT ce qui est mentionné dans le document
 - Pour "domotique" : note exactement le nom du système et si il est offert ou non
 - Pour "arguments_promoteur" : liste tous les angles marketing utilisés
+- "baignoire" : null sauf si le mot "baignoire" est explicitement écrit dans le document
+- "hauteur_plafond" : null sauf si une hauteur précise est indiquée dans le document
+- "orientation" : null sauf si une orientation cardinale (sud, nord, est, ouest) est explicitement indiquée
+- "vue" : null sauf si une vue est explicitement garantie dans le document
+- "cuisine_equipee" : null sauf si les équipements sont listés comme inclus (pas optionnels)
+- "ascenseur" : null sauf si explicitement mentionné
+- "terrasse_confirmee" : copier exactement le terme utilisé (terrasse ou balcon)
 - Si une information est absente : null
 - Zéro invention, zéro interprétation, zéro extrapolation`;
 
@@ -327,11 +364,11 @@ COHÉRENCE ANGLE/PROFIL :
 - ANGLE FAMILLE/PRIMO : INTERDIRE toute mention de rendement, Pinel investisseur
 - Ne jamais mélanger les angles dans une même annonce
 
-ZÉRO INVENTION :
-- Ne jamais utiliser des connaissances générales non présentes dans les documents fournis
-- Chaque fait technique doit être traçable vers un document source (plaquette, plan, annexe, données web sourcées)
-- Si une information n'est pas dans les documents : soit la chercher via web search, soit ne pas l'écrire
-- INTERDIT : "havre de paix", "coup de cœur", "nichée", "baignée de lumière", "demeure d'exception"
+ZÉRO INVENTION — RÈGLE FONDAMENTALE :
+Chaque information technique dans l'annonce doit être traçable vers un document source (plaquette, plan, annexe, données officielles sourcées). Si une information n'est pas dans les documents fournis ou dans les données Le Havre avec source explicite : elle n'existe pas pour cette annonce.
+Cette règle s'applique à TOUT programme, pas seulement au lot B204.
+En cas de doute sur une information : NE PAS L'ÉCRIRE.
+Mieux vaut une annonce avec moins d'informations qu'une annonce avec une seule information inventée.
 
 MENTIONS LÉGALES OBLIGATOIRES :
 - TVA réduite : toujours "selon conditions de ressources, en résidence principale pendant au minimum 10 ans"
@@ -775,16 +812,9 @@ DONNÉES CRITIQUES À INCLURE OBLIGATOIREMENT :
           : [],
       )}
 
-LISTE NOIRE — INFORMATIONS INTERDITES DANS CETTE GÉNÉRATION :
-Ces informations ne sont PAS dans les documents fournis et ne doivent JAMAIS apparaître :
-- Orientation (sud, nord, est, ouest, plein sud, façade sud/est) : NON CONFIRMÉ dans les plans
-- Cuisine équipée (réfrigérateur, lave-vaisselle, lave-linge, four, hotte) : NON CONFIRMÉ dans la plaquette — écrire uniquement "cuisine aménageable (équipements à confirmer avec le promoteur)"
-- Ventilation double flux : NON MENTIONNÉ dans la plaquette
-- Double exposition ou traversant : NON CONFIRMÉ dans les plans
-- Baigné de lumière : EXPRESSION INTERDITE
-- Havre de paix : EXPRESSION INTERDITE
-- Taux d'économie d'énergie chiffrés (divisé par 2, par 3) : NON SOURCÉ
-- Vis-à-vis : NON CONFIRMÉ dans les plans
+LISTE NOIRE DYNAMIQUE — INFORMATIONS INTERDITES POUR CE PROGRAMME :
+Ces informations ne sont PAS confirmées dans les documents fournis et ne doivent JAMAIS apparaître :
+${buildInterditsDynamiques(extractedData)}
 
 Ces interdictions sont absolues et priment sur toute autre instruction.
 
