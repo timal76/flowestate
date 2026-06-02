@@ -1081,6 +1081,72 @@ ${formatJson}
       programmeAnnonces = programmeResult;
     }
 
+    const runAnnoncesVerification = async (
+      annoncesToVerify: GeneratedAnnonces,
+    ): Promise<GeneratedAnnonces> => {
+      const verificationPrompt = `Tu es un vérificateur immobilier strict. Tu reçois des annonces générées et les données sources. Tu dois supprimer ou corriger TOUTE information qui n'est pas présente dans les sources.
+
+DONNÉES SOURCES AUTORISÉES :
+${JSON.stringify(essentialExtractedData)}
+${hardcodedData ? `DONNÉES LE HAVRE VÉRIFIÉES : ${hardcodedData.substring(0, 500)}` : ""}
+
+ANNONCES À VÉRIFIER :
+${JSON.stringify(annoncesToVerify)}
+
+RÈGLES DE VÉRIFICATION — SUPPRIME IMMÉDIATEMENT :
+- Ascenseur si non mentionné dans les sources
+- Baignoire si non mentionnée dans les sources
+- VMC double flux si non mentionnée
+- Hauteur sous plafond inventée
+- Orientation (sud/nord/est/ouest) si non confirmée
+- "Sans vis-à-vis" si non confirmé
+- Prix au m² calculés pour un lot spécifique
+- Nombre de restaurants/commerces inventé
+- Pinel sur angle retraite/résidence secondaire
+- Toute information non traçable vers les sources
+
+CORRECTIONS :
+- "ascenseur" → supprimer la mention
+- "baignoire" → remplacer par "douche à l'italienne"
+- prix calculés → supprimer
+- Pinel → supprimer si angle retraite
+
+Retourne UNIQUEMENT le JSON corrigé, commence par { et termine par } :
+{"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}`;
+
+      const verificationCall = await callAnthropicWithRetry(apiKey, {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 4000,
+        messages: [
+          { role: "user", content: verificationPrompt },
+          { role: "assistant", content: "{" },
+        ],
+      });
+
+      if (verificationCall.response.ok) {
+        const verifText = "{" + extractTextFromAnthropic(verificationCall.json);
+        try {
+          const verifiedAnnonces = parseJsonFromText(verifText) as GeneratedAnnonces;
+          if (
+            verifiedAnnonces.leboncoin?.titre &&
+            verifiedAnnonces.seloger?.titre &&
+            verifiedAnnonces.siteAgence?.titre
+          ) {
+            return verifiedAnnonces;
+          }
+        } catch {
+          console.error("[verification] parse failed, using original annonces");
+        }
+      }
+
+      return annoncesToVerify;
+    };
+
+    programmeAnnonces = await runAnnoncesVerification(programmeAnnonces);
+    if (lotAnnonces) {
+      lotAnnonces = await runAnnoncesVerification(lotAnnonces);
+    }
+
     const residenceLabel =
       nomResidence ||
       (typeof extractedData["nom de la résidence"] === "string"
@@ -1088,7 +1154,7 @@ ${formatJson}
         : "Programme neuf");
     const generationDescription = `Programme neuf — ${residenceLabel} — ${ville}`.replace(/\s+/g, " ").trim();
 
-    const annonces = lotAnnonces ?? programmeAnnonces;
+    let annonces = lotAnnonces ?? programmeAnnonces;
 
     console.log("[programme-neuf] attempting to record generation for userId:", effectiveUserId);
 
