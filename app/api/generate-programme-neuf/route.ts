@@ -956,26 +956,26 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
     let lotAnnonces: GeneratedAnnonces | null = null;
 
     if (hasAnnexes) {
-      const programmeCall = await callAnthropicWithRetry(apiKey, {
-        ...programmeGenerationParams,
-        messages: [
-          { role: "user", content: buildGenerationUserPrompt("programme") },
-          { role: "assistant", content: "{" },
-        ],
-      });
+      const [programmeCall, lotCall] = await Promise.all([
+        callAnthropicWithRetry(apiKey, {
+          ...programmeGenerationParams,
+          messages: [
+            { role: "user", content: buildGenerationUserPrompt("programme") },
+            { role: "assistant", content: "{" },
+          ],
+        }),
+        callAnthropicWithRetry(apiKey, {
+          ...lotGenerationParams,
+          messages: [
+            { role: "user", content: buildGenerationUserPrompt("lot") },
+            { role: "assistant", content: "{" },
+          ],
+        }),
+      ]);
 
       if (!programmeCall.response.ok) {
         return anthropicErrorResponse(programmeCall.response, programmeCall.json);
       }
-
-      const lotCall = await callAnthropicWithRetry(apiKey, {
-        ...lotGenerationParams,
-        messages: [
-          { role: "user", content: buildGenerationUserPrompt("lot") },
-          { role: "assistant", content: "{" },
-        ],
-      });
-
       if (!lotCall.response.ok) {
         return anthropicErrorResponse(lotCall.response, lotCall.json);
       }
