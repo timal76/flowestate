@@ -134,45 +134,80 @@ function buildInterditsDynamiques(
   prospectProfile: string,
 ): string {
   const interdits: string[] = [];
-
   const angleLC = (angle + " " + prospectProfile).toLowerCase();
+
+  // RÈGLES UNIVERSELLES — s'appliquent à TOUT programme
+  interdits.push(
+    "Orientation (sud, nord, est, ouest, plein sud, façade sud) : INTERDITE sauf si explicitement écrite dans la plaquette ou le plan",
+  );
+  interdits.push(
+    "Vue mer, vue dégagée, vue panoramique : INTERDITE sauf si explicitement garantie dans les documents",
+  );
+  interdits.push("Double exposition, traversant : INTERDIT sauf si confirmé dans les plans");
+  interdits.push("Vis-à-vis (affirmer sans vis-à-vis) : INTERDIT sauf si confirmé");
+  interdits.push(
+    "Baignoire : INTERDITE sauf si le mot 'baignoire' est explicitement dans la plaquette ou le plan — par défaut écrire 'douche'",
+  );
+  interdits.push(
+    "Hauteur sous plafond : n'invente JAMAIS une valeur — utilise uniquement la valeur présente dans les documents, sinon ne pas mentionner",
+  );
+  interdits.push(
+    "Cuisine équipée (réfrigérateur, four, hotte, lave-vaisselle inclus) : INTERDIT sauf si explicitement listés comme inclus — écrire 'cuisine aménageable (équipements à confirmer avec le promoteur)'",
+  );
+  interdits.push("Ascenseur : INTERDIT sauf si mentionné dans les documents");
+  interdits.push("Ventilation double flux : INTERDITE sauf si mentionnée dans les documents");
+  interdits.push("Gardien, concierge, digicode : INTERDITS sauf si mentionnés dans les documents");
+  interdits.push("Piscine, spa, salle de sport : INTERDITS sauf si mentionnés dans les documents");
+  interdits.push("Charges de copropriété chiffrées : INTERDITES sauf si données par le promoteur");
+  interdits.push(
+    "Taux d'économie d'énergie chiffrés (divisé par X) : INTERDITS sans source officielle — écrire uniquement 'charges énergétiques maîtrisées grâce aux normes RE2020'",
+  );
+  interdits.push(
+    "Havre de paix, coup de cœur, nichée, baignée de lumière, demeure d'exception : EXPRESSIONS INTERDITES",
+  );
+  interdits.push("Prix inventés ou estimés sans source : INTERDITS — utiliser uniquement les prix de la plaquette");
+  interdits.push("Taux d'intérêt ou conditions de crédit : INTERDITS sans source officielle datée");
+  interdits.push("Nombre de places de parking supérieur à ce qui est dans la plaquette : INTERDIT");
+  interdits.push(
+    "Surfaces arrondies : utiliser les surfaces exactes des documents — jamais 28m² si le plan dit 27,62m²",
+  );
+
+  // RÈGLES CONDITIONNELLES — basées sur les données extraites
+  if (!data.baignoire) {
+    interdits.push(
+      "Baignoire confirmée absente de ce programme — écrire uniquement 'douche à l'italienne' ou 'salle de bain avec douche'",
+    );
+  }
+  if (!data.hauteur_plafond) {
+    interdits.push("Hauteur sous plafond non confirmée dans ce programme — ne jamais inventer de valeur chiffrée");
+  }
+  if (!data.orientation) {
+    interdits.push("Orientation non confirmée dans ce programme — ne jamais mentionner de point cardinal");
+  }
+  if (!data.vue) {
+    interdits.push("Vue non confirmée dans ce programme — ne jamais mentionner de vue spécifique");
+  }
+  if (!data.cuisine_equipee) {
+    interdits.push(
+      "Cuisine équipée non confirmée dans ce programme — écrire 'cuisine aménageable (équipements à confirmer avec le promoteur)'",
+    );
+  }
+  if (!data.ascenseur) {
+    interdits.push("Ascenseur non confirmé dans ce programme — ne pas mentionner");
+  }
+
+  // RÈGLES ANGLE
   const isPinelInterdit =
     angleLC.includes("retrait") ||
     angleLC.includes("résidence secondaire") ||
     angleLC.includes("residence secondaire") ||
     angleLC.includes("pied-à-terre") ||
+    angleLC.includes("pied a terre") ||
     angleLC.includes("senior");
 
   if (isPinelInterdit) {
-    interdits.push(
-      "Loi Pinel : INTERDITE sur cet angle — ne jamais mentionner Pinel, rendement locatif ou investissement locatif",
-    );
+    interdits.push("Loi Pinel, rendement locatif, investissement locatif : INTERDITS sur cet angle");
   }
-
-  if (!data.baignoire)
-    interdits.push(
-      "Baignoire : NON CONFIRMÉ dans ce programme — écrire uniquement 'douche' ou 'salle de bain'",
-    );
-  interdits.push(
-    "Hauteur sous plafond 2,10m : FAUSSE — le plan confirme H=2,7m via l'escalier. Si tu mentionnes la hauteur, écrire exactement '2,70m' ou ne pas mentionner.",
-  );
-  if (!data.orientation)
-    interdits.push("Orientation (sud, nord, est, ouest, plein sud) : NON CONFIRMÉE — INTERDITE");
-  if (!data.vue) interdits.push("Vue (vue mer, vue dégagée, panoramique) : NON CONFIRMÉE — INTERDITE");
-  if (!data.cuisine_equipee)
-    interdits.push(
-      "Cuisine équipée (réfrigérateur, four, hotte, lave-vaisselle) : NON CONFIRMÉ — écrire 'cuisine aménageable (équipements à confirmer avec le promoteur)'",
-    );
-  if (!data.ascenseur) interdits.push("Ascenseur : NON CONFIRMÉ — ne pas mentionner");
-  if (!data.double_exposition)
-    interdits.push("Double exposition / traversant : NON CONFIRMÉ — INTERDIT");
-
-  // Interdits universels
-  interdits.push("Havre de paix : EXPRESSION INTERDITE");
-  interdits.push("Baigné de lumière : EXPRESSION INTERDITE");
-  interdits.push("Vis-à-vis (affirmer sans vis-à-vis) : NON CONFIRMÉ — INTERDIT");
-  interdits.push("Ventilation double flux : sauf si mentionné dans la plaquette");
-  interdits.push("Taux économie énergie chiffrés (divisé par X) : INTERDITS sans source");
 
   return interdits.map((i) => `- ${i}`).join("\n");
 }
