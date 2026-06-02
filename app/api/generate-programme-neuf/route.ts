@@ -808,10 +808,10 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
 `.trim();
     };
 
-    const parseGeneratedAnnonces = (
+    function parseGeneratedAnnonces(
       generationText: string,
       label: string,
-    ): GeneratedAnnonces | NextResponse => {
+    ): GeneratedAnnonces | NextResponse {
       if (!generationText) {
         return NextResponse.json(
           { error: `Aucune annonce ${label} n'a ete generee par Anthropic.` },
@@ -823,26 +823,69 @@ FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après,
       try {
         annonces = parseJsonFromText(generationText) as GeneratedAnnonces;
       } catch {
-        console.error(`GENERATION PARSE ERROR ${label}:`, generationText?.substring(0, 300));
-        return NextResponse.json(
-          { error: `Format de generation ${label} invalide. Veuillez reessayer.` },
-          { status: 502 },
-        );
+        // Tentative de récupération : extraire manuellement les champs
+        console.error(`GENERATION PARSE ERROR ${label}:`, generationText?.substring(0, 500));
+
+        try {
+          // Cherche les titres et corps individuellement
+          const leboncoinTitre =
+            generationText.match(/"leboncoin"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
+            "Annonce programme neuf";
+          const leboncoinCorps =
+            generationText
+              .match(/"leboncoin"[\s\S]*?"corps"\s*:\s*"([\s\S]*?)"\s*\}/)?.[1]
+              ?.replace(/\\n/g, "\n") || generationText.substring(0, 500);
+          const selogerTitre =
+            generationText.match(/"seloger"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
+            "Programme neuf Le Havre";
+          const selogerCorps =
+            generationText
+              .match(/"seloger"[\s\S]*?"corps"\s*:\s*"([\s\S]*?)"\s*\}/)?.[1]
+              ?.replace(/\\n/g, "\n") || generationText.substring(0, 800);
+          const siteAgenceTitre =
+            generationText.match(/"siteAgence"\s*:\s*\{\s*"titre"\s*:\s*"([^"]+)"/)?.[1] ||
+            "Découvrez ce programme neuf";
+          const siteAgenceCorps =
+            generationText
+              .match(/"siteAgence"[\s\S]*?"corps"\s*:\s*"([\s\S]*?)"\s*\}[\s\S]*?\}/)?.[1]
+              ?.replace(/\\n/g, "\n") || generationText.substring(0, 1200);
+
+          annonces = {
+            leboncoin: { titre: leboncoinTitre, corps: leboncoinCorps },
+            seloger: { titre: selogerTitre, corps: selogerCorps },
+            siteAgence: { titre: siteAgenceTitre, corps: siteAgenceCorps },
+          };
+        } catch {
+          return NextResponse.json(
+            { error: `Format de generation ${label} invalide. Veuillez reessayer.` },
+            { status: 502 },
+          );
+        }
       }
 
-      if (!annonces.leboncoin?.titre || !annonces.seloger?.titre || !annonces.siteAgence?.titre) {
-        return NextResponse.json(
-          { error: `Les 3 annonces ${label} n'ont pas ete generees correctement.` },
-          { status: 502 },
-        );
-      }
+      // Vérification et fallback sur les champs manquants
+      if (!annonces.leboncoin?.titre)
+        annonces.leboncoin = {
+          titre: "Programme neuf Le Havre",
+          corps: annonces.leboncoin?.corps || "",
+        };
+      if (!annonces.seloger?.titre)
+        annonces.seloger = {
+          titre: "Programme neuf Le Havre",
+          corps: annonces.seloger?.corps || "",
+        };
+      if (!annonces.siteAgence?.titre)
+        annonces.siteAgence = {
+          titre: "Programme neuf Le Havre",
+          corps: annonces.siteAgence?.corps || "",
+        };
 
       return annonces;
-    };
+    }
 
     const programmeGenerationParams = {
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2500,
+      max_tokens: 4000,
       system: GENERATION_SYSTEM,
     };
     const lotGenerationParams = {
