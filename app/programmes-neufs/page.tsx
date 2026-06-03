@@ -93,29 +93,18 @@ async function fileToBase64(file: File): Promise<string> {
   return base64;
 }
 
-const safeCorps = (text: string): string => {
+const clean = (text: string): string => {
   if (!text) return "";
-  const t = text.trim();
-  if (t.startsWith("{") || t.startsWith("`")) {
-    try {
-      const clean = t.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
-      const start = clean.indexOf("{");
-      const end = clean.lastIndexOf("}");
-      if (start !== -1 && end > start) {
-        const parsed = JSON.parse(clean.slice(start, end + 1)) as Record<
-          string,
-          { titre?: string; corps?: string }
-        >;
-        const bodies = Object.values(parsed)
-          .map((v) => v?.corps)
-          .filter(Boolean) as string[];
-        if (bodies.length > 0) return bodies.sort((a, b) => b.length - a.length)[0];
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-  return t.replace(/^#{1,6}\s+/gm, "").replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+  return text
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/^[•·◦‣⁃▪▸►→\-–—]\s+/gm, "")
+    .replace(/^\s*[\u2022\u2023\u25E6\u2043\u2219]\s*/gm, "")
+    .replace(/^\s*\*\s+/gm, "")
+    .replace(/^\s*✓\s+/gm, "")
+    .replace(/^\s*✗\s+/gm, "")
+    .trim();
 };
 
 export default function ProgrammesNeufsPage() {
@@ -1202,7 +1191,7 @@ export default function ProgrammesNeufsPage() {
                             {activeProgrammeBlock.titre}
                           </h3>
                           <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                            {safeCorps(activeProgrammeBlock.corps)}
+                            {clean(activeProgrammeBlock.corps)}
                           </p>
                           <div className="mt-8">
                             <button
@@ -1246,7 +1235,7 @@ export default function ProgrammesNeufsPage() {
                               {activeLotBlock.titre}
                             </h3>
                             <p className="mt-4 whitespace-pre-wrap text-[#A0A0A0] leading-relaxed">
-                              {safeCorps(activeLotBlock.corps)}
+                              {clean(activeLotBlock.corps)}
                             </p>
                             <div className="mt-8">
                               <button
