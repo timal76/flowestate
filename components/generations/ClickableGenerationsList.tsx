@@ -6,7 +6,7 @@ import GenerationModal from "@/components/prospects/GenerationModal";
 
 const goldRgb = "201, 169, 110";
 
-type ActivityType = "annonce" | "email" | "compte-rendu";
+type ActivityType = "annonce" | "email" | "compte-rendu" | "programme-neuf";
 
 export type ClickableGenerationItem = {
   id: string;
@@ -17,13 +17,22 @@ export type ClickableGenerationItem = {
 };
 
 function isActivityType(t: string): t is ActivityType {
-  return t === "annonce" || t === "email" || t === "compte-rendu";
+  return t === "annonce" || t === "email" || t === "compte-rendu" || t === "programme-neuf";
 }
 
-function typeLabel(type: ActivityType) {
+function typeLabel(type: string) {
+  if (type === "programme-neuf") return "Programme neuf";
   if (type === "annonce") return "Annonce";
   if (type === "email") return "Email";
-  return "Compte-rendu";
+  if (type === "compte-rendu") return "Compte-rendu";
+  return "Génération";
+}
+
+function typeBadgeClass(type: string) {
+  if (type === "programme-neuf") {
+    return "shrink-0 rounded-full border border-[#C9A96E]/45 bg-[#C9A96E]/15 px-2.5 py-0.5 text-xs font-medium text-[#C9A96E]";
+  }
+  return "shrink-0 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 text-xs font-medium text-[#C9A96E]";
 }
 
 const activityIconShellClass =
@@ -35,6 +44,36 @@ const activityIconShellStyle = {
 
 function ActivityIcon({ type }: { type: ActivityType }) {
   const iconClass = "block shrink-0 text-[#C9A96E]";
+  if (type === "programme-neuf") {
+    return (
+      <div
+        className={`${activityIconShellClass} text-[#F5F5F0]`}
+        style={{
+          borderColor: "rgba(201, 169, 110, 0.55)",
+          backgroundColor: "rgba(201, 169, 110, 0.18)",
+        }}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width={18}
+          height={18}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={iconClass}
+          aria-hidden
+        >
+          <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+          <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+          <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+          <path d="M10 6h4M10 10h4M10 14h4M10 18h4" />
+        </svg>
+      </div>
+    );
+  }
   if (type === "annonce") {
     return (
       <div className={`${activityIconShellClass} text-[#F5F5F0]`} style={activityIconShellStyle}>
@@ -131,8 +170,8 @@ export default function ClickableGenerationsList({ items }: { items: ClickableGe
                   <p className="text-sm font-medium text-[#F5F5F0]">{row.description}</p>
                   <p className="mt-0.5 text-xs text-[#A0A0A0]">{row.secondaryLine}</p>
                 </div>
-                <span className="shrink-0 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 text-xs font-medium text-[#C9A96E]">
-                  {typeLabel(activityType)}
+                <span className={typeBadgeClass(row.type)}>
+                  {typeLabel(row.type)}
                 </span>
               </button>
             </li>

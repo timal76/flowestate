@@ -173,27 +173,8 @@ export default function ProspectsKanbanPage() {
         </header>
 
         {loading ? (
-          <div
-            className="flex gap-4 overflow-x-auto pb-4"
-            aria-busy="true"
-            aria-label="Chargement du kanban"
-          >
-            {KANBAN_COLUMNS.map((col) => (
-              <div
-                key={col}
-                className={`min-w-[260px] flex-1 rounded-2xl border bg-white/[0.02] p-4 ${columnBorderClass(col)}`}
-              >
-                <div className="mb-4 h-5 w-24 animate-pulse rounded bg-white/10" />
-                <div className="space-y-3">
-                  {[0, 1].map((i) => (
-                    <div
-                      key={i}
-                      className="h-28 animate-pulse rounded-xl border border-white/10 bg-white/[0.03]"
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-center py-20">
+            <p className="text-sm text-[#A0A0A0]">Chargement des prospects...</p>
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-4">
