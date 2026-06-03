@@ -30,6 +30,14 @@ export async function POST(request: Request) {
 
     const baseUrl = (process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
+    const planFeatures: Record<StripePlanId, string> = {
+      essentiel:
+        "✓ 100 générations/mois  ✓ Générateur d'annonces  ✓ Emails de relance  ✓ Comptes-rendus de visite  ✓ CRM Prospects  ✓ Relances automatiques  ✓ Historique des générations",
+      pro: "✓ Générations illimitées  ✓ Tout le plan Essentiel  ✓ Templates illimités  ✓ Export PDF  ✓ Support prioritaire",
+      expert:
+        "✓ Tout le plan Pro  ✓ Programmes neufs (PDF → 6 annonces)  ✓ Analyse annonces concurrentes  ✓ Score de différenciation  ✓ Support dédié + onboarding",
+    };
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
@@ -47,6 +55,11 @@ export async function POST(request: Request) {
           userId: session.user.id,
           plan,
           billing: billingPeriod,
+        },
+      },
+      custom_text: {
+        submit: {
+          message: planFeatures[plan as StripePlanId],
         },
       },
     });
