@@ -171,6 +171,14 @@ function buildInterditsDynamiques(
   interdits.push(
     "Surfaces arrondies : utiliser les surfaces exactes des documents — jamais 28m² si le plan dit 27,62m²",
   );
+  interdits.push(
+    "Sources citées explicitement (source : X) : INTERDITES dans les annonces — données utilisées comme connaissance, jamais citées",
+  );
+  interdits.push("Années associées aux données (2024, 2025, 2026) : INTERDITES dans les annonces de marché");
+  interdits.push("Nom du promoteur : INTERDIT dans les annonces");
+  interdits.push("Nom de la résidence : INTERDIT dans les annonces");
+  interdits.push("Prix au m² : INTERDIT dans les annonces programmes neufs");
+  interdits.push("Puces, tirets, listes : INTERDITS — prose uniquement");
 
   // RÈGLES CONDITIONNELLES — basées sur les données extraites
   if (!data.baignoire) {
@@ -402,6 +410,15 @@ RÈGLES ABSOLUES — ZÉRO EXCEPTION :
 2. NOMBRE DE CHAMBRES : Utiliser UNIQUEMENT le nombre de chambres du plan architectural fourni. Le plan B204 indique EXPLICITEMENT 2 chambres (9,60m² et 13,18m²). Jamais 3 chambres pour ce lot. Si le plan indique 2 chambres, écrire 2 chambres partout, dans le titre, le corps, et les descriptions.
 
 3. MARKDOWN : Ne jamais utiliser # pour les titres dans les annonces. Les sous-titres doivent être en texte normal, en majuscules ou en gras via la convention de la plateforme, jamais avec des dièses #.
+
+RÈGLES RÉDACTIONNELLES ABSOLUES — ANNONCES PROFESSIONNELLES :
+
+- SOURCES : Ne jamais écrire "(source : X)", "(source X)", "source :" ou toute attribution dans le texte d'une annonce. Les données sont utilisées comme connaissance de fond, jamais citées explicitement.
+- ANNÉES ET DATES DE DONNÉES : Ne jamais mentionner d'année associée à une donnée de marché (pas de "2024", "2025", "janvier 2026" dans les annonces). Écrire "prix médian du secteur" et non "2 400€/m² (source DVF 2024)".
+- NOM DU PROMOTEUR : Ne jamais mentionner le nom du promoteur (Sedelka, Nexity, Bouygues, etc.) dans les annonces. L'agent immobilier l'ajoutera lui-même.
+- NOM DE LA RÉSIDENCE : Ne jamais mentionner le nom de la résidence (Havre en Scène, etc.) dans les annonces. L'agent immobilier l'ajoutera lui-même.
+- PRIX AU M² : Ne jamais mentionner de prix au m² dans les annonces programmes neufs. Pas de "2 400€/m²", pas de "3 000€/m²", pas de comparaisons de prix au m².
+- PUCES ET LISTES : Ne jamais utiliser de puces (•, -, *, ✓, ✗, →) dans le corps des annonces. Rédiger en prose uniquement. Les informations doivent s'enchaîner naturellement dans des paragraphes.
 
 DONNÉES TECHNIQUES :
 - RE2020 (pas RT2020, pas BBC, pas HQE) : utiliser exactement le terme présent dans la plaquette
@@ -705,6 +722,21 @@ export async function POST(request: Request) {
       (address?.toLowerCase().includes("havre") ?? false) ||
       (address?.toLowerCase().includes("76600") ?? false);
 
+    const isParis =
+      ville.toLowerCase().includes("paris") ||
+      address?.toLowerCase().includes("paris") ||
+      address?.toLowerCase().includes("75") ||
+      ville.toLowerCase().includes("île-de-france") ||
+      ville.toLowerCase().includes("ile-de-france") ||
+      ville.toLowerCase().includes("boulogne") ||
+      ville.toLowerCase().includes("neuilly") ||
+      ville.toLowerCase().includes("vincennes") ||
+      ville.toLowerCase().includes("saint-denis") ||
+      ville.toLowerCase().includes("levallois") ||
+      ville.toLowerCase().includes("issy") ||
+      ville.toLowerCase().includes("courbevoie") ||
+      ville.toLowerCase().includes("nanterre");
+
     const hardcodedData = isLeHavre ? getLeHavreDataForPrompt(quartier, prospectProfile) : null;
 
     const nomResidence =
@@ -726,11 +758,36 @@ export async function POST(request: Request) {
 
     let webData: unknown = null;
     if (!isLeHavre) {
+      const location = `${ville}${quartier ? `, ${quartier}` : ""}${address ? `, ${address}` : ""}`;
+
+      const parisSearchPrompt = isParis
+        ? `Tu es un expert immobilier parisien. Effectue des recherches ciblées pour enrichir une annonce programme neuf.
+
+LOCALISATION : ${location}
+ANGLE : ${angle}
+PROFIL : ${prospectProfile}
+
+Recherche ces informations SANS mentionner d'années dans tes résultats :
+1. Prix médian appartements neuf dans ce quartier/arrondissement
+2. Transports : lignes de métro/RER/tramway à proximité, fréquences
+3. Projets urbains officiels en cours dans ce secteur
+4. Services médicaux, commerces, écoles de qualité à proximité
+5. Atouts lifestyle du quartier (parcs, gastronomie, culture)
+
+RÈGLES :
+- Données vérifiables uniquement
+- Pas de prix au m² chiffrés — utiliser des formulations relatives ("secteur accessible", "quartier premium")
+- Pas d'années dans les données
+- Pas de sources citées
+
+Retourne un JSON sans markdown avec les données utiles pour rédiger une annonce.`
+        : webSearchPrompt;
+
       const webSearchCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
-        max_tokens: 500,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }],
-        messages: [{ role: "user", content: webSearchPrompt }],
+        max_tokens: 600,
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: isParis ? 2 : 1 }],
+        messages: [{ role: "user", content: parisSearchPrompt }],
       });
 
       if (!webSearchCall.response.ok) {

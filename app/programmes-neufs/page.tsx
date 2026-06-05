@@ -99,8 +99,9 @@ const clean = (text: string): string => {
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/\*(.*?)\*/g, "$1")
-    .replace(/^[•·◦‣⁃▪▸►→\-–—]\s+/gm, "")
+    .replace(/^[•·◦‣⁃▪▸►→]\s+/gm, "")
     .replace(/^\s*[\u2022\u2023\u25E6\u2043\u2219]\s*/gm, "")
+    .replace(/^\s*[-–—]\s+/gm, "")
     .replace(/^\s*\*\s+/gm, "")
     .replace(/^\s*✓\s+/gm, "")
     .replace(/^\s*✗\s+/gm, "")
@@ -528,7 +529,7 @@ export default function ProgrammesNeufsPage() {
     const annonces = section === "programme" ? result.programme : result.lot;
     if (!annonces) return;
     const block = annonces[tab];
-    const text = `${block.titre}\n\n${block.corps}`;
+    const text = `${block.titre}\n\n${clean(block.corps)}`;
     await navigator.clipboard.writeText(text);
     if (section === "programme") {
       setCopiedProgrammeTab(tab);
@@ -575,7 +576,7 @@ export default function ProgrammesNeufsPage() {
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(50, 50, 50);
-      const corpsLines = doc.splitTextToSize(block.corps, maxWidth);
+      const corpsLines = doc.splitTextToSize(clean(block.corps), maxWidth);
 
       corpsLines.forEach((line: string) => {
         if (y > 270) {
