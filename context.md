@@ -107,23 +107,40 @@ SaaS d'automatisation pour agents immobiliers.
 - **Tarifs** (`app/tarifs/page.tsx`) : 3 plans avec toggle annuel / mensuel
 
 ## Feature Programmes neufs — État actuel (mai 2026)
-(`app/programmes-neufs/page.tsx` + `app/api/generate-programme-neuf/route.ts`)
+(`app/programmes-neufs/page.tsx` + `app/api/generate-programme-neuf/route.ts` + `app/api/extract-programme/route.ts`)
 
-- Upload plaquette PDF (obligatoire) + annexes plans/photos (optionnel, 5 max)
+- Upload plaquette PDF (obligatoire, max 20 Mo) + annexes plans/photos (optionnel, 5 max)
 - Champs : adresse, angle souhaité, profil prospect libre, ton, prix optionnel, infos complémentaires, annonces concurrentes
-- 4 appels Anthropic : extraction PDF (Haiku) → web search enrichissement local (sources officielles DVF/INSEE/mairie) → extraction annexes si présentes (Haiku) → génération annonces (Sonnet)
+- Pipeline : extraction PDF (Haiku) → web search enrichissement local → extraction annexes si présentes (Haiku) → génération annonces (Haiku portails/réseaux + Sonnet site agence)
 - Double génération si annexes : programme global + lot spécifique
 - Score de différenciation /10 affiché après génération (Haiku)
 - Bandeau avertissement avant publication
 - `maxDuration = 300`, extraction PDF séquentielle avant web search
 - Règles prompts : zéro invention, zéro prix sans DVF, zéro orientation non confirmée, cuisine conditionnée, étage R+2 = 2ème étage, TVA conditions exactes plaquette, date livraison mot pour mot
 - Qualité actuelle : 8.5/10 programme global, 9.5/10 lot spécifique
-- Retourne 3 annonces (Leboncoin / SeLoger / Site propre) par mode
 - Accès réservé plan Expert (active / trialing / trial) — écran upgrade si non éligible (juin 2026)
+
+### Programmes neufs — Dernières évolutions
+- Checkboxes plateformes : Leboncoin, SeLoger, Site propre, Instagram, LinkedIn, Facebook
+- Règles rédactionnelles : no sources, no années passées, no promoteur, no nom résidence, no puces, no titres majuscules
+- Base données Le Havre ultra-enrichie : services médicaux, marchés, gastronomie, Monet, transports LiA, emploi, culture (`lib/data/le-havre.ts`)
+- Support Paris/IDF : web search ciblé par arrondissement
+- Extraction PDF séparée pour PDFs > 3 Mo (route `/api/extract-programme`)
+- Limite PDF augmentée à 20 Mo
+- Suggestions d'angle automatiques : **À CODER**
+
+### Bugs connus (Programmes neufs)
+- Génération avec PDF > 4,5 Mo encore instable (fix extraction séparée en cours)
+- Réseaux sociaux (Instagram, LinkedIn, Facebook) : à tester
+
+### Prochaines étapes (Programmes neufs)
+- Tester génération Patio Villiers Paris 17 (nue-propriété)
+- Tester annonces Instagram / LinkedIn / Facebook
+- Coder suggestions d'angle automatiques basées sur extraction plaquette
 
 ### TODO restant (Programmes neufs)
 - Génération par lot sans re-upload plaquette
-- Export PDF des 3 annonces
+- Export PDF des annonces
 - Upgrade Anthropic tier 2 pour lever rate limit 30k tokens/min
 
 ## Prompts réécrits (21 mai 2026)
@@ -160,4 +177,4 @@ SaaS d'automatisation pour agents immobiliers.
 - Multi-agents, intégration SeLoger/LeBonCoin, app mobile
 
 ## 📅 Dernière mise à jour
-- Dernière mise à jour : 1 juin 2026 (CRM Kanban + timeline, plans Essentiel/Pro/Expert, pages landing/dashboard/historique/tarifs)
+- Dernière mise à jour : 20 mai 2026 (Programmes neufs : plateformes multiples, extraction PDF séparée, Le Havre enrichi, support Paris/IDF)
