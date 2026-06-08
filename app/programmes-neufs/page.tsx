@@ -12,7 +12,16 @@ import { supabase } from "@/lib/supabase";
 
 type Tone = "Professionnel" | "Chaleureux" | "Percutant";
 
-type TabId = "leboncoin" | "seloger" | "siteAgence";
+type TabId = "leboncoin" | "seloger" | "siteAgence" | "instagram" | "linkedin" | "facebook";
+
+type PlatformSelection = {
+  leboncoin: boolean;
+  seloger: boolean;
+  siteAgence: boolean;
+  instagram: boolean;
+  linkedin: boolean;
+  facebook: boolean;
+};
 
 type AnnonceBlock = { titre: string; corps: string };
 
@@ -73,6 +82,9 @@ const tabs: { id: TabId; label: string }[] = [
   { id: "leboncoin", label: "Leboncoin" },
   { id: "seloger", label: "SeLoger" },
   { id: "siteAgence", label: "Site propre" },
+  { id: "instagram", label: "Instagram" },
+  { id: "linkedin", label: "LinkedIn" },
+  { id: "facebook", label: "Facebook" },
 ];
 
 async function fileToBase64(file: File): Promise<string> {
@@ -136,6 +148,14 @@ export default function ProgrammesNeufsPage() {
   const [isLoadingNewLot, setIsLoadingNewLot] = useState(false);
   const [isDraggingNewLot, setIsDraggingNewLot] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [platforms, setPlatforms] = useState<PlatformSelection>({
+    leboncoin: true,
+    seloger: true,
+    siteAgence: true,
+    instagram: false,
+    linkedin: false,
+    facebook: false,
+  });
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -459,6 +479,9 @@ export default function ProgrammesNeufsPage() {
           tone: form.tone,
           priceFrom: form.priceFrom || undefined,
           additionalInfo: form.additionalInfo || undefined,
+          platforms: Object.entries(platforms)
+            .filter(([, v]) => v)
+            .map(([k]) => k),
         }),
       });
 
@@ -529,7 +552,8 @@ export default function ProgrammesNeufsPage() {
     if (!result) return;
     const annonces = section === "programme" ? result.programme : result.lot;
     if (!annonces) return;
-    const block = annonces[tab];
+    const block = (annonces as Partial<Record<TabId, AnnonceBlock>>)[tab];
+    if (!block) return;
     const text = `${block.titre}\n\n${clean(block.corps)}`;
     await navigator.clipboard.writeText(text);
     if (section === "programme") {
@@ -631,8 +655,14 @@ export default function ProgrammesNeufsPage() {
     toast.success("PDF exporté !");
   }
 
-  const activeProgrammeBlock = result ? result.programme[activeProgrammeTab] : null;
-  const activeLotBlock = result?.lot ? result.lot[activeLotTab] : null;
+  const activeTabs = tabs.filter((tab) => platforms[tab.id]);
+  const selectedCount = Object.values(platforms).filter(Boolean).length;
+  const activeProgrammeBlock = result
+    ? (result.programme as Partial<Record<TabId, AnnonceBlock>>)[activeProgrammeTab] ?? null
+    : null;
+  const activeLotBlock = result?.lot
+    ? (result.lot as Partial<Record<TabId, AnnonceBlock>>)[activeLotTab] ?? null
+    : null;
 
   if (showUpgrade) {
     return (
@@ -929,6 +959,62 @@ export default function ProgrammesNeufsPage() {
                 </label>
               </div>
 
+              <div className="space-y-3">
+                <span className="text-sm text-[#A0A0A0]">Plateformes à générer</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      { id: "leboncoin", label: "Leboncoin" },
+                      { id: "seloger", label: "SeLoger" },
+                      { id: "siteAgence", label: "Site propre" },
+                      { id: "instagram", label: "Instagram" },
+                      { id: "linkedin", label: "LinkedIn" },
+                      { id: "facebook", label: "Facebook" },
+                    ] as { id: keyof PlatformSelection; label: string }[]
+                  ).map(({ id, label }) => (
+                    <label
+                      key={id}
+                      className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-all ${
+                        platforms[id]
+                          ? "border-[#C9A96E]/60 bg-[#C9A96E]/10 text-[#C9A96E]"
+                          : "border-white/10 text-[#A0A0A0] hover:border-white/20"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={platforms[id]}
+                        onChange={(e) =>
+                          setPlatforms((prev) => ({ ...prev, [id]: e.target.checked }))
+                        }
+                      />
+                      <span
+                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                          platforms[id] ? "border-[#C9A96E] bg-[#C9A96E]" : "border-white/20"
+                        }`}
+                      >
+                        {platforms[id] ? (
+                          <svg viewBox="0 0 10 8" className="h-2.5 w-2.5 fill-[#0A0A0A]" aria-hidden>
+                            <path
+                              d="M1 4l3 3 5-6"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        ) : null}
+                      </span>
+                      <span className="text-sm font-medium">{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-[#A0A0A0]">
+                  Sélectionnez les plateformes souhaitées — seules les annonces cochées seront générées.
+                </p>
+              </div>
+
               <button
                 type="submit"
                 disabled={isLoading}
@@ -960,7 +1046,7 @@ export default function ProgrammesNeufsPage() {
                     Génération en cours...
                   </>
                 ) : (
-                  "Générer les 3 annonces"
+                  `Générer ${selectedCount} annonce${selectedCount > 1 ? "s" : ""}`
                 )}
               </button>
             </form>
@@ -1168,7 +1254,7 @@ export default function ProgrammesNeufsPage() {
                         <h3 className="mb-4 text-base font-semibold text-[#C9A96E]">Programme global</h3>
                       ) : null}
                       <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
-                        {tabs.map((tab) => {
+                        {activeTabs.map((tab) => {
                           const selected = activeProgrammeTab === tab.id;
                           return (
                             <button
@@ -1212,7 +1298,7 @@ export default function ProgrammesNeufsPage() {
                       <div className="border-t border-[#C9A96E]/25 pt-10">
                         <h3 className="mb-4 text-base font-semibold text-[#C9A96E]">Lot spécifique</h3>
                         <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
-                          {tabs.map((tab) => {
+                          {activeTabs.map((tab) => {
                             const selected = activeLotTab === tab.id;
                             return (
                               <button
