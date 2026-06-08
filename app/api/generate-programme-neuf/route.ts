@@ -550,6 +550,29 @@ ANNONCE 3 — SITE DE L'AGENCE :
 - Peut inclure des sous-titres
 - Ton : adapté au ton choisi par l'agent, mais toujours ancré dans le concret
 
+ANNONCE INSTAGRAM :
+- Titre : accroche visuelle ultra-courte, max 10 mots, sans hashtags dans le titre
+- Corps : 150-220 mots, ton lifestyle et émotionnel, projette le lecteur dans une vie idéale
+- Structure : accroche forte (1 phrase choc) → bénéfice principal en 2-3 phrases → call to action court
+- Terminer par 8-10 hashtags pertinents : #immobilierneuf #programmeneuf #investissement #realestate + hashtags ville/quartier
+- Pas de données chiffrées complexes, pas de fiscal, uniquement lifestyle et émotion
+- Format : court, aéré, facile à lire sur mobile
+
+ANNONCE LINKEDIN :
+- Titre : accroche professionnelle avec données chiffrées, 100 caractères max
+- Corps : 300-400 mots, ton expert et factuel, arguments patrimoniaux et investissement
+- Structure : accroche avec chiffre clé → contexte marché → argument principal → données rendement/valorisation → call to action professionnel
+- Peut mentionner fiscalité, rendement, valorisation patrimoniale
+- Terminer par 3-5 hashtags professionnels : #immobilier #investissement #programmeneuf #patrimoine
+- Ton : expert, chiffré, sans émotionnel
+
+ANNONCE FACEBOOK :
+- Titre : accroche narrative, 80 caractères max
+- Corps : 200-300 mots, ton conversationnel et accessible, mix lifestyle et pratique
+- Structure : histoire courte → présentation programme → avantages concrets → prix → call to action
+- Équilibre entre émotionnel et pratique selon le profil prospect
+- 5-7 hashtags accessibles
+
 CHECKLIST ANTI-VIOLATION — À APPLIQUER SUR CHAQUE ANNONCE AVANT DE RETOURNER LE JSON :
 □ Zéro puce ou tiret en début de ligne
 □ Zéro titre en majuscules
@@ -580,14 +603,18 @@ type GenerateProgrammeNeufPayload = {
   tone?: string;
   priceFrom?: string;
   additionalInfo?: string;
+  platforms?: string[];
 };
 
 type AnnonceBlock = { titre: string; corps: string };
 
 type GeneratedAnnonces = {
-  leboncoin: AnnonceBlock;
-  seloger: AnnonceBlock;
-  siteAgence: AnnonceBlock;
+  leboncoin?: AnnonceBlock;
+  seloger?: AnnonceBlock;
+  siteAgence?: AnnonceBlock;
+  instagram?: AnnonceBlock;
+  linkedin?: AnnonceBlock;
+  facebook?: AnnonceBlock;
 };
 
 function anthropicErrorResponse(
@@ -659,6 +686,21 @@ export async function POST(request: Request) {
     const priceFrom = body.priceFrom?.trim() || "";
     const additionalInfo = body.additionalInfo?.trim() || "";
     const address = body.address?.trim() || "";
+
+    const platforms =
+      Array.isArray(body.platforms) && body.platforms.length > 0
+        ? body.platforms
+        : ["leboncoin", "seloger", "siteAgence"];
+
+    const wantsLeboncoin = platforms.includes("leboncoin");
+    const wantsSeloger = platforms.includes("seloger");
+    const wantsSiteAgence = platforms.includes("siteAgence");
+    const wantsInstagram = platforms.includes("instagram");
+    const wantsLinkedin = platforms.includes("linkedin");
+    const wantsFacebook = platforms.includes("facebook");
+
+    const wantsPortails = wantsLeboncoin || wantsSeloger || wantsSiteAgence;
+    const wantsReseaux = wantsInstagram || wantsLinkedin || wantsFacebook;
 
     if (!skipPdfExtraction) {
     const pdfData = cleanPdfBase64(body.pdfBase64!);
@@ -858,6 +900,7 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
 
     const buildGenerationUserPrompt = (
       mode: "programme" | "lot" | "programme-court" | "programme-site" | "lot-court" | "lot-site",
+      requestedPlatforms?: string[],
     ) => {
       const isProgramme =
         mode === "programme" || mode === "programme-court" || mode === "programme-site";
@@ -879,11 +922,29 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
           ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}`
           : "";
 
-      const introLine = isCourt
-        ? "Génère UNIQUEMENT les annonces leboncoin et seloger différenciées à partir des données suivantes."
+      const defaultPlatforms = isCourt
+        ? ["leboncoin", "seloger"]
         : isSiteOnly
-          ? "Génère UNIQUEMENT l'annonce siteAgence à partir des données suivantes."
-          : "Génère les 3 annonces immobilières différenciées à partir des données suivantes.";
+          ? ["siteAgence"]
+          : ["leboncoin", "seloger", "siteAgence"];
+      const allPlatforms =
+        requestedPlatforms && requestedPlatforms.length > 0 ? requestedPlatforms : defaultPlatforms;
+
+      const platformInstructions = allPlatforms
+        .map((p) => {
+          if (p === "leboncoin") return "leboncoin";
+          if (p === "seloger") return "seloger";
+          if (p === "siteAgence") return "siteAgence";
+          if (p === "instagram") return "instagram";
+          if (p === "linkedin") return "linkedin";
+          if (p === "facebook") return "facebook";
+          return p;
+        })
+        .join(", ");
+
+      const formatJson = `{${allPlatforms.map((p) => `"${p}":{"titre":"...","corps":"..."}`).join(",")}}`;
+
+      const introLine = `Génère les annonces pour ces plateformes : ${platformInstructions}.`;
 
       const titleRulesBlock = isCourt
         ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
@@ -896,12 +957,6 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
 - Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train. Ex: "2h05 Paris • T3 64m² neuf • Livraison T1 2026"
 - SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"
 - Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"`;
-
-      const formatJson = isCourt
-        ? '{"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."}}'
-        : isSiteOnly
-          ? '{"siteAgence":{"titre":"...","corps":"..."}}'
-          : '{"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}';
 
       const programmeMandatoryBlock = isProgramme
           ? `DONNÉES PLAQUETTE OBLIGATOIRES À INCLURE DANS TOUTES LES ANNONCES PROGRAMME :
@@ -992,7 +1047,7 @@ Avant de retourner le JSON, vérifie CHAQUE annonce :
 
 Si tu trouves une violation, corrige-la avant de retourner le JSON.
 
-RAPPEL FINAL : {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}
+RAPPEL FINAL : ${formatJson}
 `.trim();
     };
 
@@ -1053,25 +1108,27 @@ RAPPEL FINAL : {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"..
         }
       }
 
-      // Vérification et fallback sur les champs manquants
-      if (!annonces.leboncoin?.titre)
-        annonces.leboncoin = {
-          titre: "Programme neuf Le Havre",
-          corps: annonces.leboncoin?.corps || "",
-        };
-      if (!annonces.seloger?.titre)
-        annonces.seloger = {
-          titre: "Programme neuf Le Havre",
-          corps: annonces.seloger?.corps || "",
-        };
-      if (!annonces.siteAgence?.titre)
-        annonces.siteAgence = {
-          titre: "Programme neuf Le Havre",
-          corps: annonces.siteAgence?.corps || "",
-        };
+      const platformKeys = [
+        "leboncoin",
+        "seloger",
+        "siteAgence",
+        "instagram",
+        "linkedin",
+        "facebook",
+      ] as const;
+      const hasAtLeastOne = platformKeys.some((k) => annonces[k]?.titre);
+      if (!hasAtLeastOne) {
+        return NextResponse.json(
+          { error: `Format de generation ${label} invalide. Veuillez reessayer.` },
+          { status: 502 },
+        );
+      }
 
       return annonces;
     }
+
+    const buildFormatReminder = (platformList: string[]) =>
+      `{${platformList.map((p) => `"${p}":{"titre":"...","corps":"..."}`).join(",")}}`;
 
     const generateSplitAnnonces = async (
       baseMode: "programme" | "lot",
@@ -1079,18 +1136,73 @@ RAPPEL FINAL : {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"..
       const courtMode = baseMode === "programme" ? "programme-court" : "lot-court";
       const siteMode = baseMode === "programme" ? "programme-site" : "lot-site";
 
+      const haikuPlatforms = platforms.filter((p) => p !== "siteAgence");
+      const onlySiteAgence = wantsSiteAgence && haikuPlatforms.length === 0;
+      const noSiteAgence = !wantsSiteAgence;
+
+      if (onlySiteAgence) {
+        const siteFormat = buildFormatReminder(["siteAgence"]);
+        const siteCall = await callAnthropicWithRetry(apiKey, {
+          model: "claude-sonnet-4-5",
+          max_tokens: 3000,
+          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${siteFormat}`,
+          messages: [
+            {
+              role: "user",
+              content:
+                buildGenerationUserPrompt(siteMode, ["siteAgence"]) +
+                `\n\nGénère UNIQUEMENT siteAgence. Format: ${siteFormat}`,
+            },
+            { role: "assistant", content: "{" },
+          ],
+        });
+
+        if (!siteCall.response.ok) {
+          return anthropicErrorResponse(siteCall.response, siteCall.json);
+        }
+
+        const siteText = extractTextFromAnthropic(siteCall.json);
+        return parseGeneratedAnnonces(siteText, `${baseMode}-site`);
+      }
+
+      if (noSiteAgence) {
+        const haikuFormat = buildFormatReminder(haikuPlatforms);
+        const shortCall = await callAnthropicWithRetry(apiKey, {
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 2500,
+          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${haikuFormat}`,
+          messages: [
+            {
+              role: "user",
+              content:
+                buildGenerationUserPrompt(courtMode, haikuPlatforms) +
+                `\n\nFormat: ${haikuFormat}`,
+            },
+            { role: "assistant", content: "{" },
+          ],
+        });
+
+        if (!shortCall.response.ok) {
+          return anthropicErrorResponse(shortCall.response, shortCall.json);
+        }
+
+        const shortText = extractTextFromAnthropic(shortCall.json);
+        return parseGeneratedAnnonces(shortText, `${baseMode}-court`);
+      }
+
+      const haikuFormat = buildFormatReminder(haikuPlatforms);
+      const siteFormat = buildFormatReminder(["siteAgence"]);
+
       const shortCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
         max_tokens: 2500,
-        system:
-          GENERATION_SYSTEM +
-          '\n\nRAPPEL : Retourne UNIQUEMENT {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."}}',
+        system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${haikuFormat}`,
         messages: [
           {
             role: "user",
             content:
-              buildGenerationUserPrompt(courtMode) +
-              '\n\nGénère UNIQUEMENT leboncoin et seloger. Format: {"leboncoin":{...},"seloger":{...}}',
+              buildGenerationUserPrompt(courtMode, haikuPlatforms) +
+              `\n\nFormat: ${haikuFormat}`,
           },
           { role: "assistant", content: "{" },
         ],
@@ -1103,15 +1215,13 @@ RAPPEL FINAL : {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"..
       const siteCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
         max_tokens: 3000,
-        system:
-          GENERATION_SYSTEM +
-          '\n\nRAPPEL : Retourne UNIQUEMENT {"siteAgence":{"titre":"...","corps":"..."}}',
+        system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${siteFormat}`,
         messages: [
           {
             role: "user",
             content:
-              buildGenerationUserPrompt(siteMode) +
-              '\n\nGénère UNIQUEMENT siteAgence. Format: {"siteAgence":{...}}',
+              buildGenerationUserPrompt(siteMode, ["siteAgence"]) +
+              `\n\nGénère UNIQUEMENT siteAgence. Format: ${siteFormat}`,
           },
           { role: "assistant", content: "{" },
         ],
@@ -1129,11 +1239,7 @@ RAPPEL FINAL : {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"..
       const siteParsed = parseGeneratedAnnonces(siteText, `${baseMode}-site`);
       if (siteParsed instanceof NextResponse) return siteParsed;
 
-      return {
-        leboncoin: shortParsed.leboncoin,
-        seloger: shortParsed.seloger,
-        siteAgence: siteParsed.siteAgence,
-      };
+      return { ...shortParsed, ...siteParsed };
     };
 
     const hasAnnexes = annexes.length > 0;
@@ -1261,10 +1367,10 @@ Retourne UNIQUEMENT le JSON corrigé, commence par { et termine par } :
       const scoringPrompt = `Tu es expert marketing immobilier. Évalue ces annonces sur 4 critères précis.
 
 ANNONCES À ÉVALUER :
-Leboncoin titre: ${annonces.leboncoin.titre.substring(0, 120).replace(/"/g, "'")}
-Leboncoin extrait: ${annonces.leboncoin.corps.substring(0, 200).replace(/"/g, "'")}
-SeLoger extrait: ${annonces.seloger.corps.substring(0, 200).replace(/"/g, "'")}
-Site extrait: ${annonces.siteAgence.corps.substring(0, 400).replace(/"/g, "'")}
+Leboncoin titre: ${annonces.leboncoin?.titre?.substring(0, 120).replace(/"/g, "'") ?? ""}
+Leboncoin extrait: ${annonces.leboncoin?.corps?.substring(0, 200).replace(/"/g, "'") ?? ""}
+SeLoger extrait: ${annonces.seloger?.corps?.substring(0, 200).replace(/"/g, "'") ?? ""}
+Site extrait: ${annonces.siteAgence?.corps?.substring(0, 400).replace(/"/g, "'") ?? ""}
 
 ANGLE AGENT: ${angle.substring(0, 80).replace(/"/g, "'")}
 PROFIL PROSPECT: ${(prospectProfile || "").substring(0, 80).replace(/"/g, "'")}
