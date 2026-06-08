@@ -1,4 +1,10 @@
 {
+  "functions": {
+    "app/api/generate-programme-neuf/route.ts": {
+      "maxDuration": 300
+    }
+  },
+  "regions": ["cdg1"],
   "crons": [
     {
       "path": "/api/cron/send-relances",
