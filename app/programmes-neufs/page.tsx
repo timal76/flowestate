@@ -88,10 +88,6 @@ const tabs: { id: TabId; label: string }[] = [
 ];
 
 async function fileToBase64(file: File): Promise<string> {
-  // Pour les PDFs > 3 Mo, on limite la résolution des images embarquées
-  // en passant par une compression canvas si possible
-  const MAX_SIZE = 3 * 1024 * 1024; // 3 Mo
-
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
@@ -100,12 +96,6 @@ async function fileToBase64(file: File): Promise<string> {
   });
 
   const base64 = dataUrl.split(",")[1] ?? "";
-
-  if (file.size > MAX_SIZE) {
-    toast.warning(
-      `Fichier volumineux (${(file.size / 1024 / 1024).toFixed(1)} Mo) — traitement en cours, cela peut prendre plus de temps.`,
-    );
-  }
 
   return base64;
 }
@@ -489,22 +479,6 @@ export default function ProgrammesNeufsPage() {
               })),
             )
           : undefined;
-
-      const totalSize = JSON.stringify(
-        extractedDataFromPdf
-          ? { extractedProgramData: extractedDataFromPdf, annexes }
-          : { pdfBase64, annexes },
-      ).length;
-      const MAX_PAYLOAD = 3.5 * 1024 * 1024; // 3.5 Mo en base64
-
-      if (totalSize > MAX_PAYLOAD * 1.37) {
-        // base64 est 37% plus grand
-        toast.error(
-          "Les fichiers sont trop volumineux. Compressez votre PDF (max 8 Mo recommandé) ou réduisez le nombre d'annexes.",
-        );
-        setIsLoading(false);
-        return;
-      }
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
