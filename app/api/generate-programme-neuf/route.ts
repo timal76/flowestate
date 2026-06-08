@@ -4,6 +4,14 @@ import { getLeHavreDataForPrompt } from "@/lib/data/le-havre";
 import { checkGenerationLimit, checkProgrammesNeufsAccess } from "@/lib/check-generation-limit";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "20mb",
+    },
+  },
+};
+
 export const maxDuration = 300;
 
 async function callAnthropicWithRetry(apiKey: string, params: Record<string, unknown>) {
