@@ -550,6 +550,15 @@ ANNONCE 3 — SITE DE L'AGENCE :
 - Peut inclure des sous-titres
 - Ton : adapté au ton choisi par l'agent, mais toujours ancré dans le concret
 
+CHECKLIST ANTI-VIOLATION — À APPLIQUER SUR CHAQUE ANNONCE AVANT DE RETOURNER LE JSON :
+□ Zéro puce ou tiret en début de ligne
+□ Zéro titre en majuscules
+□ Zéro nom de promoteur
+□ Zéro nom de résidence commerciale  
+□ Zéro "(source : X)"
+□ Zéro année passée (2024, 2025)
+□ Texte en prose uniquement
+
 FORMAT DE SORTIE OBLIGATOIRE : Tu dois retourner UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans backticks, sans markdown, sans commentaire. Commence directement par { et termine par }. Structure exacte :
 {
   "leboncoin": { "titre": "...", "corps": "..." },
@@ -970,10 +979,20 @@ Consignes finales :
 - Respecter strictement les limites de caractères par plateforme
 - Retourner uniquement le JSON demandé
 
-RAPPEL FINAL : Retourne uniquement le JSON. Pas de texte introductif, pas de commentaire, pas de backticks. Commence par { et termine par }.
+FORMAT OBLIGATOIRE DE SORTIE :
 
-FORMAT OBLIGATOIRE : Retourne UNIQUEMENT ce JSON exact, rien avant, rien après, zéro backtick, zéro markdown :
-${formatJson}
+Avant de retourner le JSON, vérifie CHAQUE annonce :
+1. Aucune puce (•, -, *, ✓, ✗, →) nulle part
+2. Aucun titre en majuscules (LOCALISATION :, PRESTATIONS :, etc.)
+3. Aucun nom de promoteur (Sedelka, Nexity, etc.)
+4. Aucun nom de résidence commerciale (Havre en Scène, etc.)
+5. Aucune source citée (source : X)
+6. Aucune année passée (2024, 2025) — seules les années futures de projets (2027, 2028) sont autorisées
+7. Texte en prose continue uniquement
+
+Si tu trouves une violation, corrige-la avant de retourner le JSON.
+
+RAPPEL FINAL : {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}
 `.trim();
     };
 
