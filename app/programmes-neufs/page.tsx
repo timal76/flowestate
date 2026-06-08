@@ -96,9 +96,9 @@ async function fileToBase64(file: File): Promise<string> {
   });
   const base64 = dataUrl.split(",")[1] ?? "";
 
-  const MAX_PDF_SIZE = 5 * 1024 * 1024; // 5 Mo max
+  const MAX_PDF_SIZE = 20 * 1024 * 1024;
   if (file.size > MAX_PDF_SIZE) {
-    toast.error("Le PDF est trop volumineux. Maximum 5 Mo recommandé pour une génération optimale.");
+    toast.error("Le PDF est trop volumineux. Maximum 20 Mo.");
     return "";
   }
 
@@ -226,8 +226,8 @@ export default function ProgrammesNeufsPage() {
       toast.error("Seuls les fichiers PDF sont acceptés.");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("Le PDF ne doit pas dépasser 8 Mo.");
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Le PDF ne doit pas dépasser 20 Mo.");
       return;
     }
     setPdfFile(file);
@@ -807,7 +807,7 @@ export default function ProgrammesNeufsPage() {
                 {pdfFile ? (
                   <p className="mt-4 text-sm text-[#C9A96E]">{pdfFile.name}</p>
                 ) : (
-                  <p className="mt-4 text-xs text-[#A0A0A0]">PDF uniquement — 8 Mo max</p>
+                  <p className="mt-4 text-xs text-[#A0A0A0]">PDF uniquement — 20 Mo max</p>
                 )}
               </div>
 
