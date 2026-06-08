@@ -452,7 +452,33 @@ export default function ProgrammesNeufsPage() {
 
     try {
       setIsLoading(true);
-      const pdfBase64 = await fileToBase64(pdfFile);
+
+      let extractedDataFromPdf: Record<string, unknown> | undefined;
+
+      if (pdfFile.size > 3 * 1024 * 1024) {
+        toast.loading("Analyse de la plaquette...", { id: "extract" });
+
+        const pdfBase64ForExtract = await fileToBase64(pdfFile);
+
+        const extractRes = await fetch("/api/extract-programme", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pdfBase64: pdfBase64ForExtract }),
+        });
+
+        toast.dismiss("extract");
+
+        if (extractRes.ok) {
+          const extractJson = (await extractRes.json()) as {
+            extractedData: Record<string, unknown>;
+          };
+          extractedDataFromPdf = extractJson.extractedData;
+          toast.success("Plaquette analysée !");
+        }
+      }
+
+      const pdfBase64 = extractedDataFromPdf ? undefined : await fileToBase64(pdfFile);
+
       const annexes =
         annexFiles.length > 0
           ? await Promise.all(
@@ -464,7 +490,11 @@ export default function ProgrammesNeufsPage() {
             )
           : undefined;
 
-      const totalSize = JSON.stringify({ pdfBase64, annexes }).length;
+      const totalSize = JSON.stringify(
+        extractedDataFromPdf
+          ? { extractedProgramData: extractedDataFromPdf, annexes }
+          : { pdfBase64, annexes },
+      ).length;
       const MAX_PAYLOAD = 3.5 * 1024 * 1024; // 3.5 Mo en base64
 
       if (totalSize > MAX_PAYLOAD * 1.37) {
@@ -487,7 +517,9 @@ export default function ProgrammesNeufsPage() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          pdfBase64,
+          ...(extractedDataFromPdf
+            ? { extractedProgramData: extractedDataFromPdf }
+            : { pdfBase64 }),
           address: form.address.trim() || undefined,
           annexes,
           angle: form.angle,
