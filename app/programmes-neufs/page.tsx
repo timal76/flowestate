@@ -1382,10 +1382,10 @@ export default function ProgrammesNeufsPage() {
                     </svg>
                   </div>
                   <p className="text-base font-medium text-[#F5F5F0]">
-                    Vos 3 annonces apparaîtront ici
+                    Vos annonces apparaîtront ici
                   </p>
                   <p className="mt-2 text-sm text-[#A0A0A0]">
-                    Leboncoin, SeLoger et site propre
+                    Sélectionnez vos plateformes et générez vos annonces
                   </p>
                 </div>
               )}
