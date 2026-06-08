@@ -171,14 +171,13 @@ function buildInterditsDynamiques(
   interdits.push(
     "Surfaces arrondies : utiliser les surfaces exactes des documents — jamais 28m² si le plan dit 27,62m²",
   );
+  interdits.push("Nom du promoteur (Sedelka, Nexity, etc.) : INTERDIT dans les annonces");
+  interdits.push("Nom de la résidence commerciale : INTERDIT dans les annonces");
+  interdits.push("Sources citées explicitement : INTERDITES — (source : X) ne doit jamais apparaître");
   interdits.push(
-    "Sources citées explicitement (source : X) : INTERDITES dans les annonces — données utilisées comme connaissance, jamais citées",
+    "Années passées dans les données de marché (2024, 2025, l'année précédente) : INTERDITES — utiliser formulations intemporelles. Exception : années futures de projets (2027, 2028) autorisées",
   );
-  interdits.push("Années associées aux données (2024, 2025, 2026) : INTERDITES dans les annonces de marché");
-  interdits.push("Nom du promoteur : INTERDIT dans les annonces");
-  interdits.push("Nom de la résidence : INTERDIT dans les annonces");
-  interdits.push("Prix au m² : INTERDIT dans les annonces programmes neufs");
-  interdits.push("Puces, tirets, listes : INTERDITS — prose uniquement");
+  interdits.push("Puces, tirets, listes, titres en majuscules : INTERDITS — prose uniquement");
 
   // RÈGLES CONDITIONNELLES — basées sur les données extraites
   if (!data.baignoire) {
@@ -413,12 +412,12 @@ RÈGLES ABSOLUES — ZÉRO EXCEPTION :
 
 RÈGLES RÉDACTIONNELLES ABSOLUES — ANNONCES PROFESSIONNELLES :
 
-- SOURCES : Ne jamais écrire "(source : X)", "(source X)", "source :" ou toute attribution dans le texte d'une annonce. Les données sont utilisées comme connaissance de fond, jamais citées explicitement.
-- ANNÉES ET DATES DE DONNÉES : Ne jamais mentionner d'année associée à une donnée de marché (pas de "2024", "2025", "janvier 2026" dans les annonces). Écrire "prix médian du secteur" et non "2 400€/m² (source DVF 2024)".
-- NOM DU PROMOTEUR : Ne jamais mentionner le nom du promoteur (Sedelka, Nexity, Bouygues, etc.) dans les annonces. L'agent immobilier l'ajoutera lui-même.
-- NOM DE LA RÉSIDENCE : Ne jamais mentionner le nom de la résidence (Havre en Scène, etc.) dans les annonces. L'agent immobilier l'ajoutera lui-même.
-- PRIX AU M² : Ne jamais mentionner de prix au m² dans les annonces programmes neufs. Pas de "2 400€/m²", pas de "3 000€/m²", pas de comparaisons de prix au m².
-- PUCES ET LISTES : Ne jamais utiliser de puces (•, -, *, ✓, ✗, →) dans le corps des annonces. Rédiger en prose uniquement. Les informations doivent s'enchaîner naturellement dans des paragraphes.
+- PROMOTEUR : Ne jamais mentionner le nom du promoteur (Sedelka, Nexity, Bouygues, Kaufman, etc.) dans les annonces. L'agent l'ajoutera lui-même si nécessaire.
+- NOM DE LA RÉSIDENCE : Ne jamais mentionner le nom commercial de la résidence (Havre en Scène, etc.) dans les annonces. L'agent l'ajoutera lui-même.
+- SOURCES CITÉES : Ne jamais écrire "(source : X)", "(source X)", "source :" ou toute attribution dans le texte d'une annonce. Les données sont utilisées comme connaissance de fond, jamais citées.
+- ANNÉES PASSÉES : Ne jamais mentionner d'années passées ou actuelles liées aux données de marché (pas de "2024", "décembre 2024", "janvier 2026", "l'année précédente", "cette année"). Exception : les années futures de projets urbains (tramway 2027, école 2028) sont AUTORISÉES car elles représentent une valorisation future.
+- PUCES ET LISTES : Ne jamais utiliser de puces (•, -, *, ✓, ✗, →) dans le corps des annonces. Rédiger en prose uniquement.
+- TITRES EN MAJUSCULES : Ne jamais créer de sections en majuscules (LOCALISATION :, FISCALITÉ :, etc.). Le texte doit être continu et fluide.
 
 DONNÉES TECHNIQUES :
 - RE2020 (pas RT2020, pas BBC, pas HQE) : utiliser exactement le terme présent dans la plaquette
