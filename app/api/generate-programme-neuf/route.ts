@@ -922,7 +922,9 @@ DONNÉES EXTRAITES DE LA PLAQUETTE (JSON) :
 ${JSON.stringify(essentialExtractedData)}
 
 ${hardcodedData ? `DONNÉES LOCALES OFFICIELLES VÉRIFIÉES (Le Havre) :
-${hardcodedData}` : `DONNÉES WEB LOCALES :
+${hardcodedData}
+
+IMPORTANT : Ces données sont utilisées comme connaissance de fond uniquement. Ne jamais citer les sources, ne jamais mentionner d'années liées aux données de marché dans les annonces. Utiliser des formulations intemporelles : "prix médian du secteur", "loyer de marché", "demande structurelle".` : `DONNÉES WEB LOCALES :
 ${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}`}
 
 ${addressBlock ? `${addressBlock}\n` : ""}${annexesBlock ? `${annexesBlock}\n` : ""}

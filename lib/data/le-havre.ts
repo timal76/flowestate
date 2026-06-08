@@ -376,22 +376,32 @@ export function getLeHavreDataForPrompt(quartier?: string, prospectProfile?: str
     prospectProfile?.toLowerCase().includes("enfant") ||
     prospectProfile?.toLowerCase().includes("scolaire");
 
+  const cleanProjet = (text: string) =>
+    text
+      .replace(/\s*\(source\s*:\s*[^)]+\)/gi, "")
+      .replace(/\s*\(source\s+[^)]+\)/gi, "")
+      .replace(/\s+en 2023\b/g, "")
+      .trim();
+
+  const declarationTramway = d.tramway.ligne_c.declaration.replace(/\s+en décembre 2024\b/i, "");
+  const statutTramway = d.tramway.ligne_c.statut.replace(/\s+depuis février 2025\b/i, "");
+
   return `
 DONNÉES OFFICIELLES VÉRIFIÉES — LE HAVRE
-(Sources citées — à utiliser directement dans les annonces — NE PAS INVENTER d'autres données)
+(Données de connaissance de fond — NE PAS INVENTER d'autres données)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MARCHÉ IMMOBILIER (source: DVF / MeilleursAgents 2024)
+MARCHÉ IMMOBILIER
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - Prix médian appartement Le Havre : ${d.marche_immobilier.prix_m2_median_appartement}€/m² (fourchette : ${d.marche_immobilier.fourchette})
 - Évolution sur 5 ans : ${d.marche_immobilier.evolution_5_ans}
-- Quartier Arcole Brindeau : ~${d.marche_immobilier.par_quartier.arcole_brindeau.prix_m2}€/m² (source : ${d.marche_immobilier.par_quartier.arcole_brindeau.source})
+- Quartier Arcole Brindeau : ~${d.marche_immobilier.par_quartier.arcole_brindeau.prix_m2}€/m²
 - Centre reconstruit UNESCO : ~${d.marche_immobilier.par_quartier.centre_reconstruit_unesco.prix_m2}€/m²
 - Sainte-Adresse : ~${d.marche_immobilier.par_quartier.sainte_adresse.prix_m2}€/m²
 - ${d.marche_immobilier.par_quartier.arcole_brindeau.avantage}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MARCHÉ LOCATIF (source: Observatoire Clameur / SeLoger 2026)
+MARCHÉ LOCATIF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - Loyer médian : ${d.marche_locatif.loyer_median_m2}€/m² (${d.marche_locatif.evolution})
 - T2 (45m²) : ~${d.marche_locatif.par_type.T2.loyer_mensuel_estime}€/mois
@@ -400,16 +410,16 @@ MARCHÉ LOCATIF (source: Observatoire Clameur / SeLoger 2026)
 - ${d.marche_locatif.demande_locative}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TRAMWAY LIGNE C (source officielle : Le Havre Seine Métropole)
+TRAMWAY LIGNE C
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Statut : ${d.tramway.ligne_c.statut}
+- Statut : ${statutTramway}
 - Mise en service prévue : ${d.tramway.ligne_c.mise_en_service_prevue}
 - Investissement : ${d.tramway.ligne_c.investissement}
 - Impact : ${d.tramway.ligne_c.impact}
-- ${d.tramway.ligne_c.declaration}
+- ${declarationTramway}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-RÉSEAU LiA (source : Le Havre Seine Métropole juillet 2024)
+RÉSEAU LiA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - 8 lignes ChronoLiA C1 à C8 : toutes les 10-15 min de 5h à 22h30 (00h30 pour C1 C2 C3 C4)
 - 13 lignes périurbaines
@@ -418,7 +428,7 @@ RÉSEAU LiA (source : Le Havre Seine Métropole juillet 2024)
 - Funiculaire ville basse / ville haute
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TRAIN PARIS (source : SNCF Connect)
+TRAIN PARIS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - Trajet : ${d.transports_paris.trajet}
 - Fréquence : ${d.transports_paris.frequence}
@@ -429,9 +439,9 @@ TRAIN PARIS (source : SNCF Connect)
 ${
   isArcole
     ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-QUARTIER ARCOLE BRINDEAU — PROJETS OFFICIELS (source : lehavre.fr)
+QUARTIER ARCOLE BRINDEAU — PROJETS OFFICIELS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${d.quartier_arcole_brindeau.projets_officiels.map((p) => `- ${p}`).join("\n")}
+${d.quartier_arcole_brindeau.projets_officiels.map((p) => `- ${cleanProjet(p)}`).join("\n")}
 - Position : ${d.quartier_arcole_brindeau.position}
 - Commerces : ${d.quartier_arcole_brindeau.commerces_proximite}
 - Valorisation : ${d.quartier_arcole_brindeau.valorisation}
@@ -456,13 +466,13 @@ ${
     ? `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DONNÉES SPÉCIFIQUES RETRAITÉS / RÉSIDENCE SECONDAIRE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SERVICES MÉDICAUX (source : GHH ch-havre.fr) :
+SERVICES MÉDICAUX :
 - Hôpital Jacques Monod (Montivilliers) : urgences adultes 24h/24, cardiologie, chirurgie, oncologie — tél. 02 32 73 32 32
 - Hôpital Flaubert : gériatrie, soins de suite et réadaptation
 - Clinique des Ormeaux : urgences 24h/24, 200 lits, plateau technique complet, parking gratuit
 - Réseau de médecins spécialistes dense
 
-MARCHÉS ET VIE LOCALE (source : lehavre.fr) :
+MARCHÉS ET VIE LOCALE :
 - Halles Centrales : 14 Place des Halles Centrales, ouvertes TOUS LES JOURS, 22 commerçants
 - Marché Thiers : vendredi matin 7h30-13h30, huîtres et poissons frais
 - Marché aux Poissons : Quai de l'Île, 8h30-13h30
@@ -475,7 +485,7 @@ ACCESSIBILITÉ ET CONFORT :
 - 7 820 hectares d'espaces verts — promenades et balades accessibles
 
 USAGE RÉSIDENCE SECONDAIRE :
-- Location courte durée possible : à partir de 146€/nuit (source : Airbnb Le Havre 2026)
+- Location courte durée possible : à partir de 146€/nuit
 - 14 trains quotidiens Paris Saint-Lazare — liberté totale week-ends et vacances
 - Pas de contrainte de gestion si domotique pilotée à distance
 `
@@ -488,15 +498,15 @@ ${
 DONNÉES SPÉCIFIQUES INVESTISSEMENT LOCATIF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RENDEMENT POTENTIEL :
-- Loyer médian T3 (65m²) : ~780€/mois (source : Observatoire Clameur / SeLoger 2026)
+- Loyer médian T3 (65m²) : ~780€/mois
 - Loyer médian T2 (45m²) : ~585€/mois
 - Evolution loyers : +4,5% sur un an
-- Potentiel location courte durée : à partir de 146€/nuit (source : Airbnb 2026)
+- Potentiel location courte durée : à partir de 146€/nuit
 
 DEMANDE LOCATIVE STRUCTURELLE :
 - 20 000 étudiants sur l'agglomération (Université + Sciences Po + EM Normandie)
 - 32 000 emplois complexe industrialo-portuaire — salariés en mobilité toute l'année
-- Renault Sandouville : 540 recrutements 2024-2028 — afflux de nouveaux salariés
+- Renault Sandouville : 540 recrutements prévus — afflux de nouveaux salariés
 - GHH : milliers de personnels hospitaliers à loger
 
 VALORISATION PATRIMONIALE :
@@ -514,8 +524,8 @@ ${
 DONNÉES SPÉCIFIQUES FAMILLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ÉCOLES ET ENSEIGNEMENT :
-- 95 écoles publiques et 10 écoles privées (source : Ville du Havre)
-- Nouvelle école en construction Arcole Brindeau, ouverture rentrée 2028 (source : lehavre.fr)
+- 95 écoles publiques et 10 écoles privées
+- Nouvelle école en construction Arcole Brindeau, ouverture rentrée 2028
 - Université Le Havre Normandie pour les enfants en âge d'étudier
 - 20 000 étudiants sur l'agglomération
 
@@ -535,7 +545,7 @@ ${
 DONNÉES SPÉCIFIQUES JEUNES ACTIFS / PRIMO-ACCÉDANTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BASSIN D'EMPLOI DYNAMIQUE :
-- Renault Sandouville : 540 recrutements CDI/CDD 2024-2028
+- Renault Sandouville : 540 recrutements CDI/CDD prévus
 - Grand Port Maritime : 32 000 emplois directs/indirects, secteurs logistique et maritime
 - Safran Nacelles : ~1 700 emplois aéronautique
 - Tertiaire en développement, commerce international, startups logistique
@@ -552,7 +562,7 @@ QUALITÉ DE VIE :
 }
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CHIFFRES OFFICIELS VILLE (source : Ville du Havre)
+CHIFFRES OFFICIELS VILLE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - ${d.chiffres_ville.population.toLocaleString("fr-FR")} habitants — ville la plus peuplée de Normandie
 - ${d.chiffres_ville.littoral} de littoral
@@ -561,6 +571,6 @@ CHIFFRES OFFICIELS VILLE (source : Ville du Havre)
 - Plus de 2 000 associations
 - Le Havre premier port importateur de café en France (60% du trafic national)
 
-RÈGLE ABSOLUE : Ces données sont officielles et vérifiées avec leurs sources. Tu peux et dois les citer dans les annonces avec leur source entre parenthèses. NE JAMAIS inventer de données supplémentaires. Si une information n'est pas dans cette base, ne pas la mentionner.
+RÈGLE ABSOLUE : Ces données sont officielles et vérifiées. Utiliser comme connaissance de fond uniquement — ne jamais citer de sources ni d'années de marché dans les annonces. NE JAMAIS inventer de données supplémentaires. Si une information n'est pas dans cette base, ne pas la mentionner.
 `.trim();
 }
