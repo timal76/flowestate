@@ -105,6 +105,7 @@ const clean = (text: string): string => {
     .replace(/^\s*\*\s+/gm, "")
     .replace(/^\s*✓\s+/gm, "")
     .replace(/^\s*✗\s+/gm, "")
+    .replace(/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖÙÚÛÜ\s]{4,}\s*:/gm, "")
     .trim();
 };
 
