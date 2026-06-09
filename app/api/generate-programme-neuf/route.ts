@@ -471,83 +471,12 @@ DONNÉES WEB :
 - "Constat de marché observé" sans chiffre sourcé : INTERDIT
 - Taux d'intérêt et conjoncture financière : INTERDITS
 
-ORTHOGRAPHE ET NOMS PROPRES :
-- Auguste Perret (architecte havrais) : PERRET pas Perrot
-- RE2020 pas RT2020
-- Dommee pas Domee ou Domée
-- Sedelka pas Sédélka
-- Relire tous les noms propres avant de retourner le texte
-
-CONTRÔLE QUALITÉ FINAL OBLIGATOIRE :
-Avant de retourner les annonces, vérifier :
-1. Zéro faute d'orthographe, grammaire, typographie
-2. Angle cohérent du début à la fin de chaque annonce
-3. Zéro information inventée
-4. Toutes les mentions légales présentes
-5. Noms propres corrects
-6. Données techniques exactes (RE2020, étage, surfaces, nombre de trains)
-
 - PINEL HORS ANGLE INVESTISSEUR : si l'angle ou le profil prospect contient "retraite", "résidence secondaire", "pied-à-terre", "senior", "bord de mer", ne jamais mentionner le dispositif Pinel ni le rendement locatif. Ces mentions sont INTERDITES sur ces angles.
 - TRAIN PARIS-LE HAVRE : la liaison Paris Saint-Lazare - Le Havre est un Intercités ou TER Normandie. Ne jamais écrire "TGV" pour cette liaison. Écrire "train direct" ou "Intercités".
 - TARIFS TRANSPORT : ne jamais indiquer de prix de billets de train sans source officielle SNCF confirmée. Écrire "tarifs variables selon disponibilités — voir sncf-connect.com" si nécessaire.
 - RE2020 ÉCONOMIES : ne jamais écrire "factures divisées par X" sans source officielle. Écrire uniquement "charges énergétiques maîtrisées grâce aux normes RE2020" ou "performance énergétique optimisée RE2020".
 - VIS-À-VIS : ne jamais affirmer "sans vis-à-vis" ou "vue dégagée" sauf si explicitement confirmé dans les plans ou documents fournis.
 - "HAVRE DE PAIX" : cette expression reste INTERDITE sous toutes ses formes. "Votre havre normand" ou "refuge normand" sont acceptés car ils font référence à la ville.
-
-STRATÉGIE DE DIFFÉRENCIATION — MÉTHODOLOGIE OBLIGATOIRE :
-
-Étape 1 — Analyse des arguments promoteur :
-Identifie tous les arguments de la plaquette dans extractedData.arguments_promoteur. Ces arguments sont INTERDITS dans tes annonces sous cette forme. Tu dois les reformuler ou les contourner.
-
-Étape 2 — Construction de l'angle opposé :
-Pour chaque argument promoteur identifié, construis l'argument inverse centré sur le quotidien de l'acheteur.
-Exemple : Promoteur dit "résidence moderne" → toi tu dis "14 trains quotidiens Paris Saint-Lazare, premier départ 5h14 (source SNCF Connect)"
-Exemple : Promoteur dit "prestations haut de gamme" → toi tu dis "prix médian secteur 2 400€/m² soit 15% sous le centre UNESCO (source L'Apporteur d'Immo déc. 2024)"
-Exemple : Promoteur dit "cadre de vie agréable" → toi tu dis "Halles Centrales ouvertes tous les jours, 22 commerçants, 5 min à pied"
-
-Étape 3 — Titres avec chiffres réels obligatoires :
-Chaque titre DOIT contenir au minimum UN chiffre réel sourcé.
-INTERDIT : "Appartement neuf Le Havre — résidence moderne"
-OBLIGATOIRE : "2h05 de Paris • T3 neuf 64m² • 2 400€/m² secteur • livraison T1 2026"
-Les chiffres disponibles : trajet train, prix au m², nombre de trains, surfaces exactes, loyer médian, date livraison, distance plage/centre.
-
-Étape 4 — Accroche inattendue obligatoire :
-L'accroche ne commence JAMAIS par le nom de la résidence, le type de bien, ou "Découvrez".
-Elle commence par une situation concrète de vie réelle selon le profil :
-- Retraité/résidence secondaire : "Vendredi 18h32, train direct depuis Saint-Lazare." ou "Depuis votre smartphone parisien, vous préchauffez l'appartement."
-- Investisseur : "Loyer médian 12€/m² dans ce secteur (source Observatoire Clameur 2026). Voici pourquoi ce T3 change l'équation."
-- Famille : "À 800m de l'école, à 14 min des plages. C'est ça, grandir au Havre."
-
-Étape 5 — Données hardcodées = arguments différenciants :
-Les données Le Havre fournies sont ton avantage concurrentiel principal. Aucune autre agence ne les utilisera avec leurs sources précises. Cite-les avec leurs sources dans chaque annonce.
-Au minimum dans chaque annonce : 1 donnée marché immobilier sourcée + 1 donnée transport sourcée + 1 projet urbain sourcé.
-
-ADAPTATION AU PROFIL PROSPECT — RÈGLE ABSOLUE :
-L'angle et le profil prospect définis par l'agent immobilier sont LA priorité absolue de chaque annonce. Toutes les informations (web, plaquette, annexes) doivent être filtrées et présentées uniquement sous l'angle du profil prospect.
-
-PROFIL RETRAITÉ/SENIOR : 
-- Mettre en avant services médicaux, mobilité sans voiture, accessibilité PMR, activités culturelles, espaces verts, sécurité
-- Ton rassurant et humain, projections sur le quotidien paisible
-- Arguments : "douche à l'italienne (sécurité)", "volets électriques (confort)", "domotique (facilité du quotidien)", "stationnement inclus (indépendance)"
-- Ne jamais mentionner rendement locatif, Pinel, investissement dans les annonces orientées retraite
-
-PROFIL INVESTISSEUR :
-- Mettre en avant prix au m² DVF, loyers médians officiels, dispositifs fiscaux, potentiel de valorisation
-- Ton factuel et chiffré, arguments de rentabilité vérifiables
-- Arguments : rendement, fiscalité, vacance locative, valorisation quartier
-- Ne jamais mentionner lifestyle ou émotions
-
-PROFIL FAMILLE/PRIMO-ACCÉDANT :
-- Mettre en avant écoles, crèches, espaces de jeux, sécurité du quartier, transport scolaire
-- Ton chaleureux et concret sur le quotidien familial
-- Arguments : PTZ, frais notaire réduits, espace extérieur pour les enfants
-
-PROFIL RÉSIDENCE SECONDAIRE :
-- Mettre en avant accessibilité Paris, loisirs, gastronomie normande, culture, activités nautiques
-- Ton aspirationnel sur les week-ends et vacances
-- Arguments : train direct Paris, plage, patrimoine UNESCO, pack domotique pour gestion à distance
-
-Ne jamais mélanger les angles dans une même annonce. L'angle défini par l'agent est UNIQUE et EXCLUSIF du début à la fin.
 
 ANNONCE 1 — LEBONCOIN :
 - Titre : 60 caractères max, percutant, sans majuscules excessives
@@ -859,7 +788,7 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
 
       const webSearchCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
-        max_tokens: 600,
+        max_tokens: isParis ? 400 : 600,
         tools: [{ type: "web_search_20250305", name: "web_search", max_uses: isParis ? 2 : 1 }],
         messages: [{ role: "user", content: parisSearchPrompt }],
       });
@@ -985,28 +914,10 @@ ${allPlatforms.includes("facebook") ? "- Facebook : accroche narrative 80 car ma
 - SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"
 - Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"`;
 
-      const programmeMandatoryBlock = isProgramme
-          ? `DONNÉES PLAQUETTE OBLIGATOIRES À INCLURE DANS TOUTES LES ANNONCES PROGRAMME :
-- Nom : ${extractedData.nom || "Havre en Scène"}
-- Promoteur : ${extractedData.promoteur || "Sedelka"}
-- Adresse : ${extractedData.adresse || "133 boulevard Amiral Mouchez, 76600 Le Havre"}
-- Nombre de lots : ${extractedData.nb_lots || "48"}
-- Types de biens : ${JSON.stringify(extractedData.types_biens)}
-- Surfaces : ${extractedData.surface_min || "30"}m² à ${extractedData.surface_max || "90"}m²
-- Livraison : ${extractedData.livraison || "T1 2026"}
-- Domotique : ${extractedData.domotique || "Pack So Smart Dommee offert"}
-- Prestations : ${JSON.stringify(extractedData.prestations)}
-- Dispositifs fiscaux : TVA ${extractedData.taux_tva}, PTZ : ${extractedData.ptz}, Pinel : ${extractedData.pinel}
-
-Ces informations DOIVENT apparaître dans chaque annonce programme. Ne jamais les omettre.
-
-`
-          : "";
-
       return `
 ${introLine}
 
-${programmeMandatoryBlock}${modeInstruction}
+${modeInstruction}
 ${programmeStrictRule ? `\n${programmeStrictRule}\n` : ""}
 DONNÉES EXTRAITES DE LA PLAQUETTE (JSON) :
 ${JSON.stringify(essentialExtractedData)}
@@ -1200,7 +1111,7 @@ RAPPEL FINAL : ${formatJson}
         const haikuFormat = buildFormatReminder(haikuPlatforms);
         const shortCall = await callAnthropicWithRetry(apiKey, {
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 2500,
+          max_tokens: 2000,
           system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${haikuFormat}`,
           messages: [
             {
@@ -1226,7 +1137,7 @@ RAPPEL FINAL : ${formatJson}
 
       const shortCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2500,
+        max_tokens: 2000,
         system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${haikuFormat}`,
         messages: [
           {
@@ -1293,72 +1204,6 @@ RAPPEL FINAL : ${formatJson}
       const programmeResult = await generateSplitAnnonces("programme");
       if (programmeResult instanceof NextResponse) return programmeResult;
       programmeAnnonces = programmeResult;
-    }
-
-    const runAnnoncesVerification = async (
-      annoncesToVerify: GeneratedAnnonces,
-    ): Promise<GeneratedAnnonces> => {
-      const verificationPrompt = `Tu es un vérificateur immobilier strict. Tu reçois des annonces générées et les données sources. Tu dois supprimer ou corriger TOUTE information qui n'est pas présente dans les sources.
-
-DONNÉES SOURCES AUTORISÉES :
-${JSON.stringify(essentialExtractedData)}
-${hardcodedData ? `DONNÉES LE HAVRE VÉRIFIÉES : ${hardcodedData.substring(0, 500)}` : ""}
-
-ANNONCES À VÉRIFIER :
-${JSON.stringify(annoncesToVerify)}
-
-RÈGLES DE VÉRIFICATION — SUPPRIME IMMÉDIATEMENT :
-- Ascenseur si non mentionné dans les sources
-- Baignoire si non mentionnée dans les sources
-- VMC double flux si non mentionnée
-- Hauteur sous plafond inventée
-- Orientation (sud/nord/est/ouest) si non confirmée
-- "Sans vis-à-vis" si non confirmé
-- Prix au m² calculés pour un lot spécifique
-- Nombre de restaurants/commerces inventé
-- Pinel sur angle retraite/résidence secondaire
-- Toute information non traçable vers les sources
-
-CORRECTIONS :
-- "ascenseur" → supprimer la mention
-- "baignoire" → remplacer par "douche à l'italienne"
-- prix calculés → supprimer
-- Pinel → supprimer si angle retraite
-
-Retourne UNIQUEMENT le JSON corrigé, commence par { et termine par } :
-{"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}`;
-
-      const verificationCall = await callAnthropicWithRetry(apiKey, {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 4000,
-        messages: [
-          { role: "user", content: verificationPrompt },
-          { role: "assistant", content: "{" },
-        ],
-      });
-
-      if (verificationCall.response.ok) {
-        const verifText = "{" + extractTextFromAnthropic(verificationCall.json);
-        try {
-          const verifiedAnnonces = parseJsonFromText(verifText) as GeneratedAnnonces;
-          if (
-            verifiedAnnonces.leboncoin?.titre &&
-            verifiedAnnonces.seloger?.titre &&
-            verifiedAnnonces.siteAgence?.titre
-          ) {
-            return verifiedAnnonces;
-          }
-        } catch {
-          console.error("[verification] parse failed, using original annonces");
-        }
-      }
-
-      return annoncesToVerify;
-    };
-
-    programmeAnnonces = await runAnnoncesVerification(programmeAnnonces);
-    if (lotAnnonces) {
-      lotAnnonces = await runAnnoncesVerification(lotAnnonces);
     }
 
     const residenceLabel =
