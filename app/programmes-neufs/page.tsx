@@ -55,6 +55,13 @@ type FormState = {
   competitorAds: string;
 };
 
+type AngleSuggestion = {
+  angle: string;
+  prospectProfile: string;
+  label: string;
+  emoji: string;
+};
+
 const initialForm: FormState = {
   address: "",
   angle: "",
@@ -143,6 +150,19 @@ async function compressPdfToBase64(file: File): Promise<string> {
   }
 }
 
+async function generateAngleSuggestions(
+  extractedData: Record<string, unknown>,
+): Promise<AngleSuggestion[]> {
+  const response = await fetch("/api/suggest-angles", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ extractedData }),
+  });
+  if (!response.ok) return [];
+  const data = (await response.json()) as { suggestions: AngleSuggestion[] };
+  return data.suggestions || [];
+}
+
 export default function ProgrammesNeufsPage() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
@@ -178,6 +198,8 @@ export default function ProgrammesNeufsPage() {
     linkedin: false,
     facebook: false,
   });
+  const [angleSuggestions, setAngleSuggestions] = useState<AngleSuggestion[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -509,6 +531,11 @@ export default function ProgrammesNeufsPage() {
             };
             extractedDataFromPdf = extractJson.extractedData;
             toast.success("Plaquette analysée !");
+
+            setIsLoadingSuggestions(true);
+            const suggestions = await generateAngleSuggestions(extractedDataFromPdf);
+            setAngleSuggestions(suggestions);
+            setIsLoadingSuggestions(false);
 
             void supabaseClient.storage.from("plaquettes").remove([fileName]);
           }
@@ -948,6 +975,60 @@ export default function ProgrammesNeufsPage() {
                     placeholder="Ex : 12 rue du Bois Flotté, 76600 Le Havre"
                   />
                 </label>
+
+                {angleSuggestions.length > 0 && (
+                  <div className="space-y-3">
+                    <span className="text-sm text-[#A0A0A0]">Angles suggérés par FlowEstate</span>
+                    <div className="grid gap-2">
+                      {angleSuggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setForm((prev) => ({
+                              ...prev,
+                              angle: suggestion.angle,
+                              prospectProfile: suggestion.prospectProfile,
+                            }));
+                          }}
+                          className="flex items-start gap-3 rounded-xl border border-[#C9A96E]/30 bg-[#C9A96E]/5 px-4 py-3 text-left transition-all hover:border-[#C9A96E]/60 hover:bg-[#C9A96E]/10"
+                        >
+                          <span className="text-lg">{suggestion.emoji}</span>
+                          <div>
+                            <p className="text-sm font-medium text-[#C9A96E]">{suggestion.label}</p>
+                            <p className="mt-0.5 line-clamp-2 text-xs text-[#A0A0A0]">
+                              {suggestion.angle}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-[#A0A0A0]">
+                      Cliquez sur un angle pour pré-remplir les champs automatiquement.
+                    </p>
+                  </div>
+                )}
+
+                {isLoadingSuggestions && (
+                  <div className="flex items-center gap-2 text-sm text-[#A0A0A0]">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    Analyse du programme en cours...
+                  </div>
+                )}
 
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Angle souhaité</span>
