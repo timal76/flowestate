@@ -972,11 +972,11 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
 
       const titleRulesBlock = isCourt
         ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
-- Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train. Ex: "2h05 Paris • T3 64m² neuf • Livraison T1 2026"
-- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"
-- Instagram : accroche lifestyle courte, 150-220 mots, hashtags en fin
-- LinkedIn : ton expert chiffré, 300-400 mots, hashtags professionnels
-- Facebook : ton conversationnel, 200-300 mots, hashtags accessibles`
+${allPlatforms.includes("leboncoin") ? "- Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train." : ""}
+${allPlatforms.includes("seloger") ? "- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée." : ""}
+${allPlatforms.includes("instagram") ? "- Instagram : accroche lifestyle max 10 mots, corps 150-220 mots, 8-10 hashtags en fin." : ""}
+${allPlatforms.includes("linkedin") ? "- LinkedIn : accroche chiffrée 100 car max, corps 300-400 mots expert, 3-5 hashtags pro." : ""}
+${allPlatforms.includes("facebook") ? "- Facebook : accroche narrative 80 car max, corps 200-300 mots conversationnel, 5-7 hashtags." : ""}`
         : isSiteOnly
           ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
 - Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"`
@@ -1163,7 +1163,11 @@ RAPPEL FINAL : ${formatJson}
       const courtMode = baseMode === "programme" ? "programme-court" : "lot-court";
       const siteMode = baseMode === "programme" ? "programme-site" : "lot-site";
 
-      const haikuPlatforms = platforms.filter((p) => p !== "siteAgence");
+      const portailPlatforms = platforms.filter((p) => ["leboncoin", "seloger"].includes(p));
+      const reseauxPlatforms = platforms.filter((p) =>
+        ["instagram", "linkedin", "facebook"].includes(p),
+      );
+      const haikuPlatforms = [...portailPlatforms, ...reseauxPlatforms];
       const onlySiteAgence = wantsSiteAgence && haikuPlatforms.length === 0;
       const noSiteAgence = !wantsSiteAgence;
 
