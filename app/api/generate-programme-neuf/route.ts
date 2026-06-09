@@ -1136,51 +1136,27 @@ RAPPEL FINAL : ${formatJson}
 
       const results: GeneratedAnnonces = {};
 
-      if (portailsToGenerate.length > 0) {
-        const portailFormat = buildFormatReminder(portailsToGenerate);
-        const portailCall = await callAnthropicWithRetry(apiKey, {
+      const allHaikuPlatforms = [...portailsToGenerate, ...reseauxToGenerate];
+      if (allHaikuPlatforms.length > 0) {
+        const haikuFormat = buildFormatReminder(allHaikuPlatforms);
+        const haikuCall = await callAnthropicWithRetry(apiKey, {
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 2000,
-          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${portailFormat}`,
+          max_tokens: 1500,
+          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${haikuFormat}`,
           messages: [
             {
               role: "user",
               content:
-                buildGenerationUserPrompt(courtMode, portailsToGenerate) +
-                `\n\nFormat: ${portailFormat}`,
+                buildGenerationUserPrompt(courtMode, allHaikuPlatforms) +
+                `\n\nFormat: ${haikuFormat}`,
             },
             { role: "assistant", content: "{" },
           ],
         });
-        if (portailCall.response.ok) {
+        if (haikuCall.response.ok) {
           const parsed = parseGeneratedAnnonces(
-            extractTextFromAnthropic(portailCall.json),
-            `${baseMode}-portails`,
-          );
-          if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
-        }
-      }
-
-      if (reseauxToGenerate.length > 0) {
-        const reseauxFormat = buildFormatReminder(reseauxToGenerate);
-        const reseauxCall = await callAnthropicWithRetry(apiKey, {
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 2000,
-          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${reseauxFormat}`,
-          messages: [
-            {
-              role: "user",
-              content:
-                buildGenerationUserPrompt(courtMode, reseauxToGenerate) +
-                `\n\nFormat: ${reseauxFormat}`,
-            },
-            { role: "assistant", content: "{" },
-          ],
-        });
-        if (reseauxCall.response.ok) {
-          const parsed = parseGeneratedAnnonces(
-            extractTextFromAnthropic(reseauxCall.json),
-            `${baseMode}-reseaux`,
+            extractTextFromAnthropic(haikuCall.json),
+            `${baseMode}-haiku`,
           );
           if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
         }
@@ -1219,19 +1195,9 @@ RAPPEL FINAL : ${formatJson}
     let programmeAnnonces: GeneratedAnnonces;
     let lotAnnonces: GeneratedAnnonces | null = null;
 
-    if (hasAnnexes) {
-      const programmeResult = await generateSplitAnnonces("programme");
-      if (programmeResult instanceof NextResponse) return programmeResult;
-      programmeAnnonces = programmeResult;
-
-      const lotResult = await generateSplitAnnonces("lot");
-      if (lotResult instanceof NextResponse) return lotResult;
-      lotAnnonces = lotResult;
-    } else {
-      const programmeResult = await generateSplitAnnonces("programme");
-      if (programmeResult instanceof NextResponse) return programmeResult;
-      programmeAnnonces = programmeResult;
-    }
+    const programmeResult = await generateSplitAnnonces("programme");
+    if (programmeResult instanceof NextResponse) return programmeResult;
+    programmeAnnonces = programmeResult;
 
     const residenceLabel =
       nomResidence ||
@@ -1265,67 +1231,7 @@ RAPPEL FINAL : ${formatJson}
       console.error("[programme-neuf] recordGeneration failed:", e);
     }
 
-    let scoring = null;
-    try {
-      const scoringPrompt = `Tu es expert marketing immobilier. Évalue ces annonces sur 4 critères précis.
-
-ANNONCES À ÉVALUER :
-Leboncoin titre: ${annonces.leboncoin?.titre?.substring(0, 120).replace(/"/g, "'") ?? ""}
-Leboncoin extrait: ${annonces.leboncoin?.corps?.substring(0, 200).replace(/"/g, "'") ?? ""}
-SeLoger extrait: ${annonces.seloger?.corps?.substring(0, 200).replace(/"/g, "'") ?? ""}
-Site extrait: ${annonces.siteAgence?.corps?.substring(0, 400).replace(/"/g, "'") ?? ""}
-
-ANGLE AGENT: ${angle.substring(0, 80).replace(/"/g, "'")}
-PROFIL PROSPECT: ${(prospectProfile || "").substring(0, 80).replace(/"/g, "'")}
-
-CRITÈRES DE NOTATION (score global = moyenne pondérée) :
-1. Différenciation vs promoteur (3pts) : L'annonce évite-t-elle les formules génériques ? Contient-elle des angles que le promoteur n'utilise pas ?
-2. Cohérence profil prospect (3pts) : L'angle est-il tenu du début à la fin ? Les arguments correspondent-ils exactement au profil ?
-3. Données factuelles sourcées (2pts) : Y a-t-il des prix au m² sourcés, des horaires de train précis, des projets urbains avec sources ? Si oui : 2pts automatiques.
-4. Qualité rédactionnelle (2pts) : L'accroche est-elle inattendue ? Les titres contiennent-ils des chiffres réels ?
-
-BARÈME :
-- 8-10 : Annonces publiables immédiatement, différenciation forte, données sourcées présentes
-- 6-7 : Bonnes annonces avec 1-2 axes d'amélioration identifiés
-- 4-5 : Annonces correctes mais trop proches du discours promoteur
-- 1-3 : Annonces génériques non différenciées
-
-Si les annonces contiennent des données chiffrées sourcées (prix m², horaires train, projets datés) → score minimum 7.
-Si les titres contiennent des chiffres réels → bonus +1 sur qualité rédactionnelle.
-
-Retourne UNIQUEMENT ce JSON (commence par {, termine par }) :
-{"score":8,"verdict":"Une phrase courte et précise","points_forts":["point fort 1 concret","point fort 2 concret","point fort 3 concret"],"suggestions":["amélioration 1 actionnable","amélioration 2 actionnable"]}`;
-
-      const scoringCall = await callAnthropicWithRetry(apiKey, {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 200,
-        messages: [{ role: "user", content: scoringPrompt }],
-      });
-
-      if (scoringCall.response.ok) {
-        const raw = extractTextFromAnthropic(scoringCall.json)?.trim() ?? "";
-        console.log("SCORING RAW:", raw.substring(0, 150));
-        const start = raw.indexOf("{");
-        const end = raw.lastIndexOf("}");
-        if (start !== -1 && end !== -1 && end > start) {
-          try {
-            const parsed = JSON.parse(raw.slice(start, end + 1)) as {
-              score?: number;
-              verdict?: string;
-              points_forts?: string[];
-              suggestions?: string[];
-            };
-            if (typeof parsed.score === "number") {
-              scoring = parsed;
-            }
-          } catch {
-            console.error("SCORING PARSE FAILED:", raw.substring(0, 100));
-          }
-        }
-      }
-    } catch (e) {
-      console.error("SCORING ERROR:", e);
-    }
+    const scoring = null;
 
     return NextResponse.json({
       programme: programmeAnnonces,
