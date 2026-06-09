@@ -92,6 +92,7 @@ function parseJsonFromText(raw: string): unknown {
 }
 
 function cleanPdfBase64(input: string): string {
+  if (!input) return "";
   const trimmed = input.trim();
   if (trimmed.includes(",")) {
     return trimmed.split(",")[1] ?? trimmed;
@@ -679,7 +680,7 @@ export async function POST(request: Request) {
     if (body.extractedProgramData && Object.keys(body.extractedProgramData).length > 0) {
       extractedData = body.extractedProgramData;
       skipPdfExtraction = true;
-    } else if (!body.pdfBase64?.trim() && !body.extractedProgramData) {
+    } else if (!body.pdfBase64?.trim?.() && !body.extractedProgramData) {
       return NextResponse.json({ error: "Le PDF est requis." }, { status: 400 });
     }
 
@@ -711,7 +712,7 @@ export async function POST(request: Request) {
     const wantsReseaux = wantsInstagram || wantsLinkedin || wantsFacebook;
 
     if (!skipPdfExtraction) {
-    const pdfData = cleanPdfBase64(body.pdfBase64!);
+    const pdfData = body.pdfBase64 ? cleanPdfBase64(body.pdfBase64) : "";
     const extractionCall = await callAnthropicWithRetry(apiKey, {
       model: "claude-haiku-4-5-20251001",
       max_tokens: 800,
