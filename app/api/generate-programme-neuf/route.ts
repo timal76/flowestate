@@ -712,59 +712,64 @@ export async function POST(request: Request) {
     const wantsReseaux = wantsInstagram || wantsLinkedin || wantsFacebook;
 
     if (!skipPdfExtraction) {
-    const pdfData = body.pdfBase64 ? cleanPdfBase64(body.pdfBase64) : "";
-    const extractionCall = await callAnthropicWithRetry(apiKey, {
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 800,
-      system: EXTRACTION_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: {
-                type: "base64",
-                media_type: "application/pdf",
-                data: pdfData,
+      if (!body.pdfBase64) {
+        return NextResponse.json({ error: "Le PDF est requis." }, { status: 400 });
+      }
+      const pdfData = cleanPdfBase64(body.pdfBase64);
+      if (!pdfData || pdfData.length < 10) {
+        return NextResponse.json({ error: "Le PDF invalide." }, { status: 400 });
+      }
+      const extractionCall = await callAnthropicWithRetry(apiKey, {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 800,
+        system: EXTRACTION_SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "document",
+                source: {
+                  type: "base64",
+                  media_type: "application/pdf",
+                  data: pdfData,
+                },
               },
-            },
-            {
-              type: "text",
-              text: 'Sois ultra concis. Retourne uniquement le JSON avec les champs non-null. Maximum 500 tokens.\n\nAnalyse cette plaquette promoteur et extrais toutes les informations demandées.',
-            },
-          ],
-        },
-      ],
-    });
+              {
+                type: "text",
+                text: "Sois ultra concis. Retourne uniquement le JSON avec les champs non-null. Maximum 500 tokens.\n\nAnalyse cette plaquette promoteur et extrais toutes les informations demandées.",
+              },
+            ],
+          },
+        ],
+      });
 
-    if (!extractionCall.response.ok) {
-      return anthropicErrorResponse(extractionCall.response, extractionCall.json);
-    }
+      if (!extractionCall.response.ok) {
+        return anthropicErrorResponse(extractionCall.response, extractionCall.json);
+      }
 
-    const extractionText = extractTextFromAnthropic(extractionCall.json);
-    console.log("EXTRACTION RAW:", extractionText?.substring(0, 500));
-    if (!extractionText) {
-      return NextResponse.json(
-        { error: "Impossible d'extraire les informations du PDF." },
-        { status: 502 },
-      );
-    }
+      const extractionText = extractTextFromAnthropic(extractionCall.json);
+      console.log("EXTRACTION RAW:", extractionText?.substring(0, 500));
+      if (!extractionText) {
+        return NextResponse.json(
+          { error: "Impossible d'extraire les informations du PDF." },
+          { status: 502 },
+        );
+      }
 
-    try {
-      extractedData = parseJsonFromText(extractionText) as Record<string, unknown>;
-    } catch (e) {
-      console.error("PARSE ERROR:", e, "RAW:", extractionText?.substring(0, 200));
-      // Fallback : utiliser un objet vide plutôt que de bloquer
-      extractedData = {
-        nom: null,
-        ville: body.address?.split(",").pop()?.trim() || "Le Havre",
-        quartier: null,
-        promoteur: null,
-        types_biens: null,
-        arguments_promoteur: [],
-      };
-    }
+      try {
+        extractedData = parseJsonFromText(extractionText) as Record<string, unknown>;
+      } catch (e) {
+        console.error("PARSE ERROR:", e, "RAW:", extractionText?.substring(0, 200));
+        extractedData = {
+          nom: null,
+          ville: body.address?.split(",").pop()?.trim() || "Paris",
+          quartier: null,
+          promoteur: null,
+          types_biens: null,
+          arguments_promoteur: [],
+        };
+      }
     }
 
     const ville =
