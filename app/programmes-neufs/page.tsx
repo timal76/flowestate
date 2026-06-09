@@ -473,50 +473,47 @@ export default function ProgrammesNeufsPage() {
       let extractedDataFromPdf: Record<string, unknown> | undefined;
       let pdfBase64: string | undefined;
 
-      if (pdfFile.size > 2 * 1024 * 1024) {
-        toast.loading("Compression et analyse de la plaquette...", { id: "extract" });
+      // Toujours compresser via l'API extract-programme pour les PDFs > 1Mo
+      if (pdfFile.size > 1 * 1024 * 1024) {
+        toast.loading("Analyse de la plaquette...", { id: "extract" });
 
-        let compressed: string;
         try {
-          compressed = await compressPdfToBase64(pdfFile);
+          // Convertir en base64 par chunks pour éviter les crashes mémoire
+          const arrayBuffer = await pdfFile.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+          let binary = "";
+          const chunkSize = 8192;
+          for (let i = 0; i < uint8Array.length; i += chunkSize) {
+            const chunk = uint8Array.subarray(i, i + chunkSize);
+            binary += String.fromCharCode(...chunk);
+          }
+          const base64 = btoa(binary);
+
+          const extractRes = await fetch("/api/extract-programme", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pdfBase64: base64 }),
+          });
+
+          toast.dismiss("extract");
+
+          if (extractRes.ok) {
+            const extractJson = (await extractRes.json()) as {
+              extractedData: Record<string, unknown>;
+            };
+            extractedDataFromPdf = extractJson.extractedData;
+            toast.success("Plaquette analysée !");
+          } else if (extractRes.status === 413) {
+            toast.dismiss("extract");
+            toast.error("PDF trop volumineux. Compressez-le sur ilovepdf.com puis réessayez.");
+            setIsLoading(false);
+            return;
+          }
         } catch {
           toast.dismiss("extract");
-          toast.error("Impossible de compresser ce PDF. Essayez avec un fichier plus léger.");
+          toast.error("Erreur lors de l'analyse du PDF. Réessayez.");
           setIsLoading(false);
           return;
-        }
-
-        let parsedCompressed: { type: string; pages: string[] } | null = null;
-        try {
-          parsedCompressed = JSON.parse(compressed) as { type: string; pages: string[] };
-        } catch {
-          toast.dismiss("extract");
-          toast.error("Compression échouée. Essayez avec un PDF plus léger (max 8 Mo).");
-          setIsLoading(false);
-          return;
-        }
-
-        if (parsedCompressed.type !== "compressed_pages" || !parsedCompressed.pages?.length) {
-          toast.dismiss("extract");
-          toast.error("Compression échouée. Essayez avec un PDF plus léger.");
-          setIsLoading(false);
-          return;
-        }
-
-        const extractRes = await fetch("/api/extract-programme", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pdfBase64: compressed }),
-        });
-
-        toast.dismiss("extract");
-
-        if (extractRes.ok) {
-          const extractJson = (await extractRes.json()) as {
-            extractedData: Record<string, unknown>;
-          };
-          extractedDataFromPdf = extractJson.extractedData;
-          toast.success("Plaquette analysée !");
         }
       } else {
         pdfBase64 = await fileToBase64(pdfFile);
