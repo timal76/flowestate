@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/app/api/auth/[...nextauth]/route";
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "20mb",
+    },
+  },
+};
 
 export const maxDuration = 60;
 
@@ -10,43 +16,14 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as { pdfBase64: string };
 
-  const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après.
+  const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
 
 Format exact :
 {"nom":null,"promoteur":null,"ville":null,"quartier":null,"adresse":null,"types_biens":null,"surface_min":null,"surface_max":null,"nb_lots":null,"prix_min":null,"prix_max":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"re2020":null,"livraison":null,"prestations":[],"domotique":null,"stationnement":null,"commerces_rdc":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[],"baignoire":null,"hauteur_plafond":null,"orientation":null,"vue":null,"cuisine_equipee":null,"double_exposition":null,"ascenseur":null,"digicode":null,"interphone":null,"gardien":null,"piscine":null,"terrasse_confirmee":null,"balcon_confirme":null}
 
 RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null.`;
 
-  let messageContent: Array<Record<string, unknown>>;
-
-  try {
-    const parsed = JSON.parse(body.pdfBase64) as { type: string; pages: string[] };
-    if (parsed.type === "compressed_pages") {
-      messageContent = [
-        ...parsed.pages.map((p) => ({
-          type: "image",
-          source: { type: "base64", media_type: "image/jpeg", data: p },
-        })),
-        {
-          type: "text",
-          text: "Analyse ces pages de plaquette et extrais toutes les informations demandées.",
-        },
-      ];
-    } else {
-      throw new Error("not compressed");
-    }
-  } catch {
-    const pdfData = body.pdfBase64.includes(",")
-      ? body.pdfBase64.split(",")[1]
-      : body.pdfBase64;
-    messageContent = [
-      {
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: pdfData },
-      },
-      { type: "text", text: "Extrais toutes les informations. Retourne uniquement le JSON." },
-    ];
-  }
+  const pdfData = body.pdfBase64.includes(",") ? body.pdfBase64.split(",")[1] : body.pdfBase64;
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -62,7 +39,13 @@ RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null.`;
       messages: [
         {
           role: "user",
-          content: messageContent,
+          content: [
+            {
+              type: "document",
+              source: { type: "base64", media_type: "application/pdf", data: pdfData },
+            },
+            { type: "text", text: "Extrais toutes les informations. Retourne uniquement le JSON." },
+          ],
         },
       ],
     }),
