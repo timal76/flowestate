@@ -875,13 +875,10 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
           ? `ANALYSE DES DOCUMENTS ANNEXES (plans, vues 3D) :\n${annexesDescription}`
           : "";
 
-      const defaultPlatforms = isCourt
-        ? ["leboncoin", "seloger"]
-        : isSiteOnly
-          ? ["siteAgence"]
-          : ["leboncoin", "seloger", "siteAgence"];
       const allPlatforms =
-        requestedPlatforms && requestedPlatforms.length > 0 ? requestedPlatforms : defaultPlatforms;
+        requestedPlatforms && requestedPlatforms.length > 0
+          ? requestedPlatforms
+          : ["leboncoin", "seloger", "siteAgence"];
 
       const platformInstructions = allPlatforms
         .map((p) => {
