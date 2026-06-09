@@ -87,37 +87,6 @@ const tabs: { id: TabId; label: string }[] = [
   { id: "facebook", label: "Facebook" },
 ];
 
-async function compressPdfToBase64(file: File): Promise<string> {
-  try {
-    const pdfjsLib = await import("pdfjs-dist");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-    const pageImages: string[] = [];
-
-    for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.2 });
-      const canvas = document.createElement("canvas");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext("2d")!;
-      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-      pageImages.push(canvas.toDataURL("image/jpeg", 0.65).split(",")[1]);
-    }
-
-    return JSON.stringify({ type: "compressed_pages", pages: pageImages });
-  } catch {
-    const reader = new FileReader();
-    return new Promise((resolve) => {
-      reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
-      reader.readAsDataURL(file);
-    });
-  }
-}
-
 async function fileToBase64(file: File): Promise<string> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -146,6 +115,33 @@ const clean = (text: string): string => {
     .replace(/^[A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖÙÚÛÜ\s]{4,}\s*:/gm, "")
     .trim();
 };
+
+async function compressPdfToBase64(file: File): Promise<string> {
+  try {
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pageImages: string[] = [];
+    for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 1.2 });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d")!;
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+      pageImages.push(canvas.toDataURL("image/jpeg", 0.65).split(",")[1]);
+    }
+    return JSON.stringify({ type: "compressed_pages", pages: pageImages });
+  } catch {
+    const reader = new FileReader();
+    return new Promise((resolve) => {
+      reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+      reader.readAsDataURL(file);
+    });
+  }
+}
 
 export default function ProgrammesNeufsPage() {
   const { data: session, status: sessionStatus } = useSession();

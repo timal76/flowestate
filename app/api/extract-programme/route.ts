@@ -17,12 +17,10 @@ Format exact :
 
 RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null.`;
 
-  const bodyData = body.pdfBase64;
-
-  let messageContent: unknown[];
+  let messageContent: Array<Record<string, unknown>>;
 
   try {
-    const parsed = JSON.parse(bodyData) as { type: string; pages: string[] };
+    const parsed = JSON.parse(body.pdfBase64) as { type: string; pages: string[] };
     if (parsed.type === "compressed_pages") {
       messageContent = [
         ...parsed.pages.map((p) => ({
@@ -38,10 +36,13 @@ RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null.`;
       throw new Error("not compressed");
     }
   } catch {
+    const pdfData = body.pdfBase64.includes(",")
+      ? body.pdfBase64.split(",")[1]
+      : body.pdfBase64;
     messageContent = [
       {
         type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: bodyData },
+        source: { type: "base64", media_type: "application/pdf", data: pdfData },
       },
       { type: "text", text: "Extrais toutes les informations. Retourne uniquement le JSON." },
     ];
