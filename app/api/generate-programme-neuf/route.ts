@@ -1129,56 +1129,89 @@ RAPPEL FINAL : ${formatJson}
         return parseGeneratedAnnonces(shortText, `${baseMode}-court`);
       }
 
-      const haikuFormat = buildFormatReminder(haikuPlatforms);
-      const siteFormat = buildFormatReminder(["siteAgence"]);
+      const portailsToGenerate = platforms.filter((p) => ["leboncoin", "seloger"].includes(p));
+      const reseauxToGenerate = platforms.filter((p) =>
+        ["instagram", "linkedin", "facebook"].includes(p),
+      );
 
-      const shortCall = await callAnthropicWithRetry(apiKey, {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2000,
-        system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${haikuFormat}`,
-        messages: [
-          {
-            role: "user",
-            content:
-              buildGenerationUserPrompt(courtMode, haikuPlatforms) +
-              `\n\nFormat: ${haikuFormat}`,
-          },
-          { role: "assistant", content: "{" },
-        ],
-      });
+      const results: GeneratedAnnonces = {};
 
-      if (!shortCall.response.ok) {
-        return anthropicErrorResponse(shortCall.response, shortCall.json);
+      if (portailsToGenerate.length > 0) {
+        const portailFormat = buildFormatReminder(portailsToGenerate);
+        const portailCall = await callAnthropicWithRetry(apiKey, {
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 2000,
+          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${portailFormat}`,
+          messages: [
+            {
+              role: "user",
+              content:
+                buildGenerationUserPrompt(courtMode, portailsToGenerate) +
+                `\n\nFormat: ${portailFormat}`,
+            },
+            { role: "assistant", content: "{" },
+          ],
+        });
+        if (portailCall.response.ok) {
+          const parsed = parseGeneratedAnnonces(
+            extractTextFromAnthropic(portailCall.json),
+            `${baseMode}-portails`,
+          );
+          if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
+        }
       }
 
-      const siteCall = await callAnthropicWithRetry(apiKey, {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2000,
-        system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${siteFormat}`,
-        messages: [
-          {
-            role: "user",
-            content:
-              buildGenerationUserPrompt(siteMode, ["siteAgence"]) +
-              `\n\nGénère UNIQUEMENT siteAgence. Format: ${siteFormat}`,
-          },
-          { role: "assistant", content: "{" },
-        ],
-      });
-
-      if (!siteCall.response.ok) {
-        return anthropicErrorResponse(siteCall.response, siteCall.json);
+      if (reseauxToGenerate.length > 0) {
+        const reseauxFormat = buildFormatReminder(reseauxToGenerate);
+        const reseauxCall = await callAnthropicWithRetry(apiKey, {
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 2000,
+          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${reseauxFormat}`,
+          messages: [
+            {
+              role: "user",
+              content:
+                buildGenerationUserPrompt(courtMode, reseauxToGenerate) +
+                `\n\nFormat: ${reseauxFormat}`,
+            },
+            { role: "assistant", content: "{" },
+          ],
+        });
+        if (reseauxCall.response.ok) {
+          const parsed = parseGeneratedAnnonces(
+            extractTextFromAnthropic(reseauxCall.json),
+            `${baseMode}-reseaux`,
+          );
+          if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
+        }
       }
 
-      const shortText = extractTextFromAnthropic(shortCall.json);
-      const shortParsed = parseGeneratedAnnonces(shortText, `${baseMode}-court`);
-      if (shortParsed instanceof NextResponse) return shortParsed;
+      if (wantsSiteAgence) {
+        const siteFormat = buildFormatReminder(["siteAgence"]);
+        const siteCall = await callAnthropicWithRetry(apiKey, {
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 2000,
+          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${siteFormat}`,
+          messages: [
+            {
+              role: "user",
+              content:
+                buildGenerationUserPrompt(siteMode, ["siteAgence"]) +
+                `\n\nGénère UNIQUEMENT siteAgence. Format: ${siteFormat}`,
+            },
+            { role: "assistant", content: "{" },
+          ],
+        });
+        if (siteCall.response.ok) {
+          const parsed = parseGeneratedAnnonces(
+            extractTextFromAnthropic(siteCall.json),
+            `${baseMode}-site`,
+          );
+          if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
+        }
+      }
 
-      const siteText = extractTextFromAnthropic(siteCall.json);
-      const siteParsed = parseGeneratedAnnonces(siteText, `${baseMode}-site`);
-      if (siteParsed instanceof NextResponse) return siteParsed;
-
-      return { ...shortParsed, ...siteParsed };
+      return results;
     };
 
     const hasAnnexes = annexes.length > 0;
