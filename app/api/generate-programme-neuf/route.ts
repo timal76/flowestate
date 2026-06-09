@@ -1136,27 +1136,51 @@ RAPPEL FINAL : ${formatJson}
 
       const results: GeneratedAnnonces = {};
 
-      const allHaikuPlatforms = [...portailsToGenerate, ...reseauxToGenerate];
-      if (allHaikuPlatforms.length > 0) {
-        const haikuFormat = buildFormatReminder(allHaikuPlatforms);
-        const haikuCall = await callAnthropicWithRetry(apiKey, {
+      if (portailsToGenerate.length > 0) {
+        const portailFormat = buildFormatReminder(portailsToGenerate);
+        const portailCall = await callAnthropicWithRetry(apiKey, {
           model: "claude-haiku-4-5-20251001",
           max_tokens: 1500,
-          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${haikuFormat}`,
+          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${portailFormat}`,
           messages: [
             {
               role: "user",
               content:
-                buildGenerationUserPrompt(courtMode, allHaikuPlatforms) +
-                `\n\nFormat: ${haikuFormat}`,
+                buildGenerationUserPrompt(courtMode, portailsToGenerate) +
+                `\n\nFormat: ${portailFormat}`,
             },
             { role: "assistant", content: "{" },
           ],
         });
-        if (haikuCall.response.ok) {
+        if (portailCall.response.ok) {
           const parsed = parseGeneratedAnnonces(
-            extractTextFromAnthropic(haikuCall.json),
-            `${baseMode}-haiku`,
+            extractTextFromAnthropic(portailCall.json),
+            `${baseMode}-portails`,
+          );
+          if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
+        }
+      }
+
+      if (reseauxToGenerate.length > 0) {
+        const reseauxFormat = buildFormatReminder(reseauxToGenerate);
+        const reseauxCall = await callAnthropicWithRetry(apiKey, {
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1500,
+          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${reseauxFormat}`,
+          messages: [
+            {
+              role: "user",
+              content:
+                buildGenerationUserPrompt(courtMode, reseauxToGenerate) +
+                `\n\nFormat: ${reseauxFormat}`,
+            },
+            { role: "assistant", content: "{" },
+          ],
+        });
+        if (reseauxCall.response.ok) {
+          const parsed = parseGeneratedAnnonces(
+            extractTextFromAnthropic(reseauxCall.json),
+            `${baseMode}-reseaux`,
           );
           if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
         }
