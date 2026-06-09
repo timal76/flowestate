@@ -788,8 +788,8 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
 
       const webSearchCall = await callAnthropicWithRetry(apiKey, {
         model: "claude-sonnet-4-5",
-        max_tokens: isParis ? 400 : 600,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: isParis ? 2 : 1 }],
+        max_tokens: 300,
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }],
         messages: [{ role: "user", content: parisSearchPrompt }],
       });
 
@@ -1082,8 +1082,8 @@ RAPPEL FINAL : ${formatJson}
       if (onlySiteAgence) {
         const siteFormat = buildFormatReminder(["siteAgence"]);
         const siteCall = await callAnthropicWithRetry(apiKey, {
-          model: "claude-sonnet-4-5",
-          max_tokens: 3000,
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 2000,
           system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${siteFormat}`,
           messages: [
             {
@@ -1152,8 +1152,8 @@ RAPPEL FINAL : ${formatJson}
       }
 
       const siteCall = await callAnthropicWithRetry(apiKey, {
-        model: "claude-sonnet-4-5",
-        max_tokens: 3000,
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2000,
         system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${siteFormat}`,
         messages: [
           {
@@ -1187,14 +1187,11 @@ RAPPEL FINAL : ${formatJson}
     let lotAnnonces: GeneratedAnnonces | null = null;
 
     if (hasAnnexes) {
-      const [programmeResult, lotResult] = await Promise.all([
-        generateSplitAnnonces("programme"),
-        generateSplitAnnonces("lot"),
-      ]);
-
+      const programmeResult = await generateSplitAnnonces("programme");
       if (programmeResult instanceof NextResponse) return programmeResult;
       programmeAnnonces = programmeResult;
 
+      const lotResult = await generateSplitAnnonces("lot");
       if (lotResult instanceof NextResponse) return lotResult;
       lotAnnonces = lotResult;
     } else {
