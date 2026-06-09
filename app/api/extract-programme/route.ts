@@ -17,7 +17,35 @@ Format exact :
 
 RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null.`;
 
-  const pdfData = body.pdfBase64.includes(",") ? body.pdfBase64.split(",")[1] : body.pdfBase64;
+  const bodyData = body.pdfBase64;
+
+  let messageContent: unknown[];
+
+  try {
+    const parsed = JSON.parse(bodyData) as { type: string; pages: string[] };
+    if (parsed.type === "compressed_pages") {
+      messageContent = [
+        ...parsed.pages.map((p) => ({
+          type: "image",
+          source: { type: "base64", media_type: "image/jpeg", data: p },
+        })),
+        {
+          type: "text",
+          text: "Analyse ces pages de plaquette et extrais toutes les informations demandées.",
+        },
+      ];
+    } else {
+      throw new Error("not compressed");
+    }
+  } catch {
+    messageContent = [
+      {
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: bodyData },
+      },
+      { type: "text", text: "Extrais toutes les informations. Retourne uniquement le JSON." },
+    ];
+  }
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -33,13 +61,7 @@ RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null.`;
       messages: [
         {
           role: "user",
-          content: [
-            {
-              type: "document",
-              source: { type: "base64", media_type: "application/pdf", data: pdfData },
-            },
-            { type: "text", text: "Extrais toutes les informations. Retourne uniquement le JSON." },
-          ],
+          content: messageContent,
         },
       ],
     }),
