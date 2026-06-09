@@ -973,7 +973,10 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
       const titleRulesBlock = isCourt
         ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
 - Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train. Ex: "2h05 Paris • T3 64m² neuf • Livraison T1 2026"
-- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"`
+- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"
+- Instagram : accroche lifestyle courte, 150-220 mots, hashtags en fin
+- LinkedIn : ton expert chiffré, 300-400 mots, hashtags professionnels
+- Facebook : ton conversationnel, 200-300 mots, hashtags accessibles`
         : isSiteOnly
           ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
 - Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"`
