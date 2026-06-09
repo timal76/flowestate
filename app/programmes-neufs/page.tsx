@@ -611,11 +611,8 @@ export default function ProgrammesNeufsPage() {
       setActiveProgrammeTab("leboncoin");
       setActiveLotTab("leboncoin");
       setGenerationError(null);
-      toast.success(
-        payload.lot
-          ? "Les annonces programme et lot ont été générées !"
-          : "Les 3 annonces ont été générées !",
-      );
+      const selectedCount = Object.values(platforms).filter(Boolean).length;
+      toast.success(`Les ${selectedCount} annonces ont été générées !`);
     } catch {
       setGenerationError("Une erreur est survenue. Veuillez réessayer.");
       toast.error("Une erreur est survenue. Réessayez.");
