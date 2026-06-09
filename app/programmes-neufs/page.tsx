@@ -473,26 +473,32 @@ export default function ProgrammesNeufsPage() {
       let extractedDataFromPdf: Record<string, unknown> | undefined;
       let pdfBase64: string | undefined;
 
-      // Toujours compresser via l'API extract-programme pour les PDFs > 1Mo
       if (pdfFile.size > 1 * 1024 * 1024) {
-        toast.loading("Analyse de la plaquette...", { id: "extract" });
+        toast.loading("Upload de la plaquette...", { id: "upload" });
 
         try {
-          // Convertir en base64 par chunks pour éviter les crashes mémoire
-          const arrayBuffer = await pdfFile.arrayBuffer();
-          const uint8Array = new Uint8Array(arrayBuffer);
-          let binary = "";
-          const chunkSize = 8192;
-          for (let i = 0; i < uint8Array.length; i += chunkSize) {
-            const chunk = uint8Array.subarray(i, i + chunkSize);
-            binary += String.fromCharCode(...chunk);
-          }
-          const base64 = btoa(binary);
+          const { createClient } = await import("@supabase/supabase-js");
+          const supabaseClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          );
+
+          const fileName = `plaquettes/${Date.now()}_${pdfFile.name}`;
+          const { error: uploadError } = await supabaseClient.storage
+            .from("plaquettes")
+            .upload(fileName, pdfFile, { contentType: "application/pdf" });
+
+          if (uploadError) throw uploadError;
+
+          const { data: urlData } = supabaseClient.storage.from("plaquettes").getPublicUrl(fileName);
+
+          toast.dismiss("upload");
+          toast.loading("Analyse de la plaquette...", { id: "extract" });
 
           const extractRes = await fetch("/api/extract-programme", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pdfBase64: base64 }),
+            body: JSON.stringify({ pdfUrl: urlData.publicUrl }),
           });
 
           toast.dismiss("extract");
@@ -503,15 +509,14 @@ export default function ProgrammesNeufsPage() {
             };
             extractedDataFromPdf = extractJson.extractedData;
             toast.success("Plaquette analysée !");
-          } else if (extractRes.status === 413) {
-            toast.dismiss("extract");
-            toast.error("PDF trop volumineux. Compressez-le sur ilovepdf.com puis réessayez.");
-            setIsLoading(false);
-            return;
+
+            void supabaseClient.storage.from("plaquettes").remove([fileName]);
           }
-        } catch {
+        } catch (err) {
+          toast.dismiss("upload");
           toast.dismiss("extract");
-          toast.error("Erreur lors de l'analyse du PDF. Réessayez.");
+          console.error("Upload error:", err);
+          toast.error("Erreur upload. Réessayez.");
           setIsLoading(false);
           return;
         }
