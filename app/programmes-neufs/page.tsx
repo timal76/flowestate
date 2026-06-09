@@ -584,20 +584,15 @@ export default function ProgrammesNeufsPage() {
         return;
       }
 
-      if (
-        !payload.programme?.leboncoin ||
-        !payload.programme?.seloger ||
-        !payload.programme?.siteAgence
-      ) {
-        setGenerationError("Une erreur est survenue. Veuillez réessayer.");
-        toast.error("Une erreur est survenue. Réessayez.");
-        return;
-      }
+      const selectedPlatforms = Object.entries(platforms)
+        .filter(([, v]) => v)
+        .map(([k]) => k);
 
-      if (
-        payload.lot &&
-        (!payload.lot.leboncoin || !payload.lot.seloger || !payload.lot.siteAgence)
-      ) {
+      const hasAtLeastOneProgramme = selectedPlatforms.some(
+        (p) => (payload.programme as Record<string, unknown>)?.[p],
+      );
+
+      if (!hasAtLeastOneProgramme) {
         setGenerationError("Une erreur est survenue. Veuillez réessayer.");
         toast.error("Une erreur est survenue. Réessayez.");
         return;
