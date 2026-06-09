@@ -1438,7 +1438,8 @@ Retourne UNIQUEMENT ce JSON (commence par {, termine par }) :
       scoring,
       extractedData,
     });
-  } catch {
+  } catch (err) {
+    console.error("[programme-neuf] CRASH:", err);
     return NextResponse.json(
       { error: "Erreur interne lors de la generation des annonces programme neuf." },
       { status: 500 },
