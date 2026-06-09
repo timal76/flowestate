@@ -275,6 +275,40 @@ export default function ProgrammesNeufsPage() {
       return;
     }
     setPdfFile(file);
+
+    setAngleSuggestions([]);
+    setIsLoadingSuggestions(true);
+
+    void (async () => {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        let binary = "";
+        for (let i = 0; i < uint8Array.length; i += 8192) {
+          binary += String.fromCharCode(...uint8Array.subarray(i, i + 8192));
+        }
+        const base64 = btoa(binary);
+
+        const extractRes = await fetch("/api/extract-programme", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pdfBase64: base64 }),
+        });
+
+        if (extractRes.ok) {
+          const extractJson = (await extractRes.json()) as {
+            extractedData: Record<string, unknown>;
+          };
+          const suggestions = await generateAngleSuggestions(extractJson.extractedData);
+          setAngleSuggestions(suggestions);
+        }
+      } catch {
+        console.error("Suggestions error");
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    })();
+
     setResult(null);
     setGenerationError(null);
   }, []);
