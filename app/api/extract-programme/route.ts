@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "20mb",
+    },
+  },
+};
+
 export const maxDuration = 60;
 
 export async function POST(request: Request) {

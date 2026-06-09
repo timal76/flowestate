@@ -46,7 +46,7 @@ async function callAnthropicWithRetry(apiKey: string, params: Record<string, unk
     firstMessage.includes("tokens per minute");
 
   if (isRateLimit) {
-    await new Promise((resolve) => setTimeout(resolve, 10000));
+    await new Promise((resolve) => setTimeout(resolve, 8000));
     return callOnce();
   }
 

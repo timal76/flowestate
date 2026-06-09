@@ -473,7 +473,7 @@ export default function ProgrammesNeufsPage() {
       let extractedDataFromPdf: Record<string, unknown> | undefined;
       let pdfBase64: string | undefined;
 
-      if (pdfFile.size > 1 * 1024 * 1024) {
+      if (pdfFile.size > 3 * 1024 * 1024) {
         toast.loading("Upload de la plaquette...", { id: "upload" });
 
         try {
