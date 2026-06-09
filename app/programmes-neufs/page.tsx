@@ -471,16 +471,17 @@ export default function ProgrammesNeufsPage() {
       setIsLoading(true);
 
       let extractedDataFromPdf: Record<string, unknown> | undefined;
+      let pdfBase64: string | undefined;
 
-      if (pdfFile.size > 3 * 1024 * 1024) {
-        toast.loading("Analyse de la plaquette...", { id: "extract" });
+      if (pdfFile.size > 2 * 1024 * 1024) {
+        toast.loading("Compression et analyse de la plaquette...", { id: "extract" });
 
-        const pdfBase64ForExtract = await fileToBase64(pdfFile);
+        const compressed = await compressPdfToBase64(pdfFile);
 
         const extractRes = await fetch("/api/extract-programme", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pdfBase64: pdfBase64ForExtract }),
+          body: JSON.stringify({ pdfBase64: compressed }),
         });
 
         toast.dismiss("extract");
@@ -492,13 +493,9 @@ export default function ProgrammesNeufsPage() {
           extractedDataFromPdf = extractJson.extractedData;
           toast.success("Plaquette analysée !");
         }
+      } else {
+        pdfBase64 = await fileToBase64(pdfFile);
       }
-
-      const pdfBase64 = extractedDataFromPdf
-        ? undefined
-        : pdfFile.size > 2 * 1024 * 1024
-          ? await compressPdfToBase64(pdfFile)
-          : await fileToBase64(pdfFile);
 
       const annexes =
         annexFiles.length > 0
