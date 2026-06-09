@@ -40,6 +40,16 @@ async function callAnthropicWithRetry(apiKey: string, params: Record<string, unk
     firstMessage.includes("overloaded") ||
     first.json?.error?.type === "overloaded_error";
 
+  const isRateLimit =
+    first.response.status === 429 ||
+    firstMessage.includes("rate limit") ||
+    firstMessage.includes("tokens per minute");
+
+  if (isRateLimit) {
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+    return callOnce();
+  }
+
   if (!isOverloaded) return first;
 
   await new Promise((resolve) => setTimeout(resolve, 2000));
