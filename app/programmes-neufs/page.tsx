@@ -119,7 +119,7 @@ const clean = (text: string): string => {
 async function compressPdfToBase64(file: File): Promise<string> {
   try {
     const pdfjsLib = await import("pdfjs-dist");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const pageImages: string[] = [];
@@ -476,7 +476,32 @@ export default function ProgrammesNeufsPage() {
       if (pdfFile.size > 2 * 1024 * 1024) {
         toast.loading("Compression et analyse de la plaquette...", { id: "extract" });
 
-        const compressed = await compressPdfToBase64(pdfFile);
+        let compressed: string;
+        try {
+          compressed = await compressPdfToBase64(pdfFile);
+        } catch {
+          toast.dismiss("extract");
+          toast.error("Impossible de compresser ce PDF. Essayez avec un fichier plus léger.");
+          setIsLoading(false);
+          return;
+        }
+
+        let parsedCompressed: { type: string; pages: string[] } | null = null;
+        try {
+          parsedCompressed = JSON.parse(compressed) as { type: string; pages: string[] };
+        } catch {
+          toast.dismiss("extract");
+          toast.error("Compression échouée. Essayez avec un PDF plus léger (max 8 Mo).");
+          setIsLoading(false);
+          return;
+        }
+
+        if (parsedCompressed.type !== "compressed_pages" || !parsedCompressed.pages?.length) {
+          toast.dismiss("extract");
+          toast.error("Compression échouée. Essayez avec un PDF plus léger.");
+          setIsLoading(false);
+          return;
+        }
 
         const extractRes = await fetch("/api/extract-programme", {
           method: "POST",
@@ -514,6 +539,10 @@ export default function ProgrammesNeufsPage() {
       if (session?.user?.id) {
         headers["x-user-id"] = session.user.id;
       }
+
+      console.log("[debug] extractedDataFromPdf:", !!extractedDataFromPdf);
+      console.log("[debug] pdfBase64:", !!pdfBase64);
+      console.log("[debug] body keys:", extractedDataFromPdf ? "extractedProgramData" : "pdfBase64");
 
       const response = await fetch("/api/generate-programme-neuf", {
         method: "POST",
