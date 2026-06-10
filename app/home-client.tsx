@@ -164,7 +164,7 @@ export default function HomePage() {
               <h3 className="mb-3 text-xl font-semibold">Programmes neufs</h3>
               <p className="flex-1 text-sm leading-relaxed text-[#A0A0A0]">
                 Analysez une plaquette promoteur PDF et générez automatiquement 6 annonces
-                différenciantes pour Leboncoin, SeLoger et votre site.
+                différenciantes pour Leboncoin, SeLoger, votre site et les réseaux sociaux.
               </p>
             </Link>
           </div>

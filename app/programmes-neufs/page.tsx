@@ -864,7 +864,7 @@ export default function ProgrammesNeufsPage() {
           <div className="mb-12 max-w-3xl space-y-4">
             <h1 className="text-4xl font-semibold tracking-[0.02em] md:text-6xl">Programmes neufs</h1>
             <p className="text-lg text-[#A0A0A0] md:text-xl">
-              Générez 3 annonces différenciantes à partir d&apos;une plaquette promoteur
+              Générez jusqu&apos;à 6 annonces différenciantes à partir d&apos;une plaquette promoteur
             </p>
           </div>
 
