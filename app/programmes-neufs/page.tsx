@@ -300,6 +300,7 @@ export default function ProgrammesNeufsPage() {
             extractedData: Record<string, unknown>;
           };
           const suggestions = await generateAngleSuggestions(extractJson.extractedData);
+          console.log("[debug suggestions]", suggestions);
           setAngleSuggestions(suggestions);
         }
       } catch {

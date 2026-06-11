@@ -57,6 +57,7 @@ Adapte les 3 suggestions AU programme spécifique. Si c'est de la nue-propriét�
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
     const parsed = JSON.parse(text.slice(start, end + 1)) as { suggestions: unknown[] };
+    console.log("[suggest-angles] response text:", text);
     return NextResponse.json({ suggestions: parsed.suggestions });
   } catch {
     return NextResponse.json({ suggestions: [] });
