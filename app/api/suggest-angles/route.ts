@@ -56,10 +56,14 @@ Adapte les 3 suggestions AU programme spécifique. Si c'est de la nue-propriét�
   try {
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
+    console.log("[suggest-angles] full text:", text);
+    console.log("[suggest-angles] start:", start, "end:", end);
     const parsed = JSON.parse(text.slice(start, end + 1)) as { suggestions: unknown[] };
-    console.log("[suggest-angles] response text:", text);
+    console.log("[suggest-angles] parsed suggestions count:", parsed.suggestions?.length);
     return NextResponse.json({ suggestions: parsed.suggestions });
-  } catch {
+  } catch (err) {
+    console.log("[suggest-angles] parse error:", err);
+    console.log("[suggest-angles] raw text was:", text);
     return NextResponse.json({ suggestions: [] });
   }
 }
