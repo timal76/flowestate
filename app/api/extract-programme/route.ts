@@ -77,6 +77,8 @@ RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null.`;
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
     const parsed = JSON.parse(text.slice(start, end + 1));
+    console.log("[extract-programme] parsed keys:", Object.keys(parsed));
+    console.log("[extract-programme] nom:", parsed.nom, "ville:", parsed.ville);
     return NextResponse.json({ extractedData: parsed });
   } catch {
     return NextResponse.json({ extractedData: {} });
