@@ -54,11 +54,12 @@ Adapte les 3 suggestions AU programme spécifique. Si c'est de la nue-propriét�
       .trim() || "";
 
   try {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
+    const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
     console.log("[suggest-angles] full text:", text);
     console.log("[suggest-angles] start:", start, "end:", end);
-    const parsed = JSON.parse(text.slice(start, end + 1)) as { suggestions: unknown[] };
+    const parsed = JSON.parse(cleaned.slice(start, end + 1)) as { suggestions: unknown[] };
     console.log("[suggest-angles] parsed suggestions count:", parsed.suggestions?.length);
     return NextResponse.json({ suggestions: parsed.suggestions });
   } catch (err) {
