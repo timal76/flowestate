@@ -311,7 +311,7 @@ export default function ProgrammesNeufsPage() {
 
     setResult(null);
     setGenerationError(null);
-  }, [generateAngleSuggestions]);
+  }, []);
 
   function handlePdfInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     acceptPdf(event.target.files?.[0]);
