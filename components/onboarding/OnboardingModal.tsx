@@ -183,8 +183,8 @@ export default function OnboardingModal({
               const done = i < step;
               const active = i === step;
               return (
-                <div key={label} className="flex min-w-0 flex-1 items-start">
-                  <div className="flex flex-col items-center">
+                <div key={label} className="flex min-w-0 flex-1 items-start overflow-hidden">
+                  <div className="flex max-w-full flex-col items-center overflow-hidden">
                     <span
                       className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-medium ${
                         done || active
@@ -212,7 +212,7 @@ export default function OnboardingModal({
                       )}
                     </span>
                     <span
-                      className={`mt-2 text-center text-[10px] tracking-[0.03em] ${
+                      className={`mt-2 w-full max-w-full break-words text-center text-[9px] leading-tight tracking-[0.03em] whitespace-normal ${
                         active ? "text-[#C9A96E]" : "text-[#C9A96E]/35"
                       }`}
                     >
