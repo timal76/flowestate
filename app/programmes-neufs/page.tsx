@@ -281,30 +281,40 @@ export default function ProgrammesNeufsPage() {
 
     void (async () => {
       try {
-        const arrayBuffer = await file.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        let binary = "";
-        for (let i = 0; i < uint8Array.length; i += 8192) {
-          binary += String.fromCharCode(...uint8Array.subarray(i, i + 8192));
-        }
-        const base64 = btoa(binary);
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabaseClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        );
+
+        const fileName = `plaquettes/${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabaseClient.storage
+          .from("plaquettes")
+          .upload(fileName, file, { contentType: "application/pdf" });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabaseClient.storage.from("plaquettes").getPublicUrl(fileName);
 
         const extractRes = await fetch("/api/extract-programme", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pdfBase64: base64 }),
+          body: JSON.stringify({ pdfUrl: urlData.publicUrl }),
         });
 
         if (extractRes.ok) {
           const extractJson = (await extractRes.json()) as {
             extractedData: Record<string, unknown>;
           };
+          console.log("[debug extractedData]", extractJson.extractedData);
           const suggestions = await generateAngleSuggestions(extractJson.extractedData);
           console.log("[debug suggestions]", suggestions);
           setAngleSuggestions(suggestions);
         }
-      } catch {
-        console.error("Suggestions error");
+
+        void supabaseClient.storage.from("plaquettes").remove([fileName]);
+      } catch (err) {
+        console.error("Suggestions error", err);
       } finally {
         setIsLoadingSuggestions(false);
       }
