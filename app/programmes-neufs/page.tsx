@@ -477,6 +477,9 @@ export default function ProgrammesNeufsPage() {
           additionalInfo: form.additionalInfo || undefined,
           competitorAds: form.competitorAds || undefined,
           address: form.address || undefined,
+          platforms: Object.entries(platforms)
+            .filter(([, v]) => v)
+            .map(([k]) => k),
         }),
       });
 
