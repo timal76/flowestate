@@ -463,7 +463,7 @@ INTERDIT SANS SOURCE DANS LES DOCUMENTS FOURNIS :
 - Rendements locatifs chiffrés (ex: "4% de rendement", "surloyer de 8 à 12%") — TOUJOURS INTERDIT
 - Prix au m² chiffrés du marché local — TOUJOURS INTERDIT
 - Taux de vacance locative chiffrés — TOUJOURS INTERDIT
-- Affirmations de tendance marché ("les prix progressent régulièrement", "demande supérieure à l'offre", "les biens ne se déprécient pas") — TOUJOURS INTERDIT, remplacer par "secteur établi" ou "quartier reconnu" sans chiffre
+- Affirmations de tendance marché ET garanties patrimoniales ("les prix progressent régulièrement", "demande supérieure à l'offre", "les biens ne se déprécient pas", "sans risque", "valorise naturellement", "valorisation assurée", "valorisation préservée", "récompense la patience", "se sont valorisés", "aucun risque de dépréciation", "stabilité patrimoniale solide", "incontournable de la capitale") — TOUJOURS INTERDIT sans exception, remplacer UNIQUEMENT par "secteur établi", "quartier reconnu" ou "localisation recherchée" — jamais de promesse de valorisation
 - Événements ou visites non mentionnés par l'agent ("visite gratuite ce samedi") — TOUJOURS INTERDIT
 - Vues depuis le logement ("vue sur la rue", "vue dégagée") — INTERDIT sauf si confirmé dans les plans
 - Toute caractéristique non présente dans la plaquette, les plans ou les données fournies
