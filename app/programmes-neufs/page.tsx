@@ -468,7 +468,8 @@ export default function ProgrammesNeufsPage() {
         headers,
         body: JSON.stringify({
           extractedProgramData,
-          annexes,
+          lotAnnexes: annexes,
+          generateLotOnly: true,
           lotReference: lotReference || undefined,
           angle: form.angle,
           prospectProfile: form.prospectProfile || undefined,

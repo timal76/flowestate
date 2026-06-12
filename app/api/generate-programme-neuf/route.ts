@@ -571,6 +571,8 @@ type GenerateProgrammeNeufPayload = {
   lotReference?: string;
   address?: string;
   annexes?: Array<{ data: string; mediaType: string; name: string }>;
+  lotAnnexes?: Array<{ data: string; mediaType: string; name: string }>;
+  generateLotOnly?: boolean;
   angle?: string;
   prospectProfile?: string;
   competitorAds?: string;
@@ -1241,13 +1243,66 @@ RAPPEL FINAL : ${formatJson}
     };
 
     const hasAnnexes = annexes.length > 0;
+    const lotAnnexes = body.lotAnnexes ?? [];
+    const generateLotOnly = body.generateLotOnly ?? false;
 
     let programmeAnnonces: GeneratedAnnonces;
     let lotAnnonces: GeneratedAnnonces | null = null;
 
-    const programmeResult = await generateSplitAnnonces("programme");
-    if (programmeResult instanceof NextResponse) return programmeResult;
-    programmeAnnonces = programmeResult;
+    if (generateLotOnly && lotAnnexes.length > 0) {
+      const lotAnnexeContents = lotAnnexes.map((file) => {
+        if (file.mediaType === "application/pdf") {
+          return {
+            type: "document",
+            source: { type: "base64", media_type: "application/pdf", data: cleanPdfBase64(file.data) },
+          };
+        }
+        return {
+          type: "image",
+          source: { type: "base64", media_type: file.mediaType, data: cleanPdfBase64(file.data) },
+        };
+      });
+
+      const lotAnalysisCall = await callAnthropicWithRetry(apiKey, {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 800,
+        system:
+          "Tu es un expert en immobilier neuf. Analyse ce plan de lot et extrais : surface totale, surface de chaque pièce, étage, orientation si visible, présence balcon/terrasse et sa surface, type de logement (T1/T2/T3/T4), numéro de lot si visible, particularités. Retourne un texte structuré factuel.",
+        messages: [
+          {
+            role: "user",
+            content: [
+              ...lotAnnexeContents,
+              {
+                type: "text",
+                text: "Analyse ce plan de lot et extrais toutes les informations chiffrées et factuelles.",
+              },
+            ],
+          },
+        ],
+      });
+
+      let lotDescription = "";
+      if (lotAnalysisCall.response.ok) {
+        lotDescription = extractTextFromAnthropic(lotAnalysisCall.json);
+      }
+
+      const lotEnrichedData = {
+        ...extractedData,
+        lot_description: lotDescription,
+        lot_reference: body.lotReference || "",
+      };
+      extractedData = lotEnrichedData;
+
+      programmeAnnonces = {} as GeneratedAnnonces;
+      const lotResult = await generateSplitAnnonces("lot");
+      if (lotResult instanceof NextResponse) return lotResult;
+      lotAnnonces = lotResult;
+    } else {
+      const programmeResult = await generateSplitAnnonces("programme");
+      if (programmeResult instanceof NextResponse) return programmeResult;
+      programmeAnnonces = programmeResult;
+    }
 
     const residenceLabel =
       nomResidence ||
