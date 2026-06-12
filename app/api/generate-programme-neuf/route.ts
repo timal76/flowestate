@@ -525,10 +525,18 @@ CHECKLIST ANTI-VIOLATION — À APPLIQUER SUR CHAQUE ANNONCE AVANT DE RETOURNER 
 □ Zéro puce ou tiret en début de ligne
 □ Zéro titre en majuscules
 □ Zéro nom de promoteur
-□ Zéro nom de résidence commerciale  
+□ Zéro nom de résidence commerciale — même partiellement, même en abrégé
 □ Zéro "(source : X)"
 □ Zéro année passée (2024, 2025)
-□ Texte en prose uniquement
+□ Texte en prose continue uniquement
+□ Zéro chiffre de rendement inventé (surloyer %, rendement %, économies d'énergie %) sans source officielle fournie dans les données
+□ Zéro affirmation de marché sans source (ex: "les biens ne se déprécient pas", "demande supérieure à l'offre") — utiliser des formulations prudentes ("secteur reconnu", "quartier établi")
+□ Leboncoin : corps 1200 caractères MAX — couper si dépassement
+□ SeLoger : corps 2500 caractères MAX — couper si dépassement
+□ Site agence : corps 3500 caractères MAX — couper si dépassement
+□ Instagram : corps 150-220 mots, 8-10 hashtags
+□ LinkedIn : corps 300-400 mots, 3-5 hashtags
+□ Facebook : corps 200-300 mots, 5-7 hashtags
 
 FORMAT DE SORTIE OBLIGATOIRE : Tu dois retourner UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans backticks, sans markdown, sans commentaire. Commence directement par { et termine par }. Structure exacte :
 {
