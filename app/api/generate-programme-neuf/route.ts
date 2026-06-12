@@ -453,11 +453,29 @@ COHÉRENCE ANGLE/PROFIL :
 - ANGLE FAMILLE/PRIMO : INTERDIRE toute mention de rendement, Pinel investisseur
 - Ne jamais mélanger les angles dans une même annonce
 
-ZÉRO INVENTION — RÈGLE FONDAMENTALE :
-Chaque information technique dans l'annonce doit être traçable vers un document source (plaquette, plan, annexe, données officielles sourcées). Si une information n'est pas dans les documents fournis ou dans les données Le Havre avec source explicite : elle n'existe pas pour cette annonce.
-Cette règle s'applique à TOUT programme, pas seulement au lot B204.
-En cas de doute sur une information : NE PAS L'ÉCRIRE.
-Mieux vaut une annonce avec moins d'informations qu'une annonce avec une seule information inventée.
+ZÉRO INVENTION — RÈGLE FONDAMENTALE ABSOLUE :
+
+Chaque information dans l'annonce doit être traçable vers un document source fourni (plaquette, plan, annexe) ou une donnée web avec source officielle explicite dans les données fournies.
+
+INTERDIT SANS SOURCE DANS LES DOCUMENTS FOURNIS :
+- Temps de trajet chiffrés (ex: "15 minutes pour Châtelet") — sauf si présent dans les données web fournies avec source
+- Délais de vente du marché (ex: "38 jours", "délais courts") — TOUJOURS INTERDIT même avec source
+- Rendements locatifs chiffrés (ex: "4% de rendement", "surloyer de 8 à 12%") — TOUJOURS INTERDIT
+- Prix au m² chiffrés du marché local — TOUJOURS INTERDIT
+- Taux de vacance locative chiffrés — TOUJOURS INTERDIT
+- Affirmations de tendance marché ("les prix progressent régulièrement", "demande supérieure à l'offre", "les biens ne se déprécient pas") — TOUJOURS INTERDIT, remplacer par "secteur établi" ou "quartier reconnu" sans chiffre
+- Événements ou visites non mentionnés par l'agent ("visite gratuite ce samedi") — TOUJOURS INTERDIT
+- Vues depuis le logement ("vue sur la rue", "vue dégagée") — INTERDIT sauf si confirmé dans les plans
+- Toute caractéristique non présente dans la plaquette, les plans ou les données fournies
+
+FORMULATIONS DE REMPLACEMENT OBLIGATOIRES :
+- À la place de "délais de vente courts" → "quartier établi et recherché"
+- À la place de "rendement X%" → "potentiel locatif à confirmer avec votre conseiller"
+- À la place de "prix au m² X€" → "secteur premium parisien" ou "quartier reconnu"
+- À la place de "demande supérieure à l'offre" → "quartier structurellement demandé"
+- À la place de temps de trajet inventés → "accès direct ligne 2 et 3 station Villiers"
+
+En cas de doute sur une information : NE PAS L'ÉCRIRE. Une annonce courte et exacte vaut mieux qu'une annonce longue avec une seule invention.
 
 MENTIONS LÉGALES OBLIGATOIRES :
 - TVA réduite : toujours "selon conditions de ressources, en résidence principale pendant au minimum 10 ans"
