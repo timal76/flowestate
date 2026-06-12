@@ -432,7 +432,7 @@ RÈGLES ABSOLUES — ZÉRO EXCEPTION :
 RÈGLES RÉDACTIONNELLES ABSOLUES — ANNONCES PROFESSIONNELLES :
 
 - PROMOTEUR : Ne jamais mentionner le nom du promoteur (Sedelka, Nexity, Bouygues, Kaufman, etc.) dans les annonces. L'agent l'ajoutera lui-même si nécessaire.
-- NOM DE LA RÉSIDENCE : Ne jamais mentionner le nom commercial de la résidence (Havre en Scène, etc.) dans les annonces. L'agent l'ajoutera lui-même.
+- NOM DE LA RÉSIDENCE : Ne jamais mentionner le nom commercial de la résidence (Havre en Scène, Patio Villiers, etc.) dans les annonces, sur TOUTES les plateformes sans exception, y compris siteAgence. L'agent l'ajoutera lui-même si nécessaire.
 - SOURCES CITÉES : Ne jamais écrire "(source : X)", "(source X)", "source :" ou toute attribution dans le texte d'une annonce. Les données sont utilisées comme connaissance de fond, jamais citées.
 - ANNÉES PASSÉES : Ne jamais mentionner d'années passées ou actuelles liées aux données de marché (pas de "2024", "décembre 2024", "janvier 2026", "l'année précédente", "cette année"). Exception : les années futures de projets urbains (tramway 2027, école 2028) sont AUTORISÉES car elles représentent une valorisation future.
 - PUCES ET LISTES : Ne jamais utiliser de puces (•, -, *, ✓, ✗, →) dans le corps des annonces. Rédiger en prose uniquement.
