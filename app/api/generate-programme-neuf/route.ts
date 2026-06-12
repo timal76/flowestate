@@ -647,7 +647,7 @@ export async function POST(request: Request) {
     if (body.extractedProgramData && Object.keys(body.extractedProgramData).length > 0) {
       extractedData = body.extractedProgramData;
       skipPdfExtraction = true;
-    } else if (!body.pdfBase64?.trim?.() && !body.extractedProgramData) {
+    } else if (!body.pdfBase64?.trim?.() && !body.extractedProgramData && !body.generateLotOnly) {
       return NextResponse.json({ error: "Le PDF est requis." }, { status: 400 });
     }
 
