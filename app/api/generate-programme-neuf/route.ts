@@ -467,6 +467,8 @@ INTERDIT SANS SOURCE DANS LES DOCUMENTS FOURNIS :
 - Événements ou visites non mentionnés par l'agent ("visite gratuite ce samedi") — TOUJOURS INTERDIT
 - Vues depuis le logement ("vue sur la rue", "vue dégagée") — INTERDIT sauf si confirmé dans les plans
 - Toute caractéristique non présente dans la plaquette, les plans ou les données fournies
+- Surfaces par type de bien (ex: "studios 22-35 m²", "2 pièces 45-70 m²") : INTERDIT sauf si les surfaces exactes sont dans la plaquette — utiliser uniquement surface_min et surface_max globales du programme ou ne pas mentionner de surface
+- Fourchettes de surfaces inventées : INTERDIT — si surface_min et surface_max sont null, ne jamais écrire de surface chiffrée
 
 FORMULATIONS DE REMPLACEMENT OBLIGATOIRES :
 - À la place de "délais de vente courts" → "quartier établi et recherché"
