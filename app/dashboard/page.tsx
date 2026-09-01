@@ -13,6 +13,7 @@ import UpcomingRelancesBanner from "@/components/relances/UpcomingRelancesBanner
 import DashboardActivityChart from "@/components/dashboard/DashboardActivityChart";
 import SiteHeader from "@/components/site-header";
 import { absoluteUrl } from "@/lib/constants";
+import { FREE_MONTHLY_LIMIT } from "@/lib/check-generation-limit";
 import { supabase } from "@/lib/supabase";
 
 const CANONICAL_PATH = "/dashboard";
@@ -20,12 +21,12 @@ const CANONICAL_PATH = "/dashboard";
 export const metadata: Metadata = {
   title: "Dashboard",
   description:
-    "Tableau de bord FlowEstate : activité récente, stats de génération, essai et accès rapide à vos outils.",
+    "Tableau de bord FlowEstate : activité récente, stats de génération et accès rapide à vos outils.",
   alternates: { canonical: CANONICAL_PATH },
   openGraph: {
     title: "Dashboard | FlowEstate",
     description:
-      "Tableau de bord FlowEstate : activité récente, stats de génération, essai et accès rapide à vos outils.",
+      "Tableau de bord FlowEstate : activité récente, stats de génération et accès rapide à vos outils.",
     url: absoluteUrl(CANONICAL_PATH),
   },
 };
@@ -131,19 +132,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     .eq("id", session.user.id)
     .single();
 
-  const trialDaysLeft = userData?.trial_ends_at
-    ? Math.ceil(
-        (new Date(userData.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-      )
-    : null;
-
-  const showTrialBanner =
-    (userData?.subscription_status === "trialing" ||
-      userData?.subscription_status === "trial") &&
-    trialDaysLeft !== null &&
-    trialDaysLeft > 0;
-
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const isLegacyTrialUser =
+    userData?.subscription_status === "trialing" || userData?.subscription_status === "trial";
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const fromIso = startOfCurrentMonthIso();
   const userId = session.user.id;
@@ -207,11 +198,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const tempsEconomiseLabel = formatSavedTimeMinutes(minutesEconomisees);
 
   const totalGenCeMois = annoncesCeMois + emailsCeMois + comptesRendusCeMois;
-  const generationLimit = userData?.plan === "starter" ? 30 : 100;
+  const isFreePlan =
+    !isLegacyTrialUser &&
+    (userData?.plan === "free" ||
+      (!userData?.plan &&
+        (!userData?.subscription_status ||
+          userData.subscription_status === "free" ||
+          userData.subscription_status === "inactive")));
+  const generationLimit =
+    userData?.plan === "starter" || userData?.plan === "essentiel" ? 100 : 30;
   const generationsRestantes = Math.max(0, generationLimit - totalGenCeMois);
   const showGenerationsRestantesCard =
     (userData?.plan === "starter" || userData?.plan === "essentiel") &&
     userData?.subscription_status === "active";
+  const showFreeQuotaCard = isFreePlan;
+  const freeGenerationsUsed = Math.min(totalGenCeMois, FREE_MONTHLY_LIMIT);
+  const freeGenerationsColorClass =
+    freeGenerationsUsed >= FREE_MONTHLY_LIMIT
+      ? "text-red-400"
+      : freeGenerationsUsed >= FREE_MONTHLY_LIMIT - 1
+        ? "text-orange-400"
+        : "text-[#B8965A]";
   const showOnboardingModal = userData?.onboarding_completed !== true;
   const generationsRestantesColorClass =
     generationsRestantes <= 5
@@ -260,25 +267,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </h1>
             <ExportStatsButton />
           </div>
-          {showTrialBanner && userData ? (
-            <div className="rounded-xl border border-[#C9A96E]/40 bg-[#C9A96E]/15 px-6 py-4 text-[#C9A96E] font-medium">
-              <span aria-hidden>⏱</span> Essai gratuit — {trialDaysLeft} jour
-              {trialDaysLeft > 1 ? "s" : ""} restant{trialDaysLeft > 1 ? "s" : ""}. Votre plan{" "}
-              {userData.plan === "expert"
-                ? "Expert"
-                : userData.plan === "pro"
-                  ? "Pro"
-                  : "Essentiel"}{" "}
-              sera activé automatiquement.
-            </div>
-          ) : null}
           <p className="text-base capitalize text-[#A0A0A0] md:text-lg">{dateLabel}</p>
         </header>
 
         {/* Stats */}
         <section aria-label="Statistiques rapides">
           <div
-            className={`grid gap-4 sm:grid-cols-2 ${showGenerationsRestantesCard ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
+            className={`grid gap-4 sm:grid-cols-2 ${showGenerationsRestantesCard || showFreeQuotaCard ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
           >
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6">
               <div className="mb-4 flex items-start justify-between gap-3">
@@ -387,6 +382,38 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </p>
               <p className="mt-1 text-xs text-[#A0A0A0]/90">ce mois</p>
             </article>
+
+            {showFreeQuotaCard ? (
+              <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <span className="text-sm font-medium text-[#A0A0A0]">
+                    Générations gratuites
+                  </span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#C9A96E]/30 bg-[#C9A96E]/10 text-[#C9A96E]">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width={18}
+                      height={18}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                  </span>
+                </div>
+                <p
+                  className={`text-3xl font-semibold tracking-tight md:text-4xl ${freeGenerationsColorClass}`}
+                >
+                  {freeGenerationsUsed}/{FREE_MONTHLY_LIMIT}
+                </p>
+                <p className="mt-1 text-xs text-[#A0A0A0]/90">utilisées ce mois-ci</p>
+              </article>
+            ) : null}
 
             {showGenerationsRestantesCard ? (
               <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6">

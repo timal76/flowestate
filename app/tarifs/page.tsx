@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import SiteHeader from "@/components/site-header";
@@ -72,7 +73,39 @@ export default function TarifsPage() {
             </span>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 md:items-stretch">
+            {/* Découverte */}
+            <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+              <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">
+                Découverte
+              </p>
+              <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
+                0€
+                <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+              </p>
+
+              <ul className="mt-6 divide-y divide-white/10 text-sm">
+                <PlanFeature included>1 utilisateur</PlanFeature>
+                <PlanFeature included>Générateur d&apos;annonces</PlanFeature>
+                <PlanFeature included>Emails de relance</PlanFeature>
+                <PlanFeature included>Comptes rendus de visite</PlanFeature>
+                <PlanFeature included>5 générations/mois</PlanFeature>
+                <PlanFeature included>Sans carte bancaire</PlanFeature>
+                <PlanFeature included={false}>CRM Prospects</PlanFeature>
+                <PlanFeature included={false}>Programmes neufs</PlanFeature>
+              </ul>
+
+              <Link
+                href="/register"
+                className="mt-auto inline-flex w-full items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+              >
+                Commencer gratuitement
+              </Link>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
+                5 générations gratuites par mois, sans carte bancaire
+              </p>
+            </article>
+
             {/* Essentiel */}
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">
@@ -100,10 +133,10 @@ export default function TarifsPage() {
                 billing={annuel ? "annual" : "monthly"}
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-70"
               >
-                Essayer gratuitement
+                Passer à Essentiel
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                {annuel ? "804€/an — 14 jours gratuits" : "14 jours gratuits, puis 74,99€/mois"}
+                {annuel ? "804€/an — facturation immédiate" : "74,99€/mois — facturation immédiate"}
               </p>
             </article>
 
@@ -138,12 +171,10 @@ export default function TarifsPage() {
                 billing={annuel ? "annual" : "monthly"}
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-[#B8943F] bg-[#B8943F] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90 disabled:cursor-wait disabled:opacity-70"
               >
-                Essayer Pro gratuitement
+                Passer à Pro
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                {annuel
-                  ? "1 608€/an — 14 jours gratuits"
-                  : "14 jours gratuits, puis 149,99€/mois"}
+                {annuel ? "1 608€/an — facturation immédiate" : "149,99€/mois — facturation immédiate"}
               </p>
             </article>
 
@@ -179,12 +210,10 @@ export default function TarifsPage() {
                 billing={annuel ? "annual" : "monthly"}
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-white/30 bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:border-white/50 hover:bg-white/5 disabled:cursor-wait disabled:opacity-70"
               >
-                Essayer Expert gratuitement
+                Passer à Expert
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                {annuel
-                  ? "3 228€/an — 14 jours gratuits"
-                  : "14 jours gratuits, puis 299,99€/mois"}
+                {annuel ? "3 228€/an — facturation immédiate" : "299,99€/mois — facturation immédiate"}
               </p>
             </article>
           </div>

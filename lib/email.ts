@@ -14,7 +14,7 @@ export async function sendWelcomeEmail(to: string, firstName: string) {
         
         <h2 style="color: #f5f5f0; font-size: 22px;">Bienvenue, ${firstName} ! 👋</h2>
         <p style="color: #a0a0a0; line-height: 1.6;">
-          Votre compte FlowEstate est créé. Vous bénéficiez de <strong style="color: #C9A96E;">14 jours d'essai gratuit</strong> pour découvrir tous nos outils.
+          Votre compte FlowEstate est créé. Vous bénéficiez de <strong style="color: #C9A96E;">5 générations gratuites par mois</strong>, sans carte bancaire, pour découvrir nos outils.
         </p>
         
         <div style="margin: 32px 0;">
@@ -43,15 +43,15 @@ export async function sendTrialEndingEmail(to: string, firstName: string, daysLe
   await resend.emails.send({
     from: "FlowEstate <contact@flowestate.fr>",
     to,
-    subject: `Votre essai gratuit se termine dans ${daysLeft} jours`,
+    subject: `Votre abonnement FlowEstate démarre dans ${daysLeft} jours`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0a; color: #f5f5f0; padding: 40px; border-radius: 12px;">
         <h1 style="color: #C9A96E; font-size: 28px; margin-bottom: 8px;">FlowEstate</h1>
         <p style="color: #a0a0a0; font-size: 14px; margin-bottom: 32px;">Moins de tâches. Plus de ventes.</p>
         
-        <h2 style="color: #f5f5f0; font-size: 22px;">Plus que ${daysLeft} jours d'essai, ${firstName} !</h2>
+        <h2 style="color: #f5f5f0; font-size: 22px;">Plus que ${daysLeft} jours, ${firstName} !</h2>
         <p style="color: #a0a0a0; line-height: 1.6;">
-          Votre période d'essai gratuit se termine bientôt. Pour continuer à utiliser FlowEstate sans interruption, votre abonnement sera activé automatiquement.
+          Votre abonnement FlowEstate démarre bientôt. Pour continuer à utiliser FlowEstate sans interruption, la facturation sera activée automatiquement.
         </p>
         
         <div style="background: #1a1a1a; border: 1px solid #C9A96E33; border-radius: 12px; padding: 24px; margin: 24px 0;">

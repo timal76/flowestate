@@ -45,18 +45,12 @@ function initialsFromUser(user: ProfileUser | null) {
 }
 
 function planBadgeLabel(user: ProfileUser) {
-  const s = user.subscription_status ?? "";
-  if (s === "trial" || s === "trialing") return "Trial";
   const p = user.plan ?? "free";
   if (p === "pro") return "Pro";
-  if (p === "starter") return "Starter";
-  if (p === "free") return "Gratuit";
+  if (p === "expert") return "Expert";
+  if (p === "essentiel" || p === "starter") return "Essentiel";
+  if (p === "free") return "Découverte";
   return p.charAt(0).toUpperCase() + p.slice(1);
-}
-
-function trialDaysLeft(trialEndsAt: string | null) {
-  if (!trialEndsAt) return null;
-  return Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
 function storagePublicUrl(path: string) {
@@ -316,7 +310,6 @@ export default function ProfilPage() {
   const avatarSrc = resolveImageUrl(user.avatar_url);
   const logoSrc = resolveImageUrl(user.logo_url);
   const signatureSrc = resolveImageUrl(user.signature_url);
-  const trialLeft = trialDaysLeft(user.trial_ends_at);
   const isTrialish = user.subscription_status === "trial" || user.subscription_status === "trialing";
   const badge = planBadgeLabel(user);
   const smtpConfigured = smtp?.smtp_configured === true;
@@ -480,11 +473,6 @@ export default function ProfilPage() {
             <span className="inline-flex rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/12 px-4 py-1.5 text-sm font-semibold text-[#C9A96E]">
               Plan : {badge}
             </span>
-            {isTrialish && trialLeft !== null && trialLeft > 0 ? (
-              <span className="text-sm text-[#A0A0A0]">
-                Essai : <strong className="text-[#F5F5F0]">{trialLeft}</strong> jour{trialLeft > 1 ? "s" : ""} restant{trialLeft > 1 ? "s" : ""}
-              </span>
-            ) : null}
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             {user.stripe_customer_id ? (

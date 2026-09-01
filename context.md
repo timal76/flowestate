@@ -4,7 +4,7 @@
 SaaS d'automatisation pour agents immobiliers.
 
 ## ✅ Fait
-- Landing page complète avec animations + essai gratuit 14 jours
+- Landing page complète avec animations + plan Découverte (5 générations/mois, sans CB)
 - Navigation complète : Dashboard, Historique, Annonces, Programmes neufs, Emails, 
   Comptes-rendus, Accueil, Prénom cliquable → Profil, Badge plan, Déconnexion
 - Menu hamburger responsive sur mobile (toutes les pages)
@@ -17,12 +17,12 @@ SaaS d'automatisation pour agents immobiliers.
   pré-remplissage logo/signature/infos depuis profil
 - 5 générations gratuites sans inscription (localStorage)
 - Dashboard pro : stats dynamiques, activité récente dynamique, 
-  bannière trial avec jours restants, compteur générations restantes
+  bannière plan gratuit, compteur générations restantes
 - Historique des générations : filtres par type, recherche 
   par prospect, pagination
 - Page Profil : photo, infos perso, logo agence, signature, 
   abonnement, stats globales, portail Stripe, déconnexion
-- Notifications email (Resend) : bienvenue + trial ending
+- Notifications email (Resend) : bienvenue + rappel abonnement (legacy)
 - Spinner génération + Toast notifications (sonner)
 - Page contact/support avec FAQ
 - CGU + Mentions légales
@@ -36,7 +36,8 @@ SaaS d'automatisation pour agents immobiliers.
 - Authentification réelle : NextAuth.js + Supabase + bcrypt
 - Protection des routes : middleware Next.js
 - Stripe : checkout, plans Essentiel / Pro / Expert, mensuel + annuel,
-  essai 14 jours, webhooks local + production, portail client
+  facturation immédiate, webhooks local + production, portail client
+- Plan Découverte gratuit : 5 générations/mois sans Stripe (`plan: free`)
 - Limites générations : Essentiel 100/mois, Pro et Expert illimités (`lib/check-generation-limit.ts`)
 - Domaine flowestate.fr connecté à Vercel ✅
 - Resend domaine flowestate.fr vérifié ✅

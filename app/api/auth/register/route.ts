@@ -22,6 +22,8 @@ export async function POST(request: Request) {
       first_name: firstName,
       last_name: lastName,
       agency_name: agencyName,
+      plan: "free",
+      subscription_status: "free",
     });
 
     if (error) {

@@ -109,6 +109,8 @@ export default function SiteHeader() {
     !showOffers &&
     (isTrialish ||
       plan === "pro" ||
+      plan === "expert" ||
+      plan === "essentiel" ||
       (plan === "starter" && subStatus === "active"));
 
   async function handleSignOut() {
@@ -242,13 +244,13 @@ export default function SiteHeader() {
 
   function renderPlanBadge() {
     if (!showPlanBadge || !billing) return null;
-    if (isTrialish) {
+    if (plan === "expert") {
       return (
         <span
-          className={`${planBadgeBase} border-[#C9A96E]/55 bg-[#C9A96E]/12 text-[#C9A96E]`}
-          title="Essai"
+          className={`${planBadgeBase} border-white/30 bg-white/10 text-[#F5F5F0]`}
+          title="Plan Expert"
         >
-          Trial
+          Expert
         </span>
       );
     }
@@ -262,13 +264,13 @@ export default function SiteHeader() {
         </span>
       );
     }
-    if (plan === "starter" && subStatus === "active") {
+    if (plan === "essentiel" || plan === "starter" || isTrialish) {
       return (
         <span
-          className={`${planBadgeBase} border-slate-500/45 bg-slate-500/15 text-slate-300`}
-          title="Plan Starter"
+          className={`${planBadgeBase} border-[#C9A96E]/55 bg-[#C9A96E]/12 text-[#C9A96E]`}
+          title="Plan Essentiel"
         >
-          Starter
+          Essentiel
         </span>
       );
     }

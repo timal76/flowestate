@@ -7,12 +7,12 @@ const CANONICAL_PATH = "/register";
 export const metadata: Metadata = {
   title: "Créer un compte",
   description:
-    "Inscrivez-vous à FlowEstate : essai gratuit 14 jours, génération d’annonces, emails et comptes-rendus pour agents immobiliers.",
+    "Inscrivez-vous à FlowEstate : 5 générations gratuites par mois, sans carte bancaire. Génération d’annonces, emails et comptes-rendus pour agents immobiliers.",
   alternates: { canonical: CANONICAL_PATH },
   openGraph: {
     title: "Créer un compte | FlowEstate",
     description:
-      "Inscrivez-vous à FlowEstate : essai gratuit 14 jours, génération d’annonces, emails et comptes-rendus pour agents immobiliers.",
+      "Inscrivez-vous à FlowEstate : 5 générations gratuites par mois, sans carte bancaire. Génération d’annonces, emails et comptes-rendus pour agents immobiliers.",
     url: absoluteUrl(CANONICAL_PATH),
   },
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
 type OnboardingModalProps = {
@@ -27,8 +27,8 @@ export default function OnboardingModal({
   agencyName,
   phone,
   logoUrl,
-  createdAt,
-  trialEndsAt,
+  trialEndsAt: _trialEndsAt,
+  createdAt: _createdAt,
 }: OnboardingModalProps) {
   const router = useRouter();
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -45,15 +45,6 @@ export default function OnboardingModal({
   const [localPhone, setLocalPhone] = useState(phone ?? "");
   const [localLogoUrl, setLocalLogoUrl] = useState(logoUrl ?? "");
   const [localLogoName, setLocalLogoName] = useState<string>(logoUrl ? "logo" : "");
-
-  const trialDaysLeft = useMemo(() => {
-    if (trialEndsAt) {
-      return Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000));
-    }
-    if (!createdAt) return 14;
-    const daysSinceCreated = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000);
-    return Math.max(0, 14 - daysSinceCreated);
-  }, [createdAt, trialEndsAt]);
 
   function goToStep(next: 1 | 2 | 3 | 4) {
     if (next === step) return;
@@ -174,7 +165,7 @@ export default function OnboardingModal({
         <div className="border-b border-[#C9A96E]/10 bg-[#060606] px-8 pb-6 pt-7">
           <p className="text-[18px] font-medium tracking-[0.06em] text-[#C9A96E]">FlowEstate</p>
           <span className="mt-[10px] inline-flex rounded-full border border-[#C9A96E]/20 bg-[#C9A96E]/[0.08] px-3 py-1 text-[11px] tracking-[0.04em] text-[#C9A96E]">
-            ✦ 14 jours d&apos;essai gratuit
+            ✦ 5 générations gratuites par mois — sans carte bancaire
           </span>
 
           <div className="mt-5 flex items-start">
@@ -545,10 +536,7 @@ export default function OnboardingModal({
                     </svg>
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C9A96E]/25 bg-[#C9A96E]/[0.08] px-[14px] py-[5px] text-xs text-[#C9A96E]">
-                    ✓{" "}
-                    {trialDaysLeft === 0
-                      ? "Dernier jour d'essai gratuit"
-                      : `${trialDaysLeft} jours d'essai gratuit restants`}
+                    ✓ 5 générations gratuites par mois
                   </span>
                 </div>
                 <h2 className="mb-2 text-xl font-medium text-[#F5F5F0]">Votre espace est prêt !</h2>

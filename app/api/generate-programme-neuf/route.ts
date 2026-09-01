@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getLeHavreDataForPrompt } from "@/lib/data/le-havre";
-import { checkGenerationLimit, checkProgrammesNeufsAccess } from "@/lib/check-generation-limit";
+import { checkGenerationLimit, getProgrammesNeufsBlockReason } from "@/lib/check-generation-limit";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
 export const config = {
@@ -623,20 +623,14 @@ export async function POST(request: Request) {
 
     const effectiveUserId = await resolveGenerationUserId(request);
     if (effectiveUserId) {
+      const programmesNeufsBlockReason = await getProgrammesNeufsBlockReason(effectiveUserId);
+      if (programmesNeufsBlockReason) {
+        return NextResponse.json({ error: programmesNeufsBlockReason }, { status: 403 });
+      }
+
       const { allowed, reason } = await checkGenerationLimit(effectiveUserId);
       if (!allowed) {
         return NextResponse.json({ error: reason }, { status: 403 });
-      }
-
-      const hasAccess = await checkProgrammesNeufsAccess(effectiveUserId);
-      if (!hasAccess) {
-        return NextResponse.json(
-          {
-            error:
-              "La feature Programmes neufs est réservée au plan Expert. Passez au plan Expert pour y accéder.",
-          },
-          { status: 403 },
-        );
       }
     }
 

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 import { getStripePriceId, stripe, type StripePlanId } from "@/lib/stripe";
-import { supabase } from "@/lib/supabase";
 
 type CheckoutBody = {
   plan?: string;
@@ -50,7 +49,6 @@ export async function POST(request: Request) {
         billing: billingPeriod,
       },
       subscription_data: {
-        trial_period_days: 14,
         metadata: {
           userId: session.user.id,
           plan,
@@ -67,26 +65,6 @@ export async function POST(request: Request) {
     if (!checkoutSession.url) {
       return NextResponse.json(
         { error: "URL de checkout Stripe indisponible." },
-        { status: 500 }
-      );
-    }
-
-    const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 14);
-
-    const { error: dbError } = await supabase
-      .from("users")
-      .update({
-        trial_ends_at: trialEndsAt.toISOString(),
-        plan,
-        subscription_status: "trial",
-      })
-      .eq("id", session.user.id);
-
-    if (dbError) {
-      console.error("[stripe/checkout] users update", dbError);
-      return NextResponse.json(
-        { error: "Impossible d'enregistrer l'essai sur le compte utilisateur." },
         { status: 500 }
       );
     }

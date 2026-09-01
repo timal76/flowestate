@@ -7,12 +7,12 @@ const CANONICAL_PATH = "/tarifs";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Offres Starter et Pro FlowEstate : essai 14 jours, générations automatisées pour annonces, emails et comptes-rendus. Paiement sécurisé Stripe.",
+    "Offres Découverte, Essentiel, Pro et Expert FlowEstate : 5 générations gratuites par mois sans carte bancaire, puis plans payants avec facturation immédiate.",
   alternates: { canonical: CANONICAL_PATH },
   openGraph: {
     title: "Tarifs | FlowEstate",
     description:
-      "Offres Starter et Pro FlowEstate : essai 14 jours, générations automatisées pour annonces, emails et comptes-rendus. Paiement sécurisé Stripe.",
+      "Offres Découverte, Essentiel, Pro et Expert FlowEstate : 5 générations gratuites par mois sans carte bancaire, puis plans payants avec facturation immédiate.",
     url: absoluteUrl(CANONICAL_PATH),
   },
 };

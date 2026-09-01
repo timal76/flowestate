@@ -12,8 +12,8 @@ const selectClass =
 
 const faqItems = [
   {
-    q: "Comment fonctionne l'essai gratuit ?",
-    a: "À l'inscription, vous bénéficiez de 14 jours d'accès complet à FlowEstate sans engagement. Vous pouvez annuler avant la fin de la période depuis votre espace ou le portail de facturation Stripe.",
+    q: "Comment fonctionne le plan gratuit ?",
+    a: "À l'inscription, vous bénéficiez de 5 générations gratuites par mois, sans carte bancaire. Vous pouvez passer à un plan payant à tout moment depuis la page Tarifs pour débloquer plus de générations.",
   },
   {
     q: "Puis-je annuler mon abonnement ?",

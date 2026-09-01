@@ -51,7 +51,7 @@ export default function VisitorModal() {
         <div className="border-b border-[#C9A96E]/10 bg-[#060606] px-8 pb-6 pt-7">
           <p className="text-[18px] font-medium tracking-[0.06em] text-[#C9A96E]">FlowEstate</p>
           <span className="mt-[10px] inline-flex rounded-full border border-[#C9A96E]/20 bg-[#C9A96E]/[0.08] px-3 py-1 text-[11px] tracking-[0.04em] text-[#C9A96E]">
-            ✦ Essai gratuit 14 jours — sans engagement
+            ✦ 5 générations gratuites par mois — sans carte bancaire
           </span>
           <div className="mt-5 h-[2px] w-full bg-[#C9A96E]/[0.12]">
             <div className="h-[2px] w-full bg-[#C9A96E]" />

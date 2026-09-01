@@ -10,11 +10,11 @@ export const metadata: Metadata = {
     absolute: "FlowEstate — Moins de tâches, plus de ventes",
   },
   description:
-    "Automatisez vos annonces immobilières, emails de relance et comptes-rendus de visite. Essai gratuit 14 jours, sans engagement.",
+    "Automatisez vos annonces immobilières, emails de relance et comptes-rendus de visite. 5 générations gratuites par mois, sans carte bancaire.",
   openGraph: {
     title: "FlowEstate — Moins de tâches, plus de ventes",
     description:
-      "Automatisez vos annonces immobilières, emails de relance et comptes-rendus de visite. Essai gratuit 14 jours, sans engagement.",
+      "Automatisez vos annonces immobilières, emails de relance et comptes-rendus de visite. 5 générations gratuites par mois, sans carte bancaire.",
     url: "https://flowestate.fr",
   },
 };

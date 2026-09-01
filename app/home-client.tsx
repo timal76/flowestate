@@ -42,7 +42,7 @@ export default function HomePage() {
                 Commencer gratuitement
               </Link>
               <span className="animate-hero-badge inline-flex items-center gap-1.5 rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/10 px-4 py-1.5 text-xs font-medium text-[#C9A96E]">
-                ✓ 14 jours gratuits — sans engagement
+                ✓ 5 générations gratuites par mois — sans carte bancaire
               </span>
             </div>
           </div>
@@ -177,11 +177,45 @@ export default function HomePage() {
           <div className="mb-14 max-w-2xl space-y-4">
             <h2 className="text-3xl font-semibold md:text-4xl">Des plans simples et efficaces.</h2>
             <p className="text-[#A0A0A0]">
-              Trois plans adaptés à votre activité. 14 jours gratuits sans engagement.
+              Quatre plans adaptés à votre activité. Commencez avec 5 générations gratuites par mois, sans carte bancaire.
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 md:items-stretch">
+            <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
+              <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Découverte</p>
+              <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
+                0€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+              </p>
+              <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>5 générations/mois</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>Annonces, emails, comptes rendus</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>Sans carte bancaire</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-red-400/60">✗</span>
+                  <span className="text-[#A0A0A0]/50">Programmes neufs</span>
+                </li>
+              </ul>
+              <Link
+                href="/register"
+                className="mt-auto inline-flex w-full items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
+              >
+                Commencer gratuitement
+              </Link>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
+                5 générations gratuites par mois, sans carte bancaire
+              </p>
+            </article>
+
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Essentiel</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
@@ -213,10 +247,10 @@ export default function HomePage() {
                 plan="essentiel"
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-70"
               >
-                Essayer Essentiel gratuitement
+                Passer à Essentiel
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                14 jours gratuits, puis 74,99€/mois
+                74,99€/mois — facturation immédiate
               </p>
             </article>
 
@@ -261,10 +295,10 @@ export default function HomePage() {
                 plan="pro"
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-[#B8943F] bg-[#B8943F] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition-all duration-300 hover:opacity-90 disabled:cursor-wait disabled:opacity-70"
               >
-                Essayer Pro gratuitement
+                Passer à Pro
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                14 jours gratuits, puis 149,99€/mois
+                149,99€/mois — facturation immédiate
               </p>
             </article>
 
@@ -306,10 +340,10 @@ export default function HomePage() {
                 plan="expert"
                 className="mt-auto inline-flex w-full cursor-pointer items-center justify-center rounded-full border-2 border-[#C9A96E] bg-transparent px-6 py-3 text-sm font-semibold text-[#F5F5F0] transition-all duration-300 hover:bg-[#C9A96E] hover:text-[#0A0A0A] disabled:cursor-wait disabled:opacity-70"
               >
-                Essayer Expert gratuitement
+                Passer à Expert
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                14 jours gratuits, puis 299,99€/mois
+                299,99€/mois — facturation immédiate
               </p>
             </article>
           </div>

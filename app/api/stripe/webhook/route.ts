@@ -146,7 +146,7 @@ export async function POST(request: Request) {
         .from("users")
         .update({
           stripe_customer_id: session.customer as string,
-          subscription_status: "trial",
+          subscription_status: "active",
           plan,
         })
         .eq("id", userId);

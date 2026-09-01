@@ -190,6 +190,7 @@ export default function ProgrammesNeufsPage() {
   const [isLoadingNewLot, setIsLoadingNewLot] = useState(false);
   const [isDraggingNewLot, setIsDraggingNewLot] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<"free" | "expert">("expert");
   const [platforms, setPlatforms] = useState<PlatformSelection>({
     leboncoin: true,
     seloger: true,
@@ -218,6 +219,7 @@ export default function ProgrammesNeufsPage() {
           data?.subscription_status === "trial");
 
       if (!hasAccess) {
+        setUpgradeReason(data?.plan === "free" ? "free" : "expert");
         setShowUpgrade(true);
       }
     };
@@ -837,8 +839,9 @@ export default function ProgrammesNeufsPage() {
             </div>
             <h1 className="text-3xl font-semibold text-[#F5F5F0]">Programmes neufs</h1>
             <p className="text-lg text-[#A0A0A0]">
-              Cette feature est réservée au plan Expert. Analysez une plaquette promoteur PDF et
-              générez 6 annonces différenciantes en quelques secondes.
+              {upgradeReason === "free"
+                ? "Programmes neufs est disponible à partir du plan Expert."
+                : "Cette feature est réservée au plan Expert. Analysez une plaquette promoteur PDF et générez 6 annonces différenciantes en quelques secondes."}
             </p>
             <div className="space-y-3">
               <a
@@ -854,7 +857,7 @@ export default function ProgrammesNeufsPage() {
                 Retour au dashboard
               </a>
             </div>
-            <p className="text-xs text-[#555]">14 jours gratuits — sans engagement</p>
+            <p className="text-xs text-[#555]">5 générations gratuites par mois — sans carte bancaire</p>
           </div>
         </section>
       </main>

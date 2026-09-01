@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { Suspense, FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -52,6 +53,18 @@ function RegisterPageContent() {
         return;
       }
 
+      const signInResult = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (signInResult?.ok) {
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+
       router.push("/login?message=" + encodeURIComponent("Compte créé ! Connectez-vous."));
     } catch {
       setError("Une erreur est survenue.");
@@ -91,8 +104,8 @@ function RegisterPageContent() {
         >
           {showLimitBanner ? (
             <div className="mb-6 rounded-xl border border-[#C9A96E]/30 bg-[#C9A96E]/10 px-4 py-3 text-center text-sm text-[#C9A96E]">
-              Vous avez utilisé vos 5 générations gratuites. Commencez votre essai gratuit de 14
-              jours !
+              Vous avez utilisé vos 5 générations gratuites ce mois-ci. Créez un compte pour
+              continuer avec 5 générations gratuites par mois, sans carte bancaire.
             </div>
           ) : null}
           <h1 className="text-center text-2xl font-semibold text-[#F5F5F0]">
