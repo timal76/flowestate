@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ProspectModal, { type ProspectInput, type ProspectStatus, type ProspectCategorie } from "@/components/prospects/ProspectModal";
+import ProspectEmailModal from "@/components/prospects/ProspectEmailModal";
 import GenerationModal from "@/components/prospects/GenerationModal";
 import RelanceModal from "@/components/relances/RelanceModal";
 import SiteHeader from "@/components/site-header";
@@ -131,6 +132,7 @@ export default function ProspectDetailPage() {
   const [relanceOpen, setRelanceOpen] = useState(false);
   const [relances, setRelances] = useState<Relance[]>([]);
   const [genModal, setGenModal] = useState<{ title: string; content: string } | null>(null);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
 
   async function load() {
     if (!params?.id) return;
@@ -571,12 +573,13 @@ export default function ProspectDetailPage() {
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold">Emails générés</h2>
             <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href={`/emails?prospect_id=${prospect.id}`}
+              <button
+                type="button"
+                onClick={() => setEmailModalOpen(true)}
                 className="rounded-full border border-[#C9A96E] px-4 py-2 text-sm text-[#C9A96E] transition hover:bg-[#C9A96E] hover:text-[#0A0A0A]"
               >
                 Générer un email
-              </Link>
+              </button>
               <span className="text-sm text-[#A0A0A0]">{emailGenerations.length}</span>
             </div>
           </div>
@@ -696,6 +699,12 @@ export default function ProspectDetailPage() {
         }}
         onClose={() => setRelanceOpen(false)}
         onSaved={() => void load()}
+      />
+      <ProspectEmailModal
+        open={emailModalOpen}
+        prospect={prospect}
+        onClose={() => setEmailModalOpen(false)}
+        onGenerated={() => void load()}
       />
     </main>
   );

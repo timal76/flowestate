@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { GenerationLimitCheckResult } from "./generation-limit-api";
 
 export const FREE_MONTHLY_LIMIT = 5;
 export const ESSENTIEL_MONTHLY_LIMIT = 100;
@@ -31,18 +32,20 @@ function isFreePlan(plan: string | null, status: string | null): boolean {
   return false;
 }
 
-export async function checkGenerationLimit(userId: string): Promise<{
-  allowed: boolean;
-  reason?: string;
-  count?: number;
-}> {
+export async function checkGenerationLimit(userId: string): Promise<GenerationLimitCheckResult> {
   const { data: user } = await supabase
     .from("users")
     .select("plan, subscription_status")
     .eq("id", userId)
     .single();
 
-  if (!user) return { allowed: false, reason: "Utilisateur introuvable" };
+  if (!user) {
+    return {
+      allowed: false,
+      reason: "Utilisateur introuvable",
+      code: "SUBSCRIPTION_REQUIRED",
+    };
+  }
 
   const plan = (user.plan as string | null) ?? null;
   const status = (user.subscription_status as string | null) ?? null;
@@ -66,6 +69,8 @@ export async function checkGenerationLimit(userId: string): Promise<{
         reason:
           "Limite de 100 générations/mois atteinte. Passez au plan Pro pour des générations illimitées.",
         count,
+        code: "QUOTA_EXCEEDED",
+        plan: "essentiel",
       };
     }
     return { allowed: true, count };
@@ -80,6 +85,8 @@ export async function checkGenerationLimit(userId: string): Promise<{
         reason:
           "Vous avez utilisé vos 5 générations gratuites de ce mois-ci. Passez à Essentiel pour continuer.",
         count,
+        code: "QUOTA_EXCEEDED",
+        plan: "decouverte",
       };
     }
     return { allowed: true, count };
@@ -87,8 +94,9 @@ export async function checkGenerationLimit(userId: string): Promise<{
 
   return {
     allowed: false,
-    reason:
-      "Abonnement requis. Passez à Essentiel pour débloquer plus de générations.",
+    reason: "Abonnement requis. Passez à Essentiel pour débloquer plus de générations.",
+    code: "SUBSCRIPTION_REQUIRED",
+    plan: "decouverte",
   };
 }
 

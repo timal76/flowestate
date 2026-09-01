@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import ProspectModal, { type ProspectInput, type ProspectStatus, type ProspectCategorie } from "@/components/prospects/ProspectModal";
+import ProspectEmailModal from "@/components/prospects/ProspectEmailModal";
 import SiteHeader from "@/components/site-header";
 
 type ProspectTemperature = "chaud" | "tiède" | "froid";
@@ -70,6 +71,7 @@ export default function ProspectsPage() {
   const [temperature, setTemperature] = useState<TemperatureFilter>("Tous");
   const [categorieFilter, setCategorieFilter] = useState<CategorieFilter>("Tous");
   const [modalOpen, setModalOpen] = useState(false);
+  const [emailModalProspect, setEmailModalProspect] = useState<Prospect | null>(null);
 
   async function loadProspects() {
     setLoading(true);
@@ -204,8 +206,12 @@ export default function ProspectsPage() {
         ) : (
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {prospects.map((prospect) => (
-              <Link key={prospect.id} href={`/prospects/${prospect.id}`} className="cursor-pointer rounded-2xl border border-white/10 bg-white/[0.02] p-5 transition duration-200 hover:border-[#C9A96E]/30 hover:bg-white/[0.04]">
-                <div className="flex items-start gap-3">
+              <div
+                key={prospect.id}
+                className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 transition duration-200 hover:border-[#C9A96E]/30 hover:bg-white/[0.04]"
+              >
+                <Link href={`/prospects/${prospect.id}`} className="block cursor-pointer">
+                  <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C9A96E]/15 text-sm font-medium text-[#C9A96E]">{initials(prospect.nom)}</div>
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -255,8 +261,16 @@ export default function ProspectsPage() {
                       <span>{prospect.generationsCount ?? 0} générations</span>
                     </div>
                   </div>
-                </div>
-              </Link>
+                  </div>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setEmailModalProspect(prospect)}
+                  className="mt-4 w-full rounded-full border border-[#C9A96E]/40 px-3 py-1.5 text-xs font-medium text-[#C9A96E] transition hover:bg-[#C9A96E]/10"
+                >
+                  Générer un email
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -267,6 +281,12 @@ export default function ProspectsPage() {
         mode="create"
         onClose={() => setModalOpen(false)}
         onSaved={() => void loadProspects()}
+      />
+      <ProspectEmailModal
+        open={Boolean(emailModalProspect)}
+        prospect={emailModalProspect}
+        onClose={() => setEmailModalProspect(null)}
+        onGenerated={() => void loadProspects()}
       />
     </main>
   );

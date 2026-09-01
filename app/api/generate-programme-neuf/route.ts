@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getLeHavreDataForPrompt } from "@/lib/data/le-havre";
 import { checkGenerationLimit, getProgrammesNeufsBlockReason } from "@/lib/check-generation-limit";
+import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
 export const config = {
@@ -628,9 +629,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: programmesNeufsBlockReason }, { status: 403 });
       }
 
-      const { allowed, reason } = await checkGenerationLimit(effectiveUserId);
-      if (!allowed) {
-        return NextResponse.json({ error: reason }, { status: 403 });
+      const limitResult = await checkGenerationLimit(effectiveUserId);
+      if (!limitResult.allowed) {
+        return generationLimitErrorResponse(limitResult);
       }
     }
 

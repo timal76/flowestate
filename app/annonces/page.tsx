@@ -8,8 +8,11 @@ import { FormEvent, Suspense, useEffect, useState, type ChangeEvent } from "reac
 import { toast } from "sonner";
 
 import ScoreAnnonce from "@/components/annonces/ScoreAnnonce";
+import QuotaExceededModal from "@/components/paywall/QuotaExceededModal";
 import SiteHeader from "@/components/site-header";
 import TemplatesModal from "@/components/templates/TemplatesModal";
+import type { GenerationApiErrorPayload } from "@/lib/generation-limit-api";
+import { getGenerationFailure } from "@/lib/parse-generation-response";
 import { scoreAnnonce, type ScoreResult } from "@/lib/scoreAnnonce";
 import { supabase } from "@/lib/supabase";
 
@@ -79,6 +82,8 @@ function AnnoncesContent() {
   const [prospectName, setProspectName] = useState("");
   const [score, setScore] = useState<ScoreResult | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
+  const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -256,18 +261,22 @@ function AnnoncesContent() {
         body: JSON.stringify({ ...form, images, prospectId, prospectName: prospectName || null }),
       });
 
-      const payload = (await response.json()) as { annonce?: string; error?: string; message?: string };
+      const payload = (await response.json()) as { annonce?: string } & GenerationApiErrorPayload;
 
       if (!response.ok) {
-        const errorText = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
-        if (response.status === 529 || errorText.includes("overloaded")) {
-          const message = "Le service est momentanément surchargé. Réessayez dans quelques secondes.";
-          setGenerationError(message);
-          toast.error(message);
-        } else {
-          setGenerationError("Une erreur est survenue. Veuillez réessayer.");
-          toast.error("Une erreur est survenue. Réessayez.");
+        const failure = getGenerationFailure(response, payload);
+        if (failure?.type === "quota") {
+          setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallOpen(true);
+          setGenerationError(null);
+          return;
         }
+        const message =
+          failure?.type === "error"
+            ? failure.message
+            : "Une erreur est survenue. Veuillez réessayer.";
+        setGenerationError(message);
+        toast.error(message);
         return;
       }
 
@@ -766,6 +775,11 @@ function AnnoncesContent() {
           setForm((prev) => ({ ...prev, highlights: content }));
           toast.success("Template chargé");
         }}
+      />
+      <QuotaExceededModal
+        open={quotaPaywallOpen}
+        onClose={() => setQuotaPaywallOpen(false)}
+        plan={quotaPaywallPlan}
       />
     </main>
   );

@@ -4,7 +4,10 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import SiteHeader from "@/components/site-header";
+import QuotaExceededModal from "@/components/paywall/QuotaExceededModal";
 import TemplatesModal from "@/components/templates/TemplatesModal";
+import type { GenerationApiErrorPayload } from "@/lib/generation-limit-api";
+import { getGenerationFailure } from "@/lib/parse-generation-response";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -254,6 +257,8 @@ function ComptesRendusContent() {
   const [signaturePreview, setSignaturePreview] = useState<string>("");
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
   const [templatesModalMode, setTemplatesModalMode] = useState<"save" | "load">("load");
+  const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
+  const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const signatureFileInputRef = useRef<HTMLInputElement>(null);
   const logoPreviewRef = useRef(logoPreview);
@@ -532,14 +537,19 @@ function ComptesRendusContent() {
         }),
       });
 
-      const payload = (await response.json()) as { compteRendu?: string; error?: string; message?: string };
+      const payload = (await response.json()) as { compteRendu?: string } & GenerationApiErrorPayload;
       if (!response.ok) {
-        const errorText = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
-        if (response.status === 529 || errorText.includes("overloaded")) {
-          toast.error("Le service est momentanément surchargé. Réessayez dans quelques secondes.");
-        } else {
-          toast.error("Une erreur est survenue. Réessayez.");
+        const failure = getGenerationFailure(response, payload);
+        if (failure?.type === "quota") {
+          setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallOpen(true);
+          return;
         }
+        toast.error(
+          failure?.type === "error"
+            ? failure.message
+            : "Une erreur est survenue. Réessayez.",
+        );
         return;
       }
       if (!payload.compteRendu) {
@@ -1156,6 +1166,12 @@ function ComptesRendusContent() {
           setForm((prev) => ({ ...prev, personalInfo: content }));
           toast.success("Template chargé");
         }}
+      />
+
+      <QuotaExceededModal
+        open={quotaPaywallOpen}
+        onClose={() => setQuotaPaywallOpen(false)}
+        plan={quotaPaywallPlan}
       />
 
       <div

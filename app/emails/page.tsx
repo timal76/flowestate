@@ -8,8 +8,11 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import RelanceModal from "@/components/relances/RelanceModal";
+import QuotaExceededModal from "@/components/paywall/QuotaExceededModal";
 import SiteHeader from "@/components/site-header";
 import TemplatesModal from "@/components/templates/TemplatesModal";
+import type { GenerationApiErrorPayload } from "@/lib/generation-limit-api";
+import { getGenerationFailure } from "@/lib/parse-generation-response";
 import { supabase } from "@/lib/supabase";
 
 type PropertyType = "Appartement" | "Maison" | "Studio" | "Loft" | "Villa";
@@ -92,6 +95,8 @@ function EmailsContent() {
   const [sendSubject, setSendSubject] = useState("");
   const [sending, setSending] = useState(false);
   const [relanceModalOpen, setRelanceModalOpen] = useState(false);
+  const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
+  const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -241,14 +246,19 @@ function EmailsContent() {
         body: JSON.stringify({ ...form, prospectId }),
       });
 
-      const payload = (await response.json()) as { email?: string; error?: string; message?: string };
+      const payload = (await response.json()) as { email?: string } & GenerationApiErrorPayload;
       if (!response.ok) {
-        const errorText = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
-        if (response.status === 529 || errorText.includes("overloaded")) {
-          toast.error("Le service est momentanément surchargé. Réessayez dans quelques secondes.");
-        } else {
-          toast.error("Une erreur est survenue. Réessayez.");
+        const failure = getGenerationFailure(response, payload);
+        if (failure?.type === "quota") {
+          setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallOpen(true);
+          return;
         }
+        toast.error(
+          failure?.type === "error"
+            ? failure.message
+            : "Une erreur est survenue. Réessayez.",
+        );
         return;
       }
       if (!payload.email) {
@@ -805,6 +815,11 @@ function EmailsContent() {
           setRelanceModalOpen(false);
           toast.success("Relance programmée !");
         }}
+      />
+      <QuotaExceededModal
+        open={quotaPaywallOpen}
+        onClose={() => setQuotaPaywallOpen(false)}
+        plan={quotaPaywallPlan}
       />
     </main>
   );

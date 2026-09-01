@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { checkGenerationLimit } from "@/lib/check-generation-limit";
+import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
 async function callAnthropicWithRetry(apiKey: string, params: Record<string, unknown>) {
@@ -69,9 +70,9 @@ export async function POST(request: Request) {
 
     const effectiveUserId = await resolveGenerationUserId(request);
     if (effectiveUserId) {
-      const { allowed, reason } = await checkGenerationLimit(effectiveUserId);
-      if (!allowed) {
-        return NextResponse.json({ error: reason }, { status: 403 });
+      const limitResult = await checkGenerationLimit(effectiveUserId);
+      if (!limitResult.allowed) {
+        return generationLimitErrorResponse(limitResult);
       }
     }
 

@@ -10,6 +10,7 @@ import ProspectModal, {
   type ProspectStatus,
   type ProspectCategorie,
 } from "@/components/prospects/ProspectModal";
+import ProspectEmailModal from "@/components/prospects/ProspectEmailModal";
 import SiteHeader from "@/components/site-header";
 
 type ProspectTemperature = "chaud" | "tiède" | "froid";
@@ -74,6 +75,7 @@ export default function ProspectsKanbanPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<ProspectStatus | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [emailModalProspect, setEmailModalProspect] = useState<Prospect | null>(null);
 
   const loadProspects = useCallback(async () => {
     setLoading(true);
@@ -249,6 +251,16 @@ export default function ProspectsKanbanPage() {
                           <p className="mt-1 text-xs text-[#C9A96E]">
                             {prospect.budget ? formatBudget(prospect.budget) : "—"}
                           </p>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEmailModalProspect(prospect);
+                            }}
+                            className="mt-3 w-full rounded-full border border-[#C9A96E]/40 px-3 py-1.5 text-xs font-medium text-[#C9A96E] transition hover:bg-[#C9A96E]/10"
+                          >
+                            Générer un email
+                          </button>
                         </div>
                       </li>
                     ))}
@@ -265,6 +277,12 @@ export default function ProspectsKanbanPage() {
         mode="create"
         onClose={() => setModalOpen(false)}
         onSaved={() => void loadProspects()}
+      />
+      <ProspectEmailModal
+        open={Boolean(emailModalProspect)}
+        prospect={emailModalProspect}
+        onClose={() => setEmailModalProspect(null)}
+        onGenerated={() => void loadProspects()}
       />
     </main>
   );

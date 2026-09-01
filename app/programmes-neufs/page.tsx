@@ -8,6 +8,9 @@ import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useState } f
 import { toast } from "sonner";
 
 import SiteHeader from "@/components/site-header";
+import QuotaExceededModal from "@/components/paywall/QuotaExceededModal";
+import type { GenerationApiErrorPayload } from "@/lib/generation-limit-api";
+import { getGenerationFailure } from "@/lib/parse-generation-response";
 import { supabase } from "@/lib/supabase";
 
 type Tone = "Professionnel" | "Chaleureux" | "Percutant";
@@ -191,6 +194,8 @@ export default function ProgrammesNeufsPage() {
   const [isDraggingNewLot, setIsDraggingNewLot] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState<"free" | "expert">("expert");
+  const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
+  const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
   const [platforms, setPlatforms] = useState<PlatformSelection>({
     leboncoin: true,
     seloger: true,
@@ -486,9 +491,15 @@ export default function ProgrammesNeufsPage() {
         }),
       });
 
-      const payload = (await response.json()) as GeneratedResult & { error?: string };
+      const payload = (await response.json()) as GeneratedResult & GenerationApiErrorPayload;
 
       if (!response.ok) {
+        const failure = getGenerationFailure(response, payload);
+        if (failure?.type === "quota") {
+          setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallOpen(true);
+          return;
+        }
         if (response.status === 403 && payload?.error?.includes("plan Expert")) {
           setGenerationError("plan Expert");
           toast.error("Cette feature est réservée au plan Expert.");
@@ -645,9 +656,15 @@ export default function ProgrammesNeufsPage() {
         }),
       });
 
-      const payload = (await response.json()) as GeneratedResult & { error?: string; message?: string };
+      const payload = (await response.json()) as GeneratedResult & GenerationApiErrorPayload;
 
       if (!response.ok) {
+        const failure = getGenerationFailure(response, payload);
+        if (failure?.type === "quota") {
+          setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallOpen(true);
+          return;
+        }
         const errorText = `${payload?.error ?? ""} ${payload?.message ?? ""}`.toLowerCase();
         if (response.status === 529 || errorText.includes("overloaded")) {
           const message = "Le service est momentanément surchargé. Réessayez dans quelques secondes.";
@@ -1577,6 +1594,11 @@ export default function ProgrammesNeufsPage() {
           </div>
         </div>
       </section>
+      <QuotaExceededModal
+        open={quotaPaywallOpen}
+        onClose={() => setQuotaPaywallOpen(false)}
+        plan={quotaPaywallPlan}
+      />
     </main>
   );
 }
