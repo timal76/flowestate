@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:compliance": "npx tsx scripts/test-compliance.ts"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.4.0",

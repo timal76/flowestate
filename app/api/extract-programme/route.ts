@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { COMPLIANCE_RULES } from "@/lib/compliance";
+
 export const config = {
   api: {
     bodyParser: {
@@ -17,9 +19,10 @@ export async function POST(request: Request) {
   const body = (await request.json()) as { pdfUrl?: string; pdfBase64?: string };
 
   const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
+${COMPLIANCE_RULES}
 Format exact :
 {"nom":null,"promoteur":null,"ville":null,"quartier":null,"adresse":null,"types_biens":null,"surface_min":null,"surface_max":null,"nb_lots":null,"prix_min":null,"prix_max":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"re2020":null,"livraison":null,"prestations":[],"domotique":null,"stationnement":null,"commerces_rdc":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[],"baignoire":null,"hauteur_plafond":null,"orientation":null,"vue":null,"cuisine_equipee":null,"double_exposition":null,"ascenseur":null,"digicode":null,"interphone":null,"gardien":null,"piscine":null,"terrasse_confirmee":null,"balcon_confirme":null}
-RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null.`;
+RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null. Ne reformule jamais les arguments promoteur en promesses de valorisation ou de rendement.`;
 
   let pdfData: string;
 

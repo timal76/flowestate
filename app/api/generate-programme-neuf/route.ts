@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 
+import {
+  COMPLIANCE_RULES,
+  annonceText,
+  buildComplianceCorrectionMessage,
+  findViolations,
+  stripViolations,
+} from "@/lib/compliance";
 import { getLeHavreDataForPrompt } from "@/lib/data/le-havre";
 import { checkGenerationLimit, getProgrammesNeufsBlockReason } from "@/lib/check-generation-limit";
 import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
@@ -414,6 +421,8 @@ RÈGLES ABSOLUES :
 
 const GENERATION_SYSTEM = `INSTRUCTION TECHNIQUE ABSOLUE : Ta réponse doit être un JSON valide et UNIQUEMENT un JSON. Elle commence par { et se termine par }. Aucun caractère avant le {. Aucun caractère après le }. Aucun backtick. Aucun \`\`\`json. Aucun commentaire. Aucun texte introductif. Uniquement {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}
 
+${COMPLIANCE_RULES}
+
 Tu es un rédacteur immobilier expert spécialisé dans la promotion immobilière neuve en France. Tu maîtrises les codes rédactionnels de chaque plateforme, le vocabulaire juridique et fiscal du neuf (VEFA, PTZ, TVA réduite, LMNP, Pinel, RE2020), et la psychologie des différents profils d'acquéreurs.
 
 TA MISSION PRINCIPALE : Produire des annonces fondamentalement différentes de celles que les autres agences qui vendent ce même programme vont rédiger. Les autres vont reformuler la plaquette du promoteur. Toi tu construis une narration originale, ancrée dans la réalité du territoire, centrée sur le quotidien concret de l'acheteur selon son profil.
@@ -530,10 +539,10 @@ ANNONCE INSTAGRAM :
 ANNONCE LINKEDIN :
 - Titre : accroche professionnelle avec données chiffrées, 100 caractères max
 - Corps : 300-400 mots, ton expert et factuel, arguments patrimoniaux et investissement
-- Structure : accroche avec chiffre clé → contexte marché → argument principal → données rendement/valorisation → call to action professionnel
-- Peut mentionner fiscalité, rendement, valorisation patrimoniale
+- Structure : accroche avec chiffre clé → contexte programme → argument principal (bien, emplacement, prestations) → call to action professionnel
+- Peut évoquer fiscalité uniquement avec langage qualifié ("à étudier avec votre conseiller") — JAMAIS de promesse de rendement ni de valorisation
 - Terminer par 3-5 hashtags professionnels : #immobilier #investissement #programmeneuf #patrimoine
-- Ton : expert, chiffré, sans émotionnel
+- Ton : expert, factuel, sans émotionnel, sans promesse
 
 ANNONCE FACEBOOK :
 - Titre : accroche narrative, 80 caractères max
@@ -585,7 +594,21 @@ type GenerateProgrammeNeufPayload = {
   platforms?: string[];
 };
 
-type AnnonceBlock = { titre: string; corps: string };
+type AnnonceBlock = {
+  titre: string;
+  corps: string;
+  compliance_warning?: boolean;
+  compliance_violations?: string[];
+};
+
+const PLATFORM_KEYS = [
+  "leboncoin",
+  "seloger",
+  "siteAgence",
+  "instagram",
+  "linkedin",
+  "facebook",
+] as const;
 
 type GeneratedAnnonces = {
   leboncoin?: AnnonceBlock;
@@ -595,6 +618,42 @@ type GeneratedAnnonces = {
   linkedin?: AnnonceBlock;
   facebook?: AnnonceBlock;
 };
+
+function collectAnnonceViolations(annonces: GeneratedAnnonces): string[] {
+  const all: string[] = [];
+  const seen = new Set<string>();
+  for (const key of PLATFORM_KEYS) {
+    const block = annonces[key];
+    if (!block) continue;
+    for (const v of findViolations(annonceText(block))) {
+      if (!seen.has(v)) {
+        seen.add(v);
+        all.push(v);
+      }
+    }
+  }
+  return all;
+}
+
+function flagRemainingViolations(annonces: GeneratedAnnonces): GeneratedAnnonces {
+  const result: GeneratedAnnonces = { ...annonces };
+  for (const key of PLATFORM_KEYS) {
+    const block = result[key];
+    if (!block) continue;
+    const violations = findViolations(annonceText(block));
+    if (violations.length > 0) {
+      result[key] = {
+        titre: block.titre,
+        corps: block.corps,
+        compliance_warning: true,
+        compliance_violations: violations,
+      };
+    } else {
+      result[key] = { titre: block.titre, corps: block.corps };
+    }
+  }
+  return result;
+}
 
 function anthropicErrorResponse(
   anthropicResponse: Response,
@@ -652,8 +711,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "L'angle souhaité est requis." }, { status: 400 });
     }
 
-    const angle = body.angle.trim();
-    const prospectProfile = body.prospectProfile?.trim() || "";
+    const angle = stripViolations(body.angle.trim()) || body.angle.trim();
+    const prospectProfile = stripViolations(body.prospectProfile?.trim() || "");
     const competitorAds = body.competitorAds?.trim() || "";
     const tone = body.tone?.trim() || "Professionnel";
     const priceFrom = body.priceFrom?.trim() || "";
@@ -958,6 +1017,10 @@ PARAMÈTRES AGENT :
 ${priceFrom ? `- Prix à partir de (prioritaire si cohérent avec la plaquette) : ${priceFrom}` : "- Prix à partir de : utiliser les données de la plaquette"}
 ${additionalInfo ? `- Informations complémentaires : ${additionalInfo}` : ""}
 
+IMPORTANT — ANGLE ET PROFIL : Angle et profil décrivent la cible, ne pas reprendre leurs affirmations comme des faits ou des promesses.
+
+${COMPLIANCE_RULES}
+
 ${competitorAds ? `
 ANNONCES CONCURRENTES À ANALYSER ET ÉVITER ACTIVEMENT :
 ${competitorAds}
@@ -1090,6 +1153,61 @@ RAPPEL FINAL : ${formatJson}
     const buildFormatReminder = (platformList: string[]) =>
       `{${platformList.map((p) => `"${p}":{"titre":"...","corps":"..."}`).join(",")}}`;
 
+    const generateWithCompliance = async (opts: {
+      label: string;
+      maxTokens: number;
+      systemSuffix: string;
+      userContent: string;
+    }): Promise<GeneratedAnnonces | NextResponse> => {
+      const system =
+        GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${opts.systemSuffix}`;
+
+      const callOnce = (userContent: string) =>
+        callAnthropicWithRetry(apiKey, {
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: opts.maxTokens,
+          system,
+          messages: [
+            { role: "user", content: userContent },
+            { role: "assistant", content: "{" },
+          ],
+        });
+
+      const first = await callOnce(opts.userContent);
+      if (!first.response.ok) {
+        return anthropicErrorResponse(first.response, first.json);
+      }
+
+      let annonces = parseGeneratedAnnonces(
+        extractTextFromAnthropic(first.json),
+        opts.label,
+      );
+      if (annonces instanceof NextResponse) return annonces;
+
+      const violations = collectAnnonceViolations(annonces);
+      if (violations.length === 0) return flagRemainingViolations(annonces);
+
+      const correctionUser =
+        opts.userContent +
+        "\n\n" +
+        buildComplianceCorrectionMessage(violations) +
+        "\nTexte à corriger (JSON) :\n" +
+        JSON.stringify(annonces);
+
+      const retry = await callOnce(correctionUser);
+      if (retry.response.ok) {
+        const retried = parseGeneratedAnnonces(
+          extractTextFromAnthropic(retry.json),
+          `${opts.label}-compliance-retry`,
+        );
+        if (!(retried instanceof NextResponse)) {
+          annonces = retried;
+        }
+      }
+
+      return flagRemainingViolations(annonces);
+    };
+
     const generateSplitAnnonces = async (
       baseMode: "programme" | "lot",
     ): Promise<GeneratedAnnonces | NextResponse> => {
@@ -1106,52 +1224,26 @@ RAPPEL FINAL : ${formatJson}
 
       if (onlySiteAgence) {
         const siteFormat = buildFormatReminder(["siteAgence"]);
-        const siteCall = await callAnthropicWithRetry(apiKey, {
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 2000,
-          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${siteFormat}`,
-          messages: [
-            {
-              role: "user",
-              content:
-                buildGenerationUserPrompt(siteMode, ["siteAgence"]) +
-                `\n\nGénère UNIQUEMENT siteAgence. Format: ${siteFormat}`,
-            },
-            { role: "assistant", content: "{" },
-          ],
+        return generateWithCompliance({
+          label: `${baseMode}-site`,
+          maxTokens: 2000,
+          systemSuffix: siteFormat,
+          userContent:
+            buildGenerationUserPrompt(siteMode, ["siteAgence"]) +
+            `\n\nGénère UNIQUEMENT siteAgence. Format: ${siteFormat}`,
         });
-
-        if (!siteCall.response.ok) {
-          return anthropicErrorResponse(siteCall.response, siteCall.json);
-        }
-
-        const siteText = extractTextFromAnthropic(siteCall.json);
-        return parseGeneratedAnnonces(siteText, `${baseMode}-site`);
       }
 
       if (noSiteAgence) {
         const haikuFormat = buildFormatReminder(haikuPlatforms);
-        const shortCall = await callAnthropicWithRetry(apiKey, {
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 2000,
-          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${haikuFormat}`,
-          messages: [
-            {
-              role: "user",
-              content:
-                buildGenerationUserPrompt(courtMode, haikuPlatforms) +
-                `\n\nFormat: ${haikuFormat}`,
-            },
-            { role: "assistant", content: "{" },
-          ],
+        return generateWithCompliance({
+          label: `${baseMode}-court`,
+          maxTokens: 2000,
+          systemSuffix: haikuFormat,
+          userContent:
+            buildGenerationUserPrompt(courtMode, haikuPlatforms) +
+            `\n\nFormat: ${haikuFormat}`,
         });
-
-        if (!shortCall.response.ok) {
-          return anthropicErrorResponse(shortCall.response, shortCall.json);
-        }
-
-        const shortText = extractTextFromAnthropic(shortCall.json);
-        return parseGeneratedAnnonces(shortText, `${baseMode}-court`);
       }
 
       const portailsToGenerate = platforms.filter((p) => ["leboncoin", "seloger"].includes(p));
@@ -1163,77 +1255,41 @@ RAPPEL FINAL : ${formatJson}
 
       if (portailsToGenerate.length > 0) {
         const portailFormat = buildFormatReminder(portailsToGenerate);
-        const portailCall = await callAnthropicWithRetry(apiKey, {
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 1500,
-          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${portailFormat}`,
-          messages: [
-            {
-              role: "user",
-              content:
-                buildGenerationUserPrompt(courtMode, portailsToGenerate) +
-                `\n\nFormat: ${portailFormat}`,
-            },
-            { role: "assistant", content: "{" },
-          ],
+        const parsed = await generateWithCompliance({
+          label: `${baseMode}-portails`,
+          maxTokens: 1500,
+          systemSuffix: portailFormat,
+          userContent:
+            buildGenerationUserPrompt(courtMode, portailsToGenerate) +
+            `\n\nFormat: ${portailFormat}`,
         });
-        if (portailCall.response.ok) {
-          const parsed = parseGeneratedAnnonces(
-            extractTextFromAnthropic(portailCall.json),
-            `${baseMode}-portails`,
-          );
-          if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
-        }
+        if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
       }
 
       if (reseauxToGenerate.length > 0) {
         const reseauxFormat = buildFormatReminder(reseauxToGenerate);
-        const reseauxCall = await callAnthropicWithRetry(apiKey, {
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 1500,
-          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${reseauxFormat}`,
-          messages: [
-            {
-              role: "user",
-              content:
-                buildGenerationUserPrompt(courtMode, reseauxToGenerate) +
-                `\n\nFormat: ${reseauxFormat}`,
-            },
-            { role: "assistant", content: "{" },
-          ],
+        const parsed = await generateWithCompliance({
+          label: `${baseMode}-reseaux`,
+          maxTokens: 1500,
+          systemSuffix: reseauxFormat,
+          userContent:
+            buildGenerationUserPrompt(courtMode, reseauxToGenerate) +
+            `\n\nFormat: ${reseauxFormat}`,
         });
-        if (reseauxCall.response.ok) {
-          const parsed = parseGeneratedAnnonces(
-            extractTextFromAnthropic(reseauxCall.json),
-            `${baseMode}-reseaux`,
-          );
-          if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
-        }
+        if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
       }
 
       if (wantsSiteAgence) {
         const siteFormat = buildFormatReminder(["siteAgence"]);
-        const siteCall = await callAnthropicWithRetry(apiKey, {
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 2000,
-          system: GENERATION_SYSTEM + `\n\nRAPPEL : Retourne UNIQUEMENT ${siteFormat}`,
-          messages: [
-            {
-              role: "user",
-              content:
-                buildGenerationUserPrompt(siteMode, ["siteAgence"]) +
-                `\n\nGénère UNIQUEMENT siteAgence. Format: ${siteFormat}`,
-            },
-            { role: "assistant", content: "{" },
-          ],
+        const parsed = await generateWithCompliance({
+          label: `${baseMode}-site`,
+          maxTokens: 2000,
+          systemSuffix: siteFormat,
+          userContent:
+            buildGenerationUserPrompt(siteMode, ["siteAgence"]) +
+            `\n\nGénère UNIQUEMENT siteAgence. Format: ${siteFormat}`,
         });
-        if (siteCall.response.ok) {
-          const parsed = parseGeneratedAnnonces(
-            extractTextFromAnthropic(siteCall.json),
-            `${baseMode}-site`,
-          );
-          if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
-        }
+        if (!(parsed instanceof NextResponse)) Object.assign(results, parsed);
       }
 
       return results;

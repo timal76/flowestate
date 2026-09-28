@@ -26,12 +26,17 @@ type PlatformSelection = {
   facebook: boolean;
 };
 
-type AnnonceBlock = { titre: string; corps: string };
+type AnnonceBlock = {
+  titre: string;
+  corps: string;
+  compliance_warning?: boolean;
+  compliance_violations?: string[];
+};
 
-type AnnoncesSet = {
-  leboncoin: AnnonceBlock;
-  seloger: AnnonceBlock;
-  siteAgence: AnnonceBlock;
+type AnnoncesSet = Partial<Record<TabId, AnnonceBlock>> & {
+  leboncoin?: AnnonceBlock;
+  seloger?: AnnonceBlock;
+  siteAgence?: AnnonceBlock;
 };
 
 type ScoringResult = {
@@ -746,9 +751,11 @@ export default function ProgrammesNeufsPage() {
 
     const addSection = (
       platformTitle: string,
-      block: { titre: string; corps: string },
+      block: { titre: string; corps: string } | undefined,
       isNew: boolean,
     ) => {
+      if (!block?.titre) return;
+
       if (isNew) {
         doc.addPage();
         y = 20;
@@ -1499,6 +1506,25 @@ export default function ProgrammesNeufsPage() {
 
                       {activeProgrammeBlock ? (
                         <div className="mt-6 flex flex-col overflow-auto">
+                          {activeProgrammeBlock.compliance_warning ? (
+                            <div
+                              role="alert"
+                              className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-950/60 p-5 text-sm text-amber-100"
+                            >
+                              <span className="shrink-0 text-lg" aria-hidden>
+                                ⚠️
+                              </span>
+                              <p>
+                                Formulation à corriger avant publication
+                                {activeProgrammeBlock.compliance_violations &&
+                                activeProgrammeBlock.compliance_violations.length > 0
+                                  ? ` : « ${activeProgrammeBlock.compliance_violations.join(" » — « ")} »`
+                                  : "."}{" "}
+                                Cette phrase peut être considérée comme une promesse (valeur, rendement,
+                                demande locative ou fiscalité). Reformulez-la avant de publier.
+                              </p>
+                            </div>
+                          ) : null}
                           <h3 className="text-lg font-semibold text-[#C9A96E]">
                             {activeProgrammeBlock.titre}
                           </h3>
@@ -1543,6 +1569,25 @@ export default function ProgrammesNeufsPage() {
 
                         {activeLotBlock ? (
                           <div className="mt-6 flex flex-col overflow-auto">
+                            {activeLotBlock.compliance_warning ? (
+                              <div
+                                role="alert"
+                                className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-950/60 p-5 text-sm text-amber-100"
+                              >
+                                <span className="shrink-0 text-lg" aria-hidden>
+                                  ⚠️
+                                </span>
+                                <p>
+                                  Formulation à corriger avant publication
+                                  {activeLotBlock.compliance_violations &&
+                                  activeLotBlock.compliance_violations.length > 0
+                                    ? ` : « ${activeLotBlock.compliance_violations.join(" » — « ")} »`
+                                    : "."}{" "}
+                                  Cette phrase peut être considérée comme une promesse (valeur, rendement,
+                                  demande locative ou fiscalité). Reformulez-la avant de publier.
+                                </p>
+                              </div>
+                            ) : null}
                             <h3 className="text-lg font-semibold text-[#C9A96E]">
                               {activeLotBlock.titre}
                             </h3>
