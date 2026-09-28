@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { checkGenerationLimit } from "@/lib/check-generation-limit";
 import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
+import { formatPriceEuros } from "@/lib/price-input";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
 async function callAnthropicWithRetry(apiKey: string, params: Record<string, unknown>) {
@@ -138,14 +139,14 @@ INFORMATIONS SUR LE PROSPECT :
 - Nom du prospect : ${body.prospectName || "Non précisé"}
 - Email du prospect : ${body.prospectEmail || "Non précisé"}
 - Situation personnelle et professionnelle : ${body.prospectSituation || "Non précisée"}
-- Budget : ${body.prospectBudget ? body.prospectBudget + " €" : "Non précisé"}
+- Budget : ${body.prospectBudget ? formatPriceEuros(body.prospectBudget) || body.prospectBudget + " €" : "Non précisé"}
 - Délai de recherche : ${body.searchDelay || "Non précisé"}
 - Informations personnelles utiles : ${body.personalInfo || "Non précisées"}
 
 INFORMATIONS SUR LE BIEN :
 - Type de bien : ${body.propertyType || "Non précisé"}
 - Localisation : ${body.propertyLocation || "Non précisée"}
-- Prix : ${body.propertyPrice ? body.propertyPrice + " €" : "Non précisé"}
+- Prix : ${body.propertyPrice ? formatPriceEuros(body.propertyPrice) || body.propertyPrice + " €" : "Non précisé"}
 
 CONTEXTE DE LA RELATION :
 - Date de visite : ${body.visitDate || "Non précisée"}

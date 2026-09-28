@@ -32,6 +32,25 @@ function formatDate(dateStr: string) {
     .replace(":", "h");
 }
 
+/** Aperçu carte : texte brut sans marqueurs markdown (**, #, listes…). */
+function stripMarkdownPreview(raw: string, maxLen = 80): string {
+  const cleaned = raw
+    .replace(/\r\n/g, "\n")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/_(.+?)_/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^[\s]*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/\n+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  if (cleaned.length <= maxLen) return cleaned;
+  return `${cleaned.slice(0, maxLen).trimEnd()}…`;
+}
+
 function statusClass(status: Relance["statut"]) {
   if (status === "planifiée") return "bg-blue-500/10 text-blue-400 border-blue-500/20";
   if (status === "envoyée") return "bg-green-500/10 text-green-400 border-green-500/20";
@@ -121,7 +140,9 @@ export default function RelancesPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-medium text-[#F5F5F0]">{r.titre}</p>
                     {r.prospect ? <p className="mt-1 text-xs text-[#C9A96E]">Pour {r.prospect.nom}</p> : null}
-                    <p className="mt-1 text-sm text-[#A0A0A0]">{(r.message || "").slice(0, 80)}</p>
+                    <p className="mt-1 text-sm text-[#A0A0A0]">
+                      {stripMarkdownPreview(r.message || "")}
+                    </p>
                   </div>
                   <div className="ml-auto text-right">
                     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${statusClass(r.statut)}`}>{r.statut}</span>

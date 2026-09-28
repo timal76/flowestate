@@ -13,6 +13,7 @@ import SiteHeader from "@/components/site-header";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import type { GenerationApiErrorPayload } from "@/lib/generation-limit-api";
 import { getGenerationFailure } from "@/lib/parse-generation-response";
+import { sanitizePriceDigits } from "@/lib/price-input";
 import { supabase } from "@/lib/supabase";
 
 type PropertyType = "Appartement" | "Maison" | "Studio" | "Loft" | "Villa";
@@ -498,11 +499,15 @@ function EmailsContent() {
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Prix du bien</span>
                   <input
-                    type="number"
-                    min={0}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={form.propertyPrice}
                     onChange={(event) =>
-                      setForm((prev) => ({ ...prev, propertyPrice: event.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        propertyPrice: sanitizePriceDigits(event.target.value),
+                      }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
                     placeholder="Ex : 420000"
@@ -524,11 +529,15 @@ function EmailsContent() {
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Budget du prospect</span>
                   <input
-                    type="number"
-                    min={0}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={form.prospectBudget}
                     onChange={(event) =>
-                      setForm((prev) => ({ ...prev, prospectBudget: event.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        prospectBudget: sanitizePriceDigits(event.target.value),
+                      }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
                     placeholder="Ex : 450000"

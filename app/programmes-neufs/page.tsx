@@ -1150,6 +1150,8 @@ export default function ProgrammesNeufsPage() {
                   <span className="text-sm text-[#A0A0A0]">Prix à partir de (optionnel)</span>
                   <input
                     type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={form.priceFrom}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, priceFrom: event.target.value }))

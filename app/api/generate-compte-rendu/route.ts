@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { checkGenerationLimit } from "@/lib/check-generation-limit";
 import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
+import { formatPriceEuros } from "@/lib/price-input";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
 async function callAnthropicWithRetry(apiKey: string, params: Record<string, unknown>) {
@@ -129,7 +130,7 @@ Rédige un compte rendu de visite immobilier complet et professionnel à partir 
 INFORMATIONS SUR LE BIEN :
 - Type de bien : ${body.propertyType || "Non précisé"}
 - Adresse : ${body.propertyAddress || "Non précisée"}
-- Prix affiché : ${body.propertyPrice ? body.propertyPrice + " €" : "Non précisé"}
+- Prix affiché : ${body.propertyPrice ? formatPriceEuros(body.propertyPrice) || body.propertyPrice + " €" : "Non précisé"}
 
 INFORMATIONS SUR LA VISITE :
 - Date de visite : ${body.visitDate || "Non précisée"}

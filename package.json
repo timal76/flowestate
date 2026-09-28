@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:compliance": "npx tsx scripts/test-compliance.ts"
+    "test:compliance": "npx tsx scripts/test-compliance.ts",
+    "test:price-input": "npx tsx scripts/test-price-input.ts"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.4.0",

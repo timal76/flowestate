@@ -216,6 +216,9 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
               <label className="block space-y-1">
                 <span className="text-xs text-[#666]">Budget</span>
                 <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
                   placeholder="Ex: 350 000 €"
                   value={form.budget}
                   onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))}
@@ -248,6 +251,9 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
               <label className="block space-y-1">
                 <span className="text-xs text-[#666]">Prix de vente souhaité</span>
                 <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
                   placeholder="Ex: 450 000 €"
                   value={form.budget}
                   onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))}

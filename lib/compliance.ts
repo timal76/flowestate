@@ -12,6 +12,16 @@ PRINCIPE : Ne jamais promettre, garantir, assurer ni présenter comme certain(e)
 - le niveau de demande locative (soutenue, forte, permanente, toute l'année…)
 - un avantage fiscal concret (montant, éligibilité, économie d'impôt)
 
+PRINCIPE — STABILITÉ / PÉRENNITÉ DE LA VALEUR : Ne jamais qualifier l'évolution future
+de la valeur du bien (ni du quartier, ni de l'investissement) par un adjectif suggérant
+la sécurité, la stabilité ou la pérennité — même sans le mot "garanti" ou "assuré".
+Interdit notamment : pérenne, stable, durable, solide, sécurisé, fiable, constant, sûr,
+lorsqu'ils portent sur la valorisation, l'investissement, le placement, la valeur, le prix
+ou le rendement (ex. "investissement pérenne", "valorisation stable", "placement solide").
+Seuls des faits vérifiables et PRÉSENTS peuvent être décrits (proximité de commerces,
+calme du quartier, état du bien, prestations). Jamais une prédiction ni une garantie
+implicite sur la valeur future.
+
 Interdit également : "sans risque", "aucun/zéro risque", "placement/investissement sûr ou sécurisé",
 "valeur refuge", "à l'abri", "à coup sûr", "stabilité rare/patrimoniale assurée", et toute formulation
 équivalente même reformulée.
@@ -54,6 +64,17 @@ type PatternDef = {
 /** "sur" sans accent = "sûr" seulement si suivi d'une frontière de sens (pas "sur le/plan/…"). */
 const SUR_SAFE_BOUNDARY = `(?=\\s*(?:en|avec|pour|dans|[,.!?;:]|$))`;
 
+/** Cibles économiques (texte foldé, sans accents). */
+const VALUE_NOUN =
+  "(?:valorisation|investissement|placement|rendement|prix|valeur(?:\\s+du\\s+bien)?)";
+
+/** Adjectifs de stabilité / pérennité (texte foldé). */
+const STABILITY_ADJ =
+  `(?:perenne|stable|durable|solide|securis(?:e|es|ee|ees)?|fiable|constante?|${SUR_SAFE_TOKEN})`;
+
+/** Au plus un mot intercalé entre nom et adjectif (texte foldé). */
+const NEAR = "\\w*\\s*";
+
 const VIOLATION_PATTERNS: PatternDef[] = [
   { re: /\bassure(?:e|es|s)?\b/g },
   { re: /\bgarant(?:ie|ies|i|issant|it)\b/g, skipDecennale: true },
@@ -79,6 +100,9 @@ const VIOLATION_PATTERNS: PatternDef[] = [
   { re: /\bstabilite\s+(?:rare|patrimoniale(?:\s+solide)?)\b/g },
   { re: /\bdemande\s+locative\s+(?:reste\s+)?soutenue\b/g },
   { re: /\bforte\s+demande\s+locative\b/g },
+  // Promesses implicites : stabilité/pérennité appliquée à la valeur / l'investissement (2 ordres)
+  { re: new RegExp(`\\b${VALUE_NOUN}\\s+${NEAR}${STABILITY_ADJ}\\b`, "g") },
+  { re: new RegExp(`\\b${STABILITY_ADJ}\\s+${NEAR}${VALUE_NOUN}\\b`, "g") },
 ];
 
 function sentenceHasViolation(foldedSentence: string): boolean {

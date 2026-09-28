@@ -13,6 +13,7 @@ import SiteHeader from "@/components/site-header";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import type { GenerationApiErrorPayload } from "@/lib/generation-limit-api";
 import { getGenerationFailure } from "@/lib/parse-generation-response";
+import { sanitizePriceDigits } from "@/lib/price-input";
 import { scoreAnnonce, type ScoreResult } from "@/lib/scoreAnnonce";
 import { supabase } from "@/lib/supabase";
 
@@ -465,11 +466,15 @@ function AnnoncesContent() {
                     {form.mandateType === "Location" ? "Loyer mensuel (€)" : "Prix de vente (€)"}
                   </span>
                   <input
-                    type="number"
-                    min={0}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={form.price}
                     onChange={(event) =>
-                      setForm((prev) => ({ ...prev, price: event.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        price: sanitizePriceDigits(event.target.value),
+                      }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
                     placeholder={form.mandateType === "Location" ? "Ex : 1450" : "Ex : 420000"}
@@ -566,11 +571,15 @@ function AnnoncesContent() {
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Charges mensuelles (€)</span>
                   <input
-                    type="number"
-                    min={0}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={form.monthlyCharges}
                     onChange={(event) =>
-                      setForm((prev) => ({ ...prev, monthlyCharges: event.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        monthlyCharges: sanitizePriceDigits(event.target.value),
+                      }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
                     placeholder="Ex : 120"

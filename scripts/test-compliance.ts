@@ -12,6 +12,8 @@ const MUST_DETECT = [
   "garantissant une valorisation long terme et une forte demande locative",
   "stabilité rare",
   "demande locative reste soutenue toute l'année",
+  "investissement pérenne dans un arrondissement reconnu pour sa valorisation stable",
+  "un placement stable pour les années à venir",
 ];
 
 const MUST_PASS = [
@@ -19,6 +21,7 @@ const MUST_PASS = [
   "Situé à 5 minutes à pied du métro Villiers",
   "Les dispositifs fiscaux applicables méritent d'être étudiés avec votre conseiller",
   "Bien couvert par la garantie décennale du constructeur",
+  "Un cadre de vie recherché dans l'un des quartiers les plus prisés de Lyon",
 ];
 
 let failed = 0;

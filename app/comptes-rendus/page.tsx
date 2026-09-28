@@ -8,6 +8,7 @@ import QuotaExceededModal from "@/components/paywall/QuotaExceededModal";
 import TemplatesModal from "@/components/templates/TemplatesModal";
 import type { GenerationApiErrorPayload } from "@/lib/generation-limit-api";
 import { getGenerationFailure } from "@/lib/parse-generation-response";
+import { formatPriceEuros, sanitizePriceDigits } from "@/lib/price-input";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -497,9 +498,7 @@ function ComptesRendusContent() {
 
   const propertyPriceDisplay = useMemo(() => {
     if (!form.propertyPrice) return "—";
-    const n = Number(form.propertyPrice);
-    if (Number.isNaN(n)) return `${form.propertyPrice} €`;
-    return `${n.toLocaleString("fr-FR")} €`;
+    return formatPriceEuros(form.propertyPrice) || "—";
   }, [form.propertyPrice]);
 
   async function handleGenerate(event: FormEvent<HTMLFormElement>) {
@@ -767,13 +766,18 @@ function ComptesRendusContent() {
                 <label className="space-y-2">
                   <span className="text-sm text-[#A0A0A0]">Prix du bien</span>
                   <input
-                    type="number"
-                    min={0}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={form.propertyPrice}
                     onChange={(event) =>
-                      setForm((prev) => ({ ...prev, propertyPrice: event.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        propertyPrice: sanitizePriceDigits(event.target.value),
+                      }))
                     }
                     className="w-full rounded-xl border border-white/15 bg-[#121212] px-4 py-3 text-[#F5F5F0] outline-none transition-all duration-300 focus:border-[#C9A96E]"
+                    placeholder="Ex : 1200000"
                   />
                 </label>
                 <label className="space-y-2">
