@@ -85,6 +85,7 @@ function AnnoncesContent() {
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
   const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
+  const [quotaPaywallType, setQuotaPaywallType] = useState<"classic" | "programmes-neufs" | "crm-prospects" | null>(null);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -268,6 +269,7 @@ function AnnoncesContent() {
         const failure = getGenerationFailure(response, payload);
         if (failure?.type === "quota") {
           setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallType(failure.quotaType);
           setQuotaPaywallOpen(true);
           setGenerationError(null);
           return;
@@ -789,6 +791,7 @@ function AnnoncesContent() {
         open={quotaPaywallOpen}
         onClose={() => setQuotaPaywallOpen(false)}
         plan={quotaPaywallPlan}
+        quotaType={quotaPaywallType}
       />
     </main>
   );

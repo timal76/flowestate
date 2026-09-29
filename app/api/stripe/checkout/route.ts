@@ -31,10 +31,11 @@ export async function POST(request: Request) {
 
     const planFeatures: Record<StripePlanId, string> = {
       essentiel:
-        "✓ 100 générations/mois  ✓ Générateur d'annonces  ✓ Emails de relance  ✓ Comptes-rendus de visite  ✓ CRM Prospects  ✓ Relances automatiques  ✓ Historique des générations",
-      pro: "✓ Générations illimitées  ✓ Tout le plan Essentiel  ✓ Templates illimités  ✓ Export PDF  ✓ Support prioritaire",
+        "✓ 40 générations/mois  ✓ CRM Prospects (50 fiches)  ✓ Emails de relance  ✓ Comptes-rendus  ✓ 5 templates  ✓ Support email",
+      pro:
+        "✓ 150 générations/mois  ✓ CRM illimité + relances auto  ✓ 5 Programmes neufs/mois  ✓ Export PDF  ✓ Templates illimités  ✓ Support prioritaire",
       expert:
-        "✓ Tout le plan Pro  ✓ Programmes neufs (PDF → 6 annonces)  ✓ Analyse annonces concurrentes  ✓ Score de différenciation  ✓ Support dédié + onboarding",
+        "✓ Générations illimitées  ✓ Programmes neufs illimités  ✓ Génération par lot  ✓ Analyse concurrentielle  ✓ Enrichissement de données  ✓ Support dédié",
     };
 
     const checkoutSession = await stripe.checkout.sessions.create({

@@ -46,6 +46,7 @@ export default function ProspectEmailModal({
   const [isMarkingSent, setIsMarkingSent] = useState(false);
   const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
   const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
+  const [quotaPaywallType, setQuotaPaywallType] = useState<"classic" | "programmes-neufs" | "crm-prospects" | null>(null);
   const [plannedRelanceId, setPlannedRelanceId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -121,6 +122,7 @@ export default function ProspectEmailModal({
       if (!response.ok) {
         if (isQuotaExceededResponse(response.status, payload)) {
           setQuotaPaywallPlan(payload.plan ?? "decouverte");
+          setQuotaPaywallType(payload.quotaType ?? "classic");
           setQuotaPaywallOpen(true);
           return;
         }
@@ -323,6 +325,7 @@ export default function ProspectEmailModal({
         open={quotaPaywallOpen}
         onClose={() => setQuotaPaywallOpen(false)}
         plan={quotaPaywallPlan}
+        quotaType={quotaPaywallType}
       />
     </>
   );

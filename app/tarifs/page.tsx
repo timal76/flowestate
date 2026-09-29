@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import SiteHeader from "@/components/site-header";
 import StripePlanCheckoutButton from "@/components/stripe-plan-checkout-button";
+import {
+  annualDiscountPercent,
+  PLAN_AMOUNTS_CENTS,
+  type PaidPlanId,
+} from "@/lib/plans";
 
 function PlanFeature({
   included,
@@ -25,8 +30,57 @@ function PlanFeature({
   );
 }
 
+function formatEurosFromCents(cents: number): string {
+  const euros = cents / 100;
+  const rounded = Math.round(euros * 100) / 100;
+  if (Number.isInteger(rounded)) return `${rounded}€`;
+  return `${rounded.toFixed(2).replace(".", ",")}€`;
+}
+
+function formatMonthlyEquivalent(annualCents: number): string {
+  const perMonth = annualCents / 12 / 100;
+  const rounded = Math.round(perMonth);
+  return `${rounded}€`;
+}
+
+function formatAnnualTotal(annualCents: number): string {
+  const euros = annualCents / 100;
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: euros % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(euros);
+}
+
 export default function TarifsPage() {
   const [annuel, setAnnuel] = useState(false);
+
+  const discountBadge = useMemo(() => {
+    const discounts = (["essentiel", "pro", "expert"] as PaidPlanId[]).map(
+      (plan) => annualDiscountPercent(plan),
+    );
+    const unique = [...new Set(discounts)];
+    if (unique.length === 1) return `-${unique[0]}%`;
+    const min = Math.min(...discounts);
+    const max = Math.max(...discounts);
+    return min === max ? `-${min}%` : `jusqu'à -${max}%`;
+  }, []);
+
+  function planPriceLabel(plan: PaidPlanId): string {
+    const amounts = PLAN_AMOUNTS_CENTS[plan];
+    if (!annuel) return formatEurosFromCents(amounts.monthly);
+    return formatMonthlyEquivalent(amounts.annual);
+  }
+
+  function planFooter(plan: PaidPlanId): string {
+    const amounts = PLAN_AMOUNTS_CENTS[plan];
+    if (!annuel) {
+      return `${formatEurosFromCents(amounts.monthly)}/mois — facturation immédiate`;
+    }
+    const pct = annualDiscountPercent(plan);
+    return `${formatAnnualTotal(amounts.annual)}/an (−${pct}%) — facturation immédiate`;
+  }
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] antialiased">
@@ -68,7 +122,7 @@ export default function TarifsPage() {
             <span className={`text-sm font-medium ${annuel ? "text-[#F5F5F0]" : "text-[#A0A0A0]"}`}>
               Annuel
               <span className="ml-2 rounded-full bg-[#C9A96E]/20 px-2 py-0.5 text-xs text-[#C9A96E]">
-                -10%
+                {discountBadge}
               </span>
             </span>
           </div>
@@ -89,10 +143,10 @@ export default function TarifsPage() {
                 <PlanFeature included>Générateur d&apos;annonces</PlanFeature>
                 <PlanFeature included>Emails de relance</PlanFeature>
                 <PlanFeature included>Comptes rendus de visite</PlanFeature>
-                <PlanFeature included>5 générations/mois</PlanFeature>
+                <PlanFeature included>5 générations offertes</PlanFeature>
+                <PlanFeature included>1 génération Programmes neufs offerte</PlanFeature>
                 <PlanFeature included>Sans carte bancaire</PlanFeature>
                 <PlanFeature included={false}>CRM Prospects</PlanFeature>
-                <PlanFeature included={false}>Programmes neufs</PlanFeature>
               </ul>
 
               <Link
@@ -102,7 +156,7 @@ export default function TarifsPage() {
                 Commencer gratuitement
               </Link>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                5 générations gratuites par mois, sans carte bancaire
+                5 générations offertes, sans carte bancaire
               </p>
             </article>
 
@@ -112,18 +166,22 @@ export default function TarifsPage() {
                 Essentiel
               </p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                {annuel ? "67€" : "74,99€"}
+                {planPriceLabel("essentiel")}
                 <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
+              {annuel ? (
+                <p className="mt-1 text-xs text-[#C9A96E]">
+                  −{annualDiscountPercent("essentiel")}% vs mensuel
+                </p>
+              ) : null}
 
               <ul className="mt-6 divide-y divide-white/10 text-sm">
                 <PlanFeature included>1 utilisateur</PlanFeature>
-                <PlanFeature included>Générateur d&apos;annonces</PlanFeature>
-                <PlanFeature included>Emails de relance</PlanFeature>
+                <PlanFeature included>40 générations/mois</PlanFeature>
+                <PlanFeature included>CRM Prospects (50 fiches actives)</PlanFeature>
+                <PlanFeature included>Emails de relance manuels</PlanFeature>
                 <PlanFeature included>Comptes rendus de visite</PlanFeature>
-                <PlanFeature included>CRM Prospects</PlanFeature>
                 <PlanFeature included>Templates (5 max)</PlanFeature>
-                <PlanFeature included>100 générations/mois</PlanFeature>
                 <PlanFeature included>Support par email</PlanFeature>
                 <PlanFeature included={false}>Programmes neufs</PlanFeature>
               </ul>
@@ -135,9 +193,7 @@ export default function TarifsPage() {
               >
                 Passer à Essentiel
               </StripePlanCheckoutButton>
-              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                {annuel ? "804€/an — facturation immédiate" : "74,99€/mois — facturation immédiate"}
-              </p>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">{planFooter("essentiel")}</p>
             </article>
 
             {/* Pro */}
@@ -150,20 +206,22 @@ export default function TarifsPage() {
               </div>
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Pro</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                {annuel ? "134€" : "149,99€"}
+                {planPriceLabel("pro")}
                 <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
+              {annuel ? (
+                <p className="mt-1 text-xs text-[#C9A96E]">−{annualDiscountPercent("pro")}% vs mensuel</p>
+              ) : null}
 
               <ul className="mt-6 divide-y divide-white/10 text-sm">
                 <PlanFeature included>1 utilisateur</PlanFeature>
-                <PlanFeature included>Tout le plan Essentiel</PlanFeature>
-                <PlanFeature included>Générations illimitées</PlanFeature>
-                <PlanFeature included>Templates illimités</PlanFeature>
-                <PlanFeature included>Export PDF</PlanFeature>
-                <PlanFeature included>Historique complet</PlanFeature>
+                <PlanFeature included>150 générations/mois</PlanFeature>
+                <PlanFeature included>CRM Prospects illimité</PlanFeature>
                 <PlanFeature included>Relances automatiques</PlanFeature>
+                <PlanFeature included>Programmes neufs (5/mois)</PlanFeature>
+                <PlanFeature included>Export PDF</PlanFeature>
+                <PlanFeature included>Templates illimités</PlanFeature>
                 <PlanFeature included>Support prioritaire</PlanFeature>
-                <PlanFeature included={false}>Programmes neufs</PlanFeature>
               </ul>
 
               <StripePlanCheckoutButton
@@ -173,36 +231,36 @@ export default function TarifsPage() {
               >
                 Passer à Pro
               </StripePlanCheckoutButton>
-              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                {annuel ? "1 608€/an — facturation immédiate" : "149,99€/mois — facturation immédiate"}
-              </p>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">{planFooter("pro")}</p>
             </article>
 
             {/* Expert */}
             <article className="flex flex-col rounded-2xl border border-white/20 bg-white/[0.02] p-8 transition-all duration-300 hover:border-white/30 hover:bg-white/[0.04]">
               <div className="mb-3 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
-                Programmes neufs inclus
+                Illimité
               </div>
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">
                 Expert
               </p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                {annuel ? "269€" : "299,99€"}
+                {planPriceLabel("expert")}
                 <span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
+              {annuel ? (
+                <p className="mt-1 text-xs text-[#C9A96E]">
+                  −{annualDiscountPercent("expert")}% vs mensuel
+                </p>
+              ) : null}
 
               <ul className="mt-6 divide-y divide-white/10 text-sm">
                 <PlanFeature included>1 utilisateur</PlanFeature>
-                <PlanFeature included>Tout le plan Pro</PlanFeature>
-                <PlanFeature included>
-                  Programmes neufs (plaquette PDF → 6 annonces différenciantes)
-                </PlanFeature>
+                <PlanFeature included>Générations illimitées</PlanFeature>
+                <PlanFeature included>Programmes neufs illimités</PlanFeature>
                 <PlanFeature included>Génération par lot</PlanFeature>
-                <PlanFeature included>Analyse annonces concurrentes</PlanFeature>
-                <PlanFeature included>Enrichissement web données officielles</PlanFeature>
-                <PlanFeature included>Score de différenciation</PlanFeature>
-                <PlanFeature included>Export PDF annonces programmes</PlanFeature>
-                <PlanFeature included>Support dédié + onboarding personnalisé</PlanFeature>
+                <PlanFeature included>Analyse concurrentielle + scoring</PlanFeature>
+                <PlanFeature included>Enrichissement de données</PlanFeature>
+                <PlanFeature included>Onboarding personnalisé</PlanFeature>
+                <PlanFeature included>Support dédié</PlanFeature>
               </ul>
 
               <StripePlanCheckoutButton
@@ -212,9 +270,7 @@ export default function TarifsPage() {
               >
                 Passer à Expert
               </StripePlanCheckoutButton>
-              <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                {annuel ? "3 228€/an — facturation immédiate" : "299,99€/mois — facturation immédiate"}
-              </p>
+              <p className="mt-2 text-center text-xs text-[#A0A0A0]">{planFooter("expert")}</p>
             </article>
           </div>
         </div>

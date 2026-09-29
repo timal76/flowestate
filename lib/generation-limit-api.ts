@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import type { QuotaType } from "./plans";
+
 export type GenerationLimitCode = "QUOTA_EXCEEDED" | "SUBSCRIPTION_REQUIRED";
 
 export type GenerationLimitCheckResult = {
@@ -8,6 +10,7 @@ export type GenerationLimitCheckResult = {
   count?: number;
   code?: GenerationLimitCode;
   plan?: string;
+  quotaType?: QuotaType;
 };
 
 export function generationLimitErrorResponse(result: GenerationLimitCheckResult): NextResponse {
@@ -19,6 +22,7 @@ export function generationLimitErrorResponse(result: GenerationLimitCheckResult)
       code: result.code ?? "SUBSCRIPTION_REQUIRED",
       plan: result.plan ?? null,
       count: result.count ?? null,
+      quotaType: result.quotaType ?? null,
     },
     { status },
   );
@@ -29,6 +33,7 @@ export type GenerationApiErrorPayload = {
   code?: string;
   plan?: string | null;
   count?: number | null;
+  quotaType?: QuotaType | null;
   message?: string;
 };
 

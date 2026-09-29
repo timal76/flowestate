@@ -42,7 +42,7 @@ export default function HomePage() {
                 Commencer gratuitement
               </Link>
               <span className="animate-hero-badge inline-flex items-center gap-1.5 rounded-full border border-[#C9A96E]/30 bg-[#C9A96E]/10 px-4 py-1.5 text-xs font-medium text-[#C9A96E]">
-                ✓ 5 générations gratuites par mois — sans carte bancaire
+                ✓ 5 générations offertes — sans carte bancaire
               </span>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function HomePage() {
               style={{ border: "1px solid rgba(201,169,110,0.3)", background: "rgba(201,169,110,0.03)" }}
             >
               <div className="mb-4 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
-                Nouveau — Plan Expert
+                Nouveau — dès Pro
               </div>
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
@@ -177,7 +177,7 @@ export default function HomePage() {
           <div className="mb-14 max-w-2xl space-y-4">
             <h2 className="text-3xl font-semibold md:text-4xl">Des plans simples et efficaces.</h2>
             <p className="text-[#A0A0A0]">
-              Quatre plans adaptés à votre activité. Commencez avec 5 générations gratuites par mois, sans carte bancaire.
+              Quatre plans adaptés à votre activité. Commencez avec 5 générations offertes, sans carte bancaire.
             </p>
           </div>
 
@@ -190,7 +190,11 @@ export default function HomePage() {
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>5 générations/mois</span>
+                  <span>5 générations offertes</span>
+                </li>
+                <li className="flex items-center gap-3 py-3">
+                  <span className="text-[#C9A96E]">✓</span>
+                  <span>1 génération Programmes neufs offerte</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
@@ -202,7 +206,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-red-400/60">✗</span>
-                  <span className="text-[#A0A0A0]/50">Programmes neufs</span>
+                  <span className="text-[#A0A0A0]/50">CRM Prospects</span>
                 </li>
               </ul>
               <Link
@@ -212,31 +216,31 @@ export default function HomePage() {
                 Commencer gratuitement
               </Link>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                5 générations gratuites par mois, sans carte bancaire
+                5 générations offertes, sans carte bancaire
               </p>
             </article>
 
             <article className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Essentiel</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                74,99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+                49€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>1 utilisateur</span>
+                  <span>40 générations/mois</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Annonces, emails, comptes rendus</span>
+                  <span>CRM Prospects (50 fiches)</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>100 générations/mois</span>
+                  <span>Emails de relance &amp; comptes-rendus</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>CRM Prospects</span>
+                  <span>5 templates</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-red-400/60">✗</span>
@@ -250,7 +254,7 @@ export default function HomePage() {
                 Passer à Essentiel
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                74,99€/mois — facturation immédiate
+                49€/mois — facturation immédiate
               </p>
             </article>
 
@@ -263,20 +267,20 @@ export default function HomePage() {
               </div>
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Pro</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                149,99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+                99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>1 utilisateur</span>
+                  <span>150 générations/mois</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Tout le plan Essentiel</span>
+                  <span>CRM illimité + relances auto</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Générations illimitées</span>
+                  <span>5 Programmes neufs/mois</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
@@ -286,10 +290,6 @@ export default function HomePage() {
                   <span className="text-[#C9A96E]">✓</span>
                   <span>Support prioritaire</span>
                 </li>
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-red-400/60">✗</span>
-                  <span className="text-[#A0A0A0]/50">Programmes neufs</span>
-                </li>
               </ul>
               <StripePlanCheckoutButton
                 plan="pro"
@@ -298,38 +298,34 @@ export default function HomePage() {
                 Passer à Pro
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                149,99€/mois — facturation immédiate
+                99€/mois — facturation immédiate
               </p>
             </article>
 
             <article className="flex flex-col rounded-2xl border border-white/15 bg-white/[0.02] p-8 transition-all duration-300 ease-out hover:border-[#C9A96E]/60 hover:bg-white/[0.04]">
               <div className="mb-3 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
-                Programmes neufs inclus
+                Illimité
               </div>
               <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#A0A0A0]">Expert</p>
               <p className="mt-4 text-4xl font-semibold text-[#F5F5F0]">
-                299,99€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
+                199€<span className="text-base font-medium text-[#A0A0A0]">/mois</span>
               </p>
               <ul className="mt-6 divide-y divide-white/10 text-sm text-[#A0A0A0]">
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>1 utilisateur</span>
+                  <span>Générations illimitées</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Tout le plan Pro</span>
+                  <span>Programmes neufs illimités</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Programmes neufs (plaquette PDF → 6 annonces)</span>
+                  <span>Génération par lot</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>Analyse annonces concurrentes</span>
-                </li>
-                <li className="flex items-center gap-3 py-3">
-                  <span className="text-[#C9A96E]">✓</span>
-                  <span>Score de différenciation</span>
+                  <span>Analyse concurrentielle + scoring</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
@@ -343,7 +339,7 @@ export default function HomePage() {
                 Passer à Expert
               </StripePlanCheckoutButton>
               <p className="mt-2 text-center text-xs text-[#A0A0A0]">
-                299,99€/mois — facturation immédiate
+                199€/mois — facturation immédiate
               </p>
             </article>
           </div>

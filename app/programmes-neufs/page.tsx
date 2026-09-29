@@ -198,9 +198,10 @@ export default function ProgrammesNeufsPage() {
   const [isLoadingNewLot, setIsLoadingNewLot] = useState(false);
   const [isDraggingNewLot, setIsDraggingNewLot] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [upgradeReason, setUpgradeReason] = useState<"free" | "expert">("expert");
+  const [upgradeReason, setUpgradeReason] = useState<"essentiel" | "inactive">("essentiel");
   const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
   const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
+  const [quotaPaywallType, setQuotaPaywallType] = useState<"classic" | "programmes-neufs" | "crm-prospects" | null>(null);
   const [platforms, setPlatforms] = useState<PlatformSelection>({
     leboncoin: true,
     seloger: true,
@@ -222,16 +223,26 @@ export default function ProgrammesNeufsPage() {
         .eq("id", session.user.id)
         .single();
 
-      const hasAccess =
-        data?.plan === "expert" &&
-        (data?.subscription_status === "active" ||
-          data?.subscription_status === "trialing" ||
-          data?.subscription_status === "trial");
+      const plan = data?.plan as string | null | undefined;
+      const status = data?.subscription_status as string | null | undefined;
+      const isActive =
+        status === "active" || status === "trialing" || status === "trial";
 
-      if (!hasAccess) {
-        setUpgradeReason(data?.plan === "free" ? "free" : "expert");
+      // Essentiel : PN non inclus → mur d'upgrade vers Pro
+      if ((plan === "essentiel" || plan === "starter") && isActive) {
+        setUpgradeReason("essentiel");
         setShowUpgrade(true);
+        return;
       }
+
+      // Abonnement inactif (hors Découverte / free qui a 1 génération offerte)
+      if (plan && plan !== "free" && !isActive && status !== "free") {
+        setUpgradeReason("inactive");
+        setShowUpgrade(true);
+        return;
+      }
+
+      setShowUpgrade(false);
     };
 
     void checkAccess();
@@ -259,17 +270,31 @@ export default function ProgrammesNeufsPage() {
 
       if (!data) return;
 
-      setUserPlan(typeof data.plan === "string" ? data.plan : "");
+      const plan = typeof data.plan === "string" ? data.plan : "";
+      setUserPlan(plan);
       setSubscriptionStatus(
         typeof data.subscription_status === "string" ? data.subscription_status : "",
       );
 
-      const { count } = await supabase
+      const isFree =
+        plan === "free" ||
+        (!plan &&
+          (!data.subscription_status ||
+            data.subscription_status === "free" ||
+            data.subscription_status === "inactive"));
+
+      let query = supabase
         .from("generations")
         .select("*", { count: "exact", head: true })
         .eq("user_id", session.user.id)
-        .gte("created_at", fromIso);
+        .eq("type", "programme-neuf");
 
+      // Pro : compteur mensuel ; Découverte : cumulatif (jamais resetté)
+      if (!isFree) {
+        query = query.gte("created_at", fromIso);
+      }
+
+      const { count } = await query;
       setGenerationsUsed(count ?? 0);
     };
 
@@ -502,12 +527,13 @@ export default function ProgrammesNeufsPage() {
         const failure = getGenerationFailure(response, payload);
         if (failure?.type === "quota") {
           setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallType(failure.quotaType);
           setQuotaPaywallOpen(true);
           return;
         }
-        if (response.status === 403 && payload?.error?.includes("plan Expert")) {
-          setGenerationError("plan Expert");
-          toast.error("Cette feature est réservée au plan Expert.");
+        if (response.status === 403 && payload?.error?.includes("Essentiel")) {
+          setGenerationError("plan Essentiel");
+          toast.error("Programmes neufs n'est pas inclus dans le plan Essentiel.");
           return;
         }
         toast.error(payload.error || "Erreur lors de la génération.");
@@ -667,6 +693,7 @@ export default function ProgrammesNeufsPage() {
         const failure = getGenerationFailure(response, payload);
         if (failure?.type === "quota") {
           setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallType(failure.quotaType);
           setQuotaPaywallOpen(true);
           return;
         }
@@ -675,9 +702,9 @@ export default function ProgrammesNeufsPage() {
           const message = "Le service est momentanément surchargé. Réessayez dans quelques secondes.";
           setGenerationError(message);
           toast.error(message);
-        } else if (response.status === 403 && payload?.error?.includes("plan Expert")) {
-          setGenerationError("plan Expert");
-          toast.error("Cette feature est réservée au plan Expert.");
+        } else if (response.status === 403 && payload?.error?.includes("Essentiel")) {
+          setGenerationError("plan Essentiel");
+          toast.error("Programmes neufs n'est pas inclus dans le plan Essentiel.");
         } else {
           const message = payload.error || "Une erreur est survenue. Veuillez réessayer.";
           setGenerationError(message);
@@ -863,16 +890,18 @@ export default function ProgrammesNeufsPage() {
             </div>
             <h1 className="text-3xl font-semibold text-[#F5F5F0]">Programmes neufs</h1>
             <p className="text-lg text-[#A0A0A0]">
-              {upgradeReason === "free"
-                ? "Programmes neufs est disponible à partir du plan Expert."
-                : "Cette feature est réservée au plan Expert. Analysez une plaquette promoteur PDF et générez 6 annonces différenciantes en quelques secondes."}
+              {upgradeReason === "essentiel"
+                ? "Programmes neufs n'est pas inclus dans le plan Essentiel. Passez au plan Pro pour 5 conversions par mois."
+                : "Réactivez un abonnement Pro ou Expert pour accéder à Programmes neufs."}
             </p>
             <div className="space-y-3">
               <a
                 href="/tarifs"
                 className="inline-flex w-full items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90"
               >
-                Passer au plan Expert — 299,99€/mois
+                {upgradeReason === "essentiel"
+                  ? "Passer au plan Pro — 99€/mois"
+                  : "Voir les tarifs"}
               </a>
               <a
                 href="/dashboard"
@@ -881,7 +910,9 @@ export default function ProgrammesNeufsPage() {
                 Retour au dashboard
               </a>
             </div>
-            <p className="text-xs text-[#555]">5 générations gratuites par mois — sans carte bancaire</p>
+            <p className="text-xs text-[#555]">
+              Disponible dès Découverte (1 génération offerte) et Pro (5/mois)
+            </p>
           </div>
         </section>
       </main>
@@ -910,31 +941,47 @@ export default function ProgrammesNeufsPage() {
             </p>
           </div>
 
-          {userPlan === "starter" && subscriptionStatus === "active" && generationsUsed !== null ? (
-            <div className="mb-8 max-w-3xl rounded-xl border border-white/10 bg-white/[0.02] p-4">
-              <div className="mb-2 flex justify-between text-sm">
-                <span className="text-[#A0A0A0]">Générations utilisées ce mois</span>
-                <span className={generationsUsed >= 25 ? "text-red-400" : "text-[#C9A96E]"}>
-                  {generationsUsed}/30
-                </span>
+          {(() => {
+            const isFreeUser =
+              userPlan === "free" ||
+              (!userPlan &&
+                (!subscriptionStatus ||
+                  subscriptionStatus === "free" ||
+                  subscriptionStatus === "inactive"));
+            const isProUser = userPlan === "pro" && subscriptionStatus === "active";
+            if ((!isFreeUser && !isProUser) || generationsUsed === null) return null;
+
+            const limit = isFreeUser ? 1 : 5;
+            const label = isFreeUser
+              ? "Génération Programmes neufs offerte"
+              : "Conversions Programmes neufs ce mois";
+            const nearLimit = generationsUsed >= Math.max(1, limit - 1);
+
+            return (
+              <div className="mb-8 max-w-3xl rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                <div className="mb-2 flex justify-between text-sm">
+                  <span className="text-[#A0A0A0]">{label}</span>
+                  <span className={nearLimit ? "text-red-400" : "text-[#C9A96E]"}>
+                    {generationsUsed}/{limit}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-white/10">
+                  <div
+                    className={`h-2 rounded-full transition-all ${nearLimit ? "bg-red-400" : "bg-[#C9A96E]"}`}
+                    style={{ width: `${Math.min(100, (generationsUsed / limit) * 100)}%` }}
+                  />
+                </div>
+                {generationsUsed >= limit ? (
+                  <p className="mt-2 text-xs text-red-400">
+                    Quota épuisé —{" "}
+                    <Link href="/tarifs" className="underline">
+                      {isFreeUser ? "Passer au Pro" : "Passer à Expert"}
+                    </Link>
+                  </p>
+                ) : null}
               </div>
-              <div className="h-2 rounded-full bg-white/10">
-                <div
-                  className={`h-2 rounded-full transition-all ${generationsUsed >= 25 ? "bg-red-400" : "bg-[#C9A96E]"}`}
-                  style={{ width: `${Math.min(100, (generationsUsed / 30) * 100)}%` }}
-                />
-              </div>
-              {generationsUsed >= 25 ? (
-                <p className="mt-2 text-xs text-red-400">
-                  Plus que {30 - generationsUsed} génération{30 - generationsUsed > 1 ? "s" : ""}{" "}
-                  restante{30 - generationsUsed > 1 ? "s" : ""} —
-                  <Link href="/tarifs" className="ml-1 underline">
-                    Passer au Pro
-                  </Link>
-                </p>
-              ) : null}
-            </div>
-          ) : null}
+            );
+          })()}
 
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
             <form
@@ -1287,18 +1334,19 @@ export default function ProgrammesNeufsPage() {
             <div className="flex h-full min-h-[20rem] flex-col rounded-2xl border border-[#C9A96E]/20 bg-white/[0.02] p-8 lg:min-h-0">
               <h2 className="text-xl font-semibold text-[#F5F5F0]">Vos annonces</h2>
 
-              {generationError?.includes("plan Expert") ? (
+              {generationError?.includes("plan Essentiel") ? (
                 <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-[#C9A96E]/30 bg-[#C9A96E]/5 p-8 text-center">
-                  <p className="text-lg font-semibold text-[#F5F5F0]">Feature réservée au plan Expert</p>
+                  <p className="text-lg font-semibold text-[#F5F5F0]">
+                    Non inclus dans Essentiel
+                  </p>
                   <p className="mt-2 text-sm text-[#A0A0A0]">
-                    La génération d&apos;annonces depuis une plaquette promoteur est disponible
-                    uniquement avec le plan Expert.
+                    Programmes neufs est disponible à partir du plan Pro (5 conversions/mois).
                   </p>
                   <a
                     href="/tarifs"
                     className="mt-6 inline-flex items-center justify-center rounded-full bg-[#B8943F] px-8 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90"
                   >
-                    Voir le plan Expert
+                    Voir le plan Pro
                   </a>
                 </div>
               ) : generationError ? (
@@ -1645,6 +1693,7 @@ export default function ProgrammesNeufsPage() {
         open={quotaPaywallOpen}
         onClose={() => setQuotaPaywallOpen(false)}
         plan={quotaPaywallPlan}
+        quotaType={quotaPaywallType}
       />
     </main>
   );

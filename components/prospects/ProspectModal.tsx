@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import QuotaExceededModal from "@/components/paywall/QuotaExceededModal";
+import { isQuotaExceededResponse } from "@/lib/generation-limit-api";
+import type { QuotaType } from "@/lib/plans";
+
 export type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
 export type ProspectTemperature = "chaud" | "tiède" | "froid";
 export type ProspectCategorie = "acheteur" | "vendeur";
@@ -56,6 +60,9 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
   const [form, setForm] = useState<ProspectInput>(initialValue ?? emptyForm);
   const [temperature, setTemperature] = useState<ProspectTemperature>("tiède");
   const [saving, setSaving] = useState(false);
+  const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
+  const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
+  const [quotaPaywallType, setQuotaPaywallType] = useState<QuotaType | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -114,7 +121,21 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = (await res.json()) as { prospect?: unknown; error?: string };
+      const data = (await res.json()) as {
+        prospect?: unknown;
+        error?: string;
+        code?: string;
+        plan?: string | null;
+        quotaType?: QuotaType | null;
+      };
+
+      if (isQuotaExceededResponse(res.status, data)) {
+        setQuotaPaywallPlan(data.plan ?? "essentiel");
+        setQuotaPaywallType(data.quotaType ?? "crm-prospects");
+        setQuotaPaywallOpen(true);
+        return;
+      }
+
       if (!res.ok || !data.prospect) throw new Error(data.error ?? "Erreur lors de l'enregistrement.");
 
       toast.success(mode === "create" ? "Prospect créé" : "Prospect mis à jour");
@@ -128,6 +149,7 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
   }
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
       <div
         className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto rounded-2xl border border-[#C9A96E]/20 bg-[#0A0A0A]"
@@ -287,5 +309,12 @@ export default function ProspectModal({ open, mode, initialValue, prospectId, on
         </div>
       </div>
     </div>
+    <QuotaExceededModal
+      open={quotaPaywallOpen}
+      onClose={() => setQuotaPaywallOpen(false)}
+      plan={quotaPaywallPlan}
+      quotaType={quotaPaywallType}
+    />
+    </>
   );
 }

@@ -98,6 +98,7 @@ function EmailsContent() {
   const [relanceModalOpen, setRelanceModalOpen] = useState(false);
   const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
   const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
+  const [quotaPaywallType, setQuotaPaywallType] = useState<"classic" | "programmes-neufs" | "crm-prospects" | null>(null);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated" || !session?.user?.id) {
@@ -252,6 +253,7 @@ function EmailsContent() {
         const failure = getGenerationFailure(response, payload);
         if (failure?.type === "quota") {
           setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallType(failure.quotaType);
           setQuotaPaywallOpen(true);
           return;
         }
@@ -829,6 +831,7 @@ function EmailsContent() {
         open={quotaPaywallOpen}
         onClose={() => setQuotaPaywallOpen(false)}
         plan={quotaPaywallPlan}
+        quotaType={quotaPaywallType}
       />
     </main>
   );

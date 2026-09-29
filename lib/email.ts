@@ -14,7 +14,7 @@ export async function sendWelcomeEmail(to: string, firstName: string) {
         
         <h2 style="color: #f5f5f0; font-size: 22px;">Bienvenue, ${firstName} ! 👋</h2>
         <p style="color: #a0a0a0; line-height: 1.6;">
-          Votre compte FlowEstate est créé. Vous bénéficiez de <strong style="color: #C9A96E;">5 générations gratuites par mois</strong>, sans carte bancaire, pour découvrir nos outils.
+          Votre compte FlowEstate est créé. Vous bénéficiez de <strong style="color: #C9A96E;">5 générations offertes</strong> et <strong style="color: #C9A96E;">1 génération Programmes neufs offerte</strong>, sans carte bancaire, pour découvrir nos outils.
         </p>
         
         <div style="margin: 32px 0;">

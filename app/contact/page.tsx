@@ -13,7 +13,7 @@ const selectClass =
 const faqItems = [
   {
     q: "Comment fonctionne le plan gratuit ?",
-    a: "À l'inscription, vous bénéficiez de 5 générations gratuites par mois, sans carte bancaire. Vous pouvez passer à un plan payant à tout moment depuis la page Tarifs pour débloquer plus de générations.",
+    a: "À l'inscription, vous bénéficiez de 5 générations offertes et 1 génération Programmes neufs offerte, sans carte bancaire. Vous pouvez passer à un plan payant à tout moment depuis la page Tarifs pour débloquer plus de générations.",
   },
   {
     q: "Puis-je annuler mon abonnement ?",

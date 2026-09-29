@@ -8,7 +8,7 @@ import {
   stripViolations,
 } from "@/lib/compliance";
 import { getLeHavreDataForPrompt } from "@/lib/data/le-havre";
-import { checkGenerationLimit, getProgrammesNeufsBlockReason } from "@/lib/check-generation-limit";
+import { checkProgrammesNeufsLimit } from "@/lib/check-generation-limit";
 import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
 
@@ -683,12 +683,7 @@ export async function POST(request: Request) {
 
     const effectiveUserId = await resolveGenerationUserId(request);
     if (effectiveUserId) {
-      const programmesNeufsBlockReason = await getProgrammesNeufsBlockReason(effectiveUserId);
-      if (programmesNeufsBlockReason) {
-        return NextResponse.json({ error: programmesNeufsBlockReason }, { status: 403 });
-      }
-
-      const limitResult = await checkGenerationLimit(effectiveUserId);
+      const limitResult = await checkProgrammesNeufsLimit(effectiveUserId);
       if (!limitResult.allowed) {
         return generationLimitErrorResponse(limitResult);
       }

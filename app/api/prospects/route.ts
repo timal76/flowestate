@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/app/api/auth/[...nextauth]/route";
+import { checkProspectCreationLimit } from "@/lib/check-generation-limit";
+import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
 
 type ProspectStatus = "Nouveau" | "Contacté" | "Visite planifiée" | "Offre faite" | "Signé" | "Perdu";
 type ProspectTemperature = "chaud" | "tiède" | "froid";
@@ -137,6 +139,11 @@ export async function POST(request: Request) {
   if (!isTemperature(temperature)) return NextResponse.json({ error: "Température invalide." }, { status: 400 });
   const categorie = (body.categorie ?? "acheteur").trim();
   if (!isCategorie(categorie)) return NextResponse.json({ error: "Catégorie invalide." }, { status: 400 });
+
+  const prospectLimit = await checkProspectCreationLimit(session.user.id);
+  if (!prospectLimit.allowed) {
+    return generationLimitErrorResponse(prospectLimit);
+  }
 
   const supabase = createServiceClient();
   const { data, error } = await supabase

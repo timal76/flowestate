@@ -104,8 +104,8 @@ function RegisterPageContent() {
         >
           {showLimitBanner ? (
             <div className="mb-6 rounded-xl border border-[#C9A96E]/30 bg-[#C9A96E]/10 px-4 py-3 text-center text-sm text-[#C9A96E]">
-              Vous avez utilisé vos 5 générations gratuites ce mois-ci. Créez un compte pour
-              continuer avec 5 générations gratuites par mois, sans carte bancaire.
+              Vous avez utilisé vos 5 générations offertes. Créez un compte pour
+              continuer avec 5 générations offertes, sans carte bancaire.
             </div>
           ) : null}
           <h1 className="text-center text-2xl font-semibold text-[#F5F5F0]">

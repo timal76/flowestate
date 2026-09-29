@@ -1,19 +1,27 @@
 import type { GenerationApiErrorPayload } from "@/lib/generation-limit-api";
 import { isQuotaExceededResponse } from "@/lib/generation-limit-api";
+import type { QuotaType } from "@/lib/plans";
 
 export type GenerationFetchResult<T> =
   | { ok: true; data: T }
-  | { ok: false; quotaExceeded: true; plan: string | null }
+  | { ok: false; quotaExceeded: true; plan: string | null; quotaType: QuotaType | null }
   | { ok: false; quotaExceeded: false; message: string };
 
 export function getGenerationFailure(
   response: Response,
   payload: GenerationApiErrorPayload,
-): { type: "quota"; plan: string | null } | { type: "error"; message: string } | null {
+):
+  | { type: "quota"; plan: string | null; quotaType: QuotaType | null }
+  | { type: "error"; message: string }
+  | null {
   if (response.ok) return null;
 
   if (isQuotaExceededResponse(response.status, payload)) {
-    return { type: "quota", plan: payload.plan ?? "decouverte" };
+    return {
+      type: "quota",
+      plan: payload.plan ?? "decouverte",
+      quotaType: payload.quotaType ?? "classic",
+    };
   }
 
   const errorText = `${payload.error ?? ""} ${payload.message ?? ""}`.toLowerCase();
@@ -42,7 +50,12 @@ export async function parseGenerationResponse<T>(
   }
 
   if (isQuotaExceededResponse(response.status, payload)) {
-    return { ok: false, quotaExceeded: true, plan: payload.plan ?? "decouverte" };
+    return {
+      ok: false,
+      quotaExceeded: true,
+      plan: payload.plan ?? "decouverte",
+      quotaType: payload.quotaType ?? "classic",
+    };
   }
 
   const errorText = `${payload.error ?? ""} ${payload.message ?? ""}`.toLowerCase();

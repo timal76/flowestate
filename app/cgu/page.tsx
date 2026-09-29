@@ -55,7 +55,7 @@ export default function CguPage() {
             <section className="space-y-3">
               <h2 className="text-lg font-semibold text-[#F5F5F0]">2. Accès au service</h2>
               <ul className="list-disc space-y-2 pl-5 leading-relaxed marker:text-[#C9A96E]">
-                <li>Plan Découverte gratuit : 5 générations par mois, sans carte bancaire</li>
+                <li>Plan Découverte gratuit : 5 générations offertes et 1 génération Programmes neufs offerte, sans carte bancaire</li>
                 <li>Plans payants : Essentiel, Pro et Expert — facturation immédiate via Stripe</li>
                 <li>Résiliation possible à tout moment depuis l&apos;espace client</li>
               </ul>

@@ -165,7 +165,7 @@ export default function OnboardingModal({
         <div className="border-b border-[#C9A96E]/10 bg-[#060606] px-8 pb-6 pt-7">
           <p className="text-[18px] font-medium tracking-[0.06em] text-[#C9A96E]">FlowEstate</p>
           <span className="mt-[10px] inline-flex rounded-full border border-[#C9A96E]/20 bg-[#C9A96E]/[0.08] px-3 py-1 text-[11px] tracking-[0.04em] text-[#C9A96E]">
-            ✦ 5 générations gratuites par mois — sans carte bancaire
+            ✦ 5 générations offertes — sans carte bancaire
           </span>
 
           <div className="mt-5 flex items-start">
@@ -536,7 +536,7 @@ export default function OnboardingModal({
                     </svg>
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C9A96E]/25 bg-[#C9A96E]/[0.08] px-[14px] py-[5px] text-xs text-[#C9A96E]">
-                    ✓ 5 générations gratuites par mois
+                    ✓ 5 générations offertes
                   </span>
                 </div>
                 <h2 className="mb-2 text-xl font-medium text-[#F5F5F0]">Votre espace est prêt !</h2>

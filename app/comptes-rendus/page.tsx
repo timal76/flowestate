@@ -260,6 +260,7 @@ function ComptesRendusContent() {
   const [templatesModalMode, setTemplatesModalMode] = useState<"save" | "load">("load");
   const [quotaPaywallOpen, setQuotaPaywallOpen] = useState(false);
   const [quotaPaywallPlan, setQuotaPaywallPlan] = useState<string | null>(null);
+  const [quotaPaywallType, setQuotaPaywallType] = useState<"classic" | "programmes-neufs" | "crm-prospects" | null>(null);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const signatureFileInputRef = useRef<HTMLInputElement>(null);
   const logoPreviewRef = useRef(logoPreview);
@@ -541,6 +542,7 @@ function ComptesRendusContent() {
         const failure = getGenerationFailure(response, payload);
         if (failure?.type === "quota") {
           setQuotaPaywallPlan(failure.plan);
+          setQuotaPaywallType(failure.quotaType);
           setQuotaPaywallOpen(true);
           return;
         }
@@ -1176,6 +1178,7 @@ function ComptesRendusContent() {
         open={quotaPaywallOpen}
         onClose={() => setQuotaPaywallOpen(false)}
         plan={quotaPaywallPlan}
+        quotaType={quotaPaywallType}
       />
 
       <div

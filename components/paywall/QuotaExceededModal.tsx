@@ -3,40 +3,153 @@
 import Link from "next/link";
 
 import StripePlanCheckoutButton from "@/components/stripe-plan-checkout-button";
+import type { QuotaType } from "@/lib/plans";
 
 type QuotaExceededModalProps = {
   open: boolean;
   onClose: () => void;
   plan?: string | null;
+  quotaType?: QuotaType | null;
 };
 
-const DECOUVERTE_BENEFITS = [
-  "100 générations par mois",
-  "Générateur d'annonces, emails et comptes-rendus",
-  "CRM Prospects et relances automatiques",
-  "Templates et historique des générations",
-];
+type PaywallCopy = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  benefitsLabel: string;
+  benefits: string[];
+  ctaPlan: "essentiel" | "pro" | "expert";
+  ctaLabel: string;
+};
 
-const ESSENTIEL_BENEFITS = [
-  "Générations illimitées",
-  "Tout le plan Essentiel inclus",
-  "Export PDF et templates illimités",
-  "Support prioritaire",
-];
+function resolvePaywallCopy(plan: string | null | undefined, quotaType: QuotaType | null | undefined): PaywallCopy {
+  const kind = quotaType ?? "classic";
 
-export default function QuotaExceededModal({ open, onClose, plan }: QuotaExceededModalProps) {
+  // CRM Essentiel → Pro
+  if (kind === "crm-prospects") {
+    return {
+      eyebrow: "CRM Essentiel",
+      title: "Limite de 50 fiches prospects atteinte",
+      subtitle:
+        "Votre plan Essentiel est plafonné à 50 fiches prospects actives. Passez à Pro pour un CRM illimité et des relances automatiques.",
+      benefitsLabel: "Avec le plan Pro :",
+      benefits: [
+        "CRM Prospects illimité",
+        "Relances automatiques",
+        "150 générations/mois",
+        "5 conversions Programmes neufs/mois",
+      ],
+      ctaPlan: "pro",
+      ctaLabel: "Passer à Pro",
+    };
+  }
+
+  // Programmes neufs
+  if (kind === "programmes-neufs") {
+    if (plan === "pro") {
+      return {
+        eyebrow: "Quota Pro",
+        title: "Conversions Programmes neufs épuisées",
+        subtitle:
+          "Vous avez utilisé vos 5 conversions Programmes neufs de ce mois. Passez à Expert pour un accès illimité.",
+        benefitsLabel: "Avec le plan Expert :",
+        benefits: [
+          "Programmes neufs illimités",
+          "Générations illimitées",
+          "Génération par lot",
+          "Analyse concurrentielle + scoring",
+        ],
+        ctaPlan: "expert",
+        ctaLabel: "Passer à Expert",
+      };
+    }
+
+    // Découverte ou Essentiel (PN non inclus) → Pro
+    return {
+      eyebrow: plan === "essentiel" ? "Plan Essentiel" : "Plan Découverte",
+      title:
+        plan === "essentiel"
+          ? "Programmes neufs non inclus"
+          : "Génération Programmes neufs offerte utilisée",
+      subtitle:
+        plan === "essentiel"
+          ? "Programmes neufs est disponible à partir du plan Pro (5 conversions/mois)."
+          : "Vous avez utilisé votre génération Programmes neufs offerte. Passez au plan Pro pour continuer.",
+      benefitsLabel: "Avec le plan Pro :",
+      benefits: [
+        "5 conversions Programmes neufs/mois",
+        "150 générations/mois",
+        "CRM Prospects illimité + relances auto",
+        "Export PDF et templates illimités",
+      ],
+      ctaPlan: "pro",
+      ctaLabel: "Passer à Pro",
+    };
+  }
+
+  // Générations classiques
+  if (plan === "pro") {
+    return {
+      eyebrow: "Quota Pro",
+      title: "Limite mensuelle atteinte",
+      subtitle:
+        "Vous avez atteint les 150 générations incluses dans votre plan Pro ce mois-ci. Passez à Expert pour des générations illimitées.",
+      benefitsLabel: "Avec le plan Expert :",
+      benefits: [
+        "Générations illimitées",
+        "Programmes neufs illimités",
+        "Génération par lot",
+        "Analyse concurrentielle + support dédié",
+      ],
+      ctaPlan: "expert",
+      ctaLabel: "Passer à Expert",
+    };
+  }
+
+  if (plan === "essentiel") {
+    return {
+      eyebrow: "Quota Essentiel",
+      title: "Limite mensuelle atteinte",
+      subtitle:
+        "Vous avez atteint les 40 générations incluses dans votre plan Essentiel ce mois-ci.",
+      benefitsLabel: "Avec le plan Pro :",
+      benefits: [
+        "150 générations par mois",
+        "CRM Prospects illimité + relances auto",
+        "5 conversions Programmes neufs/mois",
+        "Export PDF et templates illimités",
+      ],
+      ctaPlan: "pro",
+      ctaLabel: "Passer à Pro",
+    };
+  }
+
+  // Découverte — classiques
+  return {
+    eyebrow: "Plan Découverte",
+    title: "Vous avez utilisé vos 5 générations offertes",
+    subtitle: "Passez à Essentiel pour continuer à générer sans interruption.",
+    benefitsLabel: "Avec Essentiel :",
+    benefits: [
+      "40 générations par mois",
+      "CRM Prospects (jusqu'à 50 fiches)",
+      "Emails de relance manuels",
+      "Compte-rendu de visite et 5 templates",
+    ],
+    ctaPlan: "essentiel",
+    ctaLabel: "Passer à Essentiel",
+  };
+}
+
+export default function QuotaExceededModal({
+  open,
+  onClose,
+  plan,
+  quotaType,
+}: QuotaExceededModalProps) {
   if (!open) return null;
 
-  const isEssentielLimit = plan === "essentiel";
-  const title = isEssentielLimit
-    ? "Limite mensuelle atteinte"
-    : "Vous avez utilisé vos 5 générations gratuites de ce mois";
-  const subtitle = isEssentielLimit
-    ? "Vous avez atteint les 100 générations incluses dans votre plan Essentiel ce mois-ci."
-    : "Passez à Essentiel pour continuer à générer sans interruption.";
-  const benefits = isEssentielLimit ? ESSENTIEL_BENEFITS : DECOUVERTE_BENEFITS;
-  const ctaPlan = isEssentielLimit ? "pro" : "essentiel";
-  const ctaLabel = isEssentielLimit ? "Passer à Pro" : "Passer à Essentiel";
+  const copy = resolvePaywallCopy(plan, quotaType);
 
   return (
     <div
@@ -52,20 +165,18 @@ export default function QuotaExceededModal({ open, onClose, plan }: QuotaExceede
       >
         <div className="border-b border-[#C9A96E]/15 bg-[#060606] px-6 py-5">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#C9A96E]">
-            {isEssentielLimit ? "Quota Essentiel" : "Plan Découverte"}
+            {copy.eyebrow}
           </p>
           <h2 id="quota-modal-title" className="mt-2 text-xl font-semibold text-[#F5F5F0]">
-            {title}
+            {copy.title}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-[#A0A0A0]">{subtitle}</p>
+          <p className="mt-2 text-sm leading-relaxed text-[#A0A0A0]">{copy.subtitle}</p>
         </div>
 
         <div className="px-6 py-5">
-          <p className="mb-3 text-sm font-medium text-[#F5F5F0]">
-            {isEssentielLimit ? "Avec le plan Pro :" : "Avec Essentiel :"}
-          </p>
+          <p className="mb-3 text-sm font-medium text-[#F5F5F0]">{copy.benefitsLabel}</p>
           <ul className="space-y-2.5 text-sm text-[#A0A0A0]">
-            {benefits.map((benefit) => (
+            {copy.benefits.map((benefit) => (
               <li key={benefit} className="flex items-start gap-2.5">
                 <span className="mt-0.5 text-[#C9A96E]" aria-hidden>
                   ✓
@@ -79,10 +190,10 @@ export default function QuotaExceededModal({ open, onClose, plan }: QuotaExceede
 
         <div className="flex flex-col gap-2 border-t border-white/10 px-6 py-5">
           <StripePlanCheckoutButton
-            plan={ctaPlan}
+            plan={copy.ctaPlan}
             className="inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-[#B8943F] bg-[#B8943F] px-6 py-3 text-sm font-semibold text-[#0A0A0A] transition hover:opacity-90 disabled:cursor-wait disabled:opacity-70"
           >
-            {ctaLabel}
+            {copy.ctaLabel}
           </StripePlanCheckoutButton>
           <Link
             href="/tarifs"

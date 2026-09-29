@@ -13,7 +13,11 @@ import UpcomingRelancesBanner from "@/components/relances/UpcomingRelancesBanner
 import DashboardActivityChart from "@/components/dashboard/DashboardActivityChart";
 import SiteHeader from "@/components/site-header";
 import { absoluteUrl } from "@/lib/constants";
-import { FREE_MONTHLY_LIMIT } from "@/lib/check-generation-limit";
+import {
+  ESSENTIEL_MONTHLY_LIMIT,
+  FREE_CLASSIC_GIFTED_LIMIT,
+  PRO_MONTHLY_LIMIT,
+} from "@/lib/check-generation-limit";
 import { supabase } from "@/lib/supabase";
 
 const CANONICAL_PATH = "/dashboard";
@@ -143,6 +147,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   let emailsCeMois = 0;
   let comptesRendusCeMois = 0;
   let programmesNeufsCeMois = 0;
+  let classicLifetime = 0;
   let recentGenerations: GenerationRow[] = [];
 
   if (url && key) {
@@ -156,7 +161,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .eq("user_id", userId)
         .gte("created_at", fromIso);
 
-    const [annRes, emailRes, crRes, pnRes, recentRes] = await Promise.all([
+    const [annRes, emailRes, crRes, pnRes, recentRes, classicLifetimeRes] = await Promise.all([
       countThisMonth("annonce"),
       countThisMonth("email"),
       countThisMonth("compte-rendu"),
@@ -172,6 +177,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(5),
+      supabase
+        .from("generations")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .in("type", ["annonce", "email", "compte-rendu"]),
     ]);
 
     if (annRes.error) console.error("[dashboard] generations count annonce", annRes.error);
@@ -182,6 +192,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     else comptesRendusCeMois = crRes.count ?? 0;
     if (pnRes.error) console.error("[dashboard] generations count programme-neuf", pnRes.error);
     else programmesNeufsCeMois = pnRes.count ?? 0;
+    if (classicLifetimeRes.error) {
+      console.error("[dashboard] generations classic lifetime", classicLifetimeRes.error);
+    } else {
+      classicLifetime = classicLifetimeRes.count ?? 0;
+    }
 
     if (recentRes.error) {
       console.error("[dashboard] generations recent", recentRes.error);
@@ -205,18 +220,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         (!userData?.subscription_status ||
           userData.subscription_status === "free" ||
           userData.subscription_status === "inactive")));
-  const generationLimit =
-    userData?.plan === "starter" || userData?.plan === "essentiel" ? 100 : 30;
-  const generationsRestantes = Math.max(0, generationLimit - totalGenCeMois);
-  const showGenerationsRestantesCard =
+  const isEssentielActive =
     (userData?.plan === "starter" || userData?.plan === "essentiel") &&
     userData?.subscription_status === "active";
+  const isProActive =
+    userData?.plan === "pro" && userData?.subscription_status === "active";
+  const generationLimit = isEssentielActive
+    ? ESSENTIEL_MONTHLY_LIMIT
+    : isProActive
+      ? PRO_MONTHLY_LIMIT
+      : 0;
+  const generationsRestantes = Math.max(0, generationLimit - totalGenCeMois);
+  const showGenerationsRestantesCard = isEssentielActive || isProActive;
   const showFreeQuotaCard = isFreePlan;
-  const freeGenerationsUsed = Math.min(totalGenCeMois, FREE_MONTHLY_LIMIT);
+  const freeGenerationsUsed = Math.min(classicLifetime, FREE_CLASSIC_GIFTED_LIMIT);
   const freeGenerationsColorClass =
-    freeGenerationsUsed >= FREE_MONTHLY_LIMIT
+    freeGenerationsUsed >= FREE_CLASSIC_GIFTED_LIMIT
       ? "text-red-400"
-      : freeGenerationsUsed >= FREE_MONTHLY_LIMIT - 1
+      : freeGenerationsUsed >= FREE_CLASSIC_GIFTED_LIMIT - 1
         ? "text-orange-400"
         : "text-[#B8965A]";
   const showOnboardingModal = userData?.onboarding_completed !== true;
@@ -409,9 +430,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <p
                   className={`text-3xl font-semibold tracking-tight md:text-4xl ${freeGenerationsColorClass}`}
                 >
-                  {freeGenerationsUsed}/{FREE_MONTHLY_LIMIT}
+                  {freeGenerationsUsed}/{FREE_CLASSIC_GIFTED_LIMIT}
                 </p>
-                <p className="mt-1 text-xs text-[#A0A0A0]/90">utilisées ce mois-ci</p>
+                <p className="mt-1 text-xs text-[#A0A0A0]/90">générations offertes utilisées</p>
               </article>
             ) : null}
 
@@ -579,7 +600,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               className="flex min-h-0 flex-col rounded-2xl border border-[#C9A96E]/30 bg-[#C9A96E]/5 p-8 text-inherit no-underline outline-none transition-all duration-300 hover:border-[#C9A96E]/75 hover:bg-white/[0.055] hover:shadow-[0_0_32px_-12px_rgba(201,169,110,0.38)] focus-visible:ring-2 focus-visible:ring-[#C9A96E]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] md:h-full"
             >
               <div className="mb-4 inline-flex w-fit rounded-full border border-[#C9A96E]/50 bg-[#C9A96E]/10 px-3 py-1 text-xs font-medium text-[#C9A96E]">
-                Plan Expert
+                Dès Pro (5/mois)
               </div>
               <div className="mb-6 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]">
                 <svg
