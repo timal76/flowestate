@@ -22,12 +22,12 @@ export const FREE_MONTHLY_LIMIT = FREE_CLASSIC_GIFTED_LIMIT;
 
 /**
  * Montants affichés (centimes EUR).
- * Essentiel annuel −15%, Pro/Expert annuel −16% vs 12× mensuel.
+ * Annuel : 499€ / 999€ / 1999€ → −15% Essentiel, −16% Pro/Expert.
  */
 export const PLAN_AMOUNTS_CENTS = {
-  essentiel: { monthly: 4900, annual: 49980 },
-  pro: { monthly: 9900, annual: 99792 },
-  expert: { monthly: 19900, annual: 200592 },
+  essentiel: { monthly: 4900, annual: 49900 },
+  pro: { monthly: 9900, annual: 99900 },
+  expert: { monthly: 19900, annual: 199900 },
 } as const;
 
 export function annualDiscountPercent(plan: PaidPlanId): number {

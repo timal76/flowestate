@@ -232,7 +232,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>CRM Prospects (50 fiches)</span>
+                  <span>CRM Prospects (50 fiches actives)</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
@@ -280,7 +280,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>
-                  <span>5 Programmes neufs/mois</span>
+                  <span>5 conversions Programmes neufs/mois</span>
                 </li>
                 <li className="flex items-center gap-3 py-3">
                   <span className="text-[#C9A96E]">✓</span>

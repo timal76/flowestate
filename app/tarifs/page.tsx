@@ -218,7 +218,7 @@ export default function TarifsPage() {
                 <PlanFeature included>150 générations/mois</PlanFeature>
                 <PlanFeature included>CRM Prospects illimité</PlanFeature>
                 <PlanFeature included>Relances automatiques</PlanFeature>
-                <PlanFeature included>Programmes neufs (5/mois)</PlanFeature>
+                <PlanFeature included>5 conversions Programmes neufs/mois</PlanFeature>
                 <PlanFeature included>Export PDF</PlanFeature>
                 <PlanFeature included>Templates illimités</PlanFeature>
                 <PlanFeature included>Support prioritaire</PlanFeature>
