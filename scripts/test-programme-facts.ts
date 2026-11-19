@@ -180,6 +180,23 @@ for (const forbidden of ["haussmann", "agréé", "décennale", "appels de fonds"
   }
 }
 
+// Strip sur un corps multi-paragraphes (cas réel : les phrases fautives restaient en production)
+{
+  const corps = "Parquet contrecollé dans les séjours.\n\nCarrelage de qualité dans les salles de bains. Ascenseur et local à vélos.\n\nPrix moyen studio : 326 500 €.";
+  const issues = collectFactIssues({ seloger: { titre: "Studio", corps } }, ctx);
+  const stripped = stripFactIssues("seloger", { titre: "Studio", corps }, issues);
+  const ok =
+    !stripped.corps.includes("de qualité") &&
+    stripped.corps.includes("Parquet contrecollé") &&
+    stripped.corps.includes("Ascenseur et local à vélos") &&
+    stripped.corps.includes("\n\n");
+  if (ok) console.log("OK strip multi-paragraphes");
+  else {
+    console.error("FAIL strip multi-paragraphes: " + JSON.stringify(stripped.corps));
+    failed++;
+  }
+}
+
 if (failed > 0) {
   console.error(`\n${failed} échec(s)`);
   process.exit(1);
