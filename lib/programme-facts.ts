@@ -486,11 +486,23 @@ export function stripFactIssues<T extends AnnonceLike & { compliance_warning?: b
   if (mine.length === 0) return block;
 
   const badSentences = new Set(mine.filter((i) => i.field === "corps").map((i) => i.sentence));
+  // Même découpage que collectFactIssues, ligne par ligne, pour conserver les paragraphes.
   const keptCorps = (block.corps ?? "")
-    .split(/(?<=[.!?])[ \t]+/)
-    .filter((part) => !badSentences.has(part.trim()))
-    .join(" ")
-    .replace(/[ \t]{2,}/g, " ")
+    .split("\n")
+    .map((line) =>
+      line
+        .split(/(?<=[.!?])\s+/)
+        .map((part) => part.trim())
+        .filter((part) => part && !badSentences.has(part))
+        .join(" "),
+    )
+    .reduce<string[]>((lines, line, index, all) => {
+      if (line) lines.push(line);
+      else if (all[index - 1] !== undefined && lines.length && lines[lines.length - 1] !== "") lines.push("");
+      return lines;
+    }, [])
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 
   const titleIssues = mine.filter((i) => i.field === "titre");

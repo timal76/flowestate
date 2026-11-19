@@ -24,6 +24,18 @@ const MIN_FACT_LENGTH = 12;
 const FORBIDDEN_IN_FACT =
   /(?:€|euros?)\s*(?:\/|par)\s*m|prix\s+(?:au|du)\s+m|rendement|rentabilit|taux\s+d'interet|plus-value|valoris|classement|meilleur|avis\s+(?:des|clients)|investisseurs?\s+(?:recherch|plebiscit)/;
 
+/** Sites commerciaux (agences, portails, promoteurs, blogs d'investissement) : sources non retenues. */
+const COMMERCIAL_HOST =
+  /immo|immobili|seloger|leboncoin|pap\.fr|bienici|meilleursagents|investeamo|logic-|century21|orpi|laforet|nexity|kaufmanbroad|bouygues-immobilier|blogspot|wordpress|medium\.com/;
+
+export function isCommercialSource(url: string): boolean {
+  try {
+    return COMMERCIAL_HOST.test(new URL(url).hostname.toLowerCase());
+  } catch {
+    return true;
+  }
+}
+
 function fold(text: string): string {
   return text
     .normalize("NFD")
@@ -89,6 +101,7 @@ export function validateExternalFacts(
       fact.length >= MIN_FACT_LENGTH &&
       fact.length <= MAX_FACT_LENGTH &&
       Boolean(match) &&
+      !isCommercialSource(match!.url) &&
       !FORBIDDEN_IN_FACT.test(folded) &&
       !seen.has(folded);
 
@@ -124,7 +137,7 @@ RÈGLES :
 - source_url : l'URL exacte d'une page que tu as consultée. Un fait sans page consultée est supprimé.
 - Distances et durées à pied : seulement si la source les indique. Ne les calcule pas.
 - Interdits : prix au m², rendements, évolution de marché, classements, avis, superlatifs, promesses, tout ce que tu n'as pas lu.
-- Privilégie les sources officielles ou institutionnelles (mairie, transporteur, ministère, métropole), puis les sources de référence.
+- Sources admises : institutions (mairie, métropole, région, État, ministères), transporteurs (RATP, Île-de-France Mobilités, SNCF), annuaires officiels (annuaire de l'éducation), Wikipédia. Sources refusées : agences, portails et promoteurs immobiliers, blogs d'investissement.
 - 6 à 12 faits au maximum, les plus utiles pour une annonce.
 
 Réponds uniquement avec ce JSON, sans markdown :

@@ -1,5 +1,5 @@
 import { buildFactsContext, buildFactsPrompt, verifySentence } from "../lib/programme-facts";
-import { collectSearchUrls, validateExternalFacts, normalizeUrl } from "../lib/web-enrichment";
+import { collectSearchUrls, isCommercialSource, validateExternalFacts, normalizeUrl } from "../lib/web-enrichment";
 
 let failures = 0;
 function check(name: string, ok: boolean) {
@@ -44,6 +44,7 @@ const parsed = {
 const { kept, rejected } = validateExternalFacts(parsed, urls);
 check("garde les 2 faits sourcés valides", kept.length === 2);
 check("écarte source inconnue, prix au m², doublon, classement", rejected === 4);
+check("sites commerciaux refusés comme sources", isCommercialSource("https://www.meilleursagents.com/x") && isCommercialSource("https://investeamo.fr/y") && !isCommercialSource("https://www.paris.fr/z") && !isCommercialSource("https://fr.wikipedia.org/wiki/A"));
 check("l'URL conservée est celle réellement consultée", kept[0].sourceUrl === "https://www.paris.fr/pages/parc-monceau-1234/");
 
 const ctx = buildFactsContext({
