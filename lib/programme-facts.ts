@@ -283,7 +283,7 @@ const UNSUPPORTED_TERMS: TermRule[] = [
   { re: /\bpourquoi\s+maintenant\b/, label: "formule d'urgence" },
   { re: /\bfortement\s+impose\w*/, label: "situation fiscale du profil cible" },
   {
-    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|etabli\w*|attractif\w*|privilegi\w+|modulable\w*|specialis\w+|specialiste\w*|substantiel\w*|soucieu\w+|durablement|ancr\w+|soigne\w*|de\s+qualite|haute\s+qualite|surprise|tracas|sans\s+souci|serein\w*|serenite|equilibr\w+|encadr\w+|transparen\w+|levier|diversification|partout|reconnu\w*|coherent\w*|exposition\s+(?:immobiliere|au\s+marche)|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
+    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|etabli\w*|attractif\w*|privilegi\w+|modulable\w*|specialis\w+|specialiste\w*|substantiel\w*|soucieu\w+|durablement|ancr\w+|soigne\w*|de\s+qualite|haute\s+qualite|surprise|tracas|sans\s+souci|serein\w*|serenite|strategique\w*|richesse|branche\w*|charme\w*|vrai\s+placement|libre\s+de\s+toute|proximite\s+directe|prestations\s+(?:completes|finies)|equilibr\w+|encadr\w+|transparen\w+|levier|diversification|partout|reconnu\w*|coherent\w*|exposition\s+(?:immobiliere|au\s+marche)|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
     label: "qualificatif ou superlatif non sourcé",
   },
   {
@@ -312,9 +312,16 @@ export function verifySentence(sentence: string, ctx: FactsContext): string[] {
   const reasons: string[] = [];
   const folded = collapseThousands(foldText(sentence));
 
+  // Chaque terme trouvé dans la phrase doit figurer lui-même dans les faits. Tester toute l'alternance
+  // contre les faits excuserait tous les termes dès qu'un seul d'entre eux y figure.
   for (const { re, label } of UNSUPPORTED_TERMS) {
-    if (re.test(folded) && !re.test(ctx.folded)) {
-      reasons.push(`${label} absent(e) des faits`);
+    const global = new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`);
+    for (const match of folded.matchAll(global)) {
+      const term = match[0].trim();
+      if (term && !ctx.folded.includes(term)) {
+        reasons.push(`${label} « ${term} » absent(e) des faits`);
+        break;
+      }
     }
   }
 
@@ -416,6 +423,10 @@ export function verifySentence(sentence: string, ctx: FactsContext): string[] {
 
   if (/\b(?:manuel\w*|a\s+manoeuvre\s+manuelle)\b/.test(folded) && !/\bmanuel\w*/.test(ctx.folded)) {
     reasons.push("mode de manœuvre non mentionné dans les faits");
+  }
+
+  if (/\b(?:appartements?\s+temoins?|modeles?\s+(?:disponibles?|de\s+decoration)|visites?\s+(?:du|des)\s+(?:modeles?|logements?\s+temoins?)|frais\s+de\s+notaire\s+(?:reduits?|offerts?)|pret\s+(?:a\s+taux|aide))\b/.test(folded) && !/temoin|modele/.test(ctx.folded)) {
+    reasons.push("offre ou service absent des faits");
   }
 
   if (/\baeroports?\s+region\w+|\bappels?\s+de\s+charges?\b|\bcharges?\s+surprise\b/.test(folded)) {

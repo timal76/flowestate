@@ -16,6 +16,7 @@ Signale une phrase uniquement si elle contient clairement l'un de ces défauts :
 - un rôle juridique inexact : en nue-propriété, pendant le démembrement le client est nu-propriétaire, pas propriétaire du sol et des murs ni plein propriétaire ; il ne touche pas de loyer et n'occupe pas le bien ;
 - un équipement de l'immeuble ou d'un seul type de lot attribué à tous les logements ;
 - une proximité ou une distance présentée de façon plus favorable que les faits ;
+- l'invention d'une offre ou d'un service (visite de modèles, appartement témoin, frais réduits, financement, accompagnement) ;
 - une déformation d'un fait (chiffre, condition, durée, nature du prix).
 
 Ne signale pas : les accroches neutres, les appels à l'action, les rappels de prudence (« à étudier avec votre conseiller »), les reformulations fidèles, les hashtags, les phrases qui reprennent un fait tel quel.

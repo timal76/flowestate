@@ -90,6 +90,11 @@ const MUST_FLAG: Array<[string, string]> = [
   ["C'est un vrai levier pour investir plus à Paris.", "qualificatif"],
   ["Écoles et lycées partout.", "qualificatif"],
   ["20 ans de sérénité.", "qualificatif"],
+  ["Parquet contrecollé, prestations soignées, ascenseur.", "qualificatif"],
+  ["Un gestionnaire spécialisé assume l'exploitation.", "qualificatif"],
+  ["Un vrai placement patrimonial sans les tracas.", "qualificatif"],
+  ["Contactez-nous pour visiter les modèles disponibles.", "offre"],
+  ["Une situation stratégique dans le quartier.", "qualificatif"],
 ];
 
 const MUST_PASS = [
@@ -227,6 +232,23 @@ for (const forbidden of ["haussmann", "agréé", "décennale", "appels de fonds"
   if (ok) console.log("OK hashtags");
   else {
     console.error("FAIL hashtags: " + out);
+    failed++;
+  }
+}
+
+// Régression : un terme présent dans les faits ne doit pas excuser les autres termes de la même liste
+{
+  const withDurable = buildFactsContext({
+    extractedData: { nom: "Patio", ville: "Paris", architecture: "Isolant durable, façade greige" },
+    now: NOW,
+  });
+  const okDurable = verifySentence("Isolant durable et façade greige.", withDurable).length === 0;
+  const stillFlagged =
+    verifySentence("Prestations soignées et gestionnaire spécialisé.", withDurable).length > 0 &&
+    verifySentence("Un vrai placement sans tracas.", withDurable).length > 0;
+  if (okDurable && stillFlagged) console.log("OK terme sourcé n'excuse pas les autres");
+  else {
+    console.error(`FAIL terme sourcé: durable=${okDurable} autres signalés=${stillFlagged}`);
     failed++;
   }
 }
