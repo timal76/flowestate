@@ -74,6 +74,14 @@ const MUST_FLAG: Array<[string, string]> = [
   ["Chauffage pompe à chaleur, eau chaude collective, ascenseur.", "pompe à chaleur"],
   ["Un gestionnaire spécialisé gère l'usufruit.", "qualificatif"],
   ["Un quartier établi où les familles s'ancrent durablement.", "qualificatif"],
+  ["Vous restituez la pleine propriété à l'issue du démembrement.", "restitu"],
+  ["Studios, 2 pièces et 4 pièces avec kitchenette pour les studios, chauffage par pompe à chaleur, eau chaude collective.", "pompe à chaleur"],
+  ["Une résidence pensée pour les investisseurs patrimoniaux.", "profil"],
+  ["Occultation par stores motorisés (manuels ou électriques).", "manœuvre"],
+  ["Accès rapide aux aéroports régionaux.", "formule"],
+  ["Aucun appel de charge surprise.", "formule"],
+  ["Prestations soignées et de qualité.", "qualificatif"],
+  ["L'usufruit est confié à un gestionnaire spécialisé.", "qualificatif"],
 ];
 
 const MUST_PASS = [

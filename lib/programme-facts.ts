@@ -282,7 +282,7 @@ const UNSUPPORTED_TERMS: TermRule[] = [
   { re: /\bpourquoi\s+maintenant\b/, label: "formule d'urgence" },
   { re: /\bfortement\s+impose\w*/, label: "situation fiscale du profil cible" },
   {
-    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|etabli\w*|attractif\w*|privilegi\w+|modulable\w*|specialis\w+|substantiel\w*|soucieu\w+|durablement|ancr\w+|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
+    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|etabli\w*|attractif\w*|privilegi\w+|modulable\w*|specialis\w+|specialiste\w*|substantiel\w*|soucieu\w+|durablement|ancr\w+|soigne\w*|de\s+qualite|haute\s+qualite|surprise|tracas|sans\s+souci|serein\w*|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
     label: "qualificatif ou superlatif non sourcé",
   },
   {
@@ -384,13 +384,34 @@ export function verifySentence(sentence: string, ctx: FactsContext): string[] {
     reasons.push("pourcentage de nue-propriété présenté comme une décote (il s'agit de la part de valeur payée)");
   }
 
+  if (/pompe\s+a\s+chaleur\s+individuelle/.test(ctx.folded) && /electrique/.test(ctx.folded)) {
+    for (const match of folded.matchAll(/chauffage[^.;]{0,40}pompe\s+a\s+chaleur/g)) {
+      const start = Math.max(0, (match.index ?? 0) - 60);
+      const around = folded.slice(start, (match.index ?? 0) + match[0].length + 60);
+      if (!/\b(?:studios?\s+(?:du\s+)?(?:r\+6|dernier)|r\+6|dernier\s+etage|selon|certain\w*|electrique|autres\s+logements)\b/.test(around)) {
+        reasons.push("pompe à chaleur présentée comme chauffage de tous les logements");
+        break;
+      }
+    }
+  }
+
   if (
-    /chauffage[^.;]{0,40}pompe\s+a\s+chaleur/.test(folded) &&
-    !/\b(?:studios?|r\+6|dernier\s+etage|selon|certain\w*|electrique|autres\s+logements)\b/.test(folded) &&
-    /pompe\s+a\s+chaleur\s+individuelle/.test(ctx.folded) &&
-    /electrique/.test(ctx.folded)
+    ctx.dispositif === "nue-propriete" &&
+    /\bvous\s+(?:restituez|rendez|perdez|revendez)\b[^.;]{0,30}pleine\s+propriete/.test(folded)
   ) {
-    reasons.push("pompe à chaleur présentée comme chauffage de tous les logements");
+    reasons.push("la pleine propriété est récupérée par le nue-propriétaire, pas restituée");
+  }
+
+  if (/\binvestisseurs?\s+(?:patrimoni\w+|fortement)|\bprofil\s+(?:investisseur|patrimonial)/.test(folded)) {
+    reasons.push("profil cible présenté comme une caractéristique du programme");
+  }
+
+  if (/\b(?:manuel\w*|a\s+manoeuvre\s+manuelle)\b/.test(folded) && !/\bmanuel\w*/.test(ctx.folded)) {
+    reasons.push("mode de manœuvre non mentionné dans les faits");
+  }
+
+  if (/\baeroports?\s+region\w+|\bappels?\s+de\s+charges?\b|\bcharges?\s+surprise\b/.test(folded)) {
+    reasons.push("formule non sourcée");
   }
 
   if (/\bvous\s+etes\s+(?:un|une)\b/.test(folded)) {
