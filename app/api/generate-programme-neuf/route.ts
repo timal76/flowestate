@@ -13,9 +13,11 @@ import {
   buildFactsCorrectionMessage,
   buildFactsPrompt,
   collectFactIssues,
+  sanitizeHashtags,
   stripFactIssues,
   type FactIssue,
 } from "@/lib/programme-facts";
+import { JUDGE_SYSTEM, buildJudgeInput, parseJudgeOutput } from "@/lib/fact-judge";
 import {
   buildEnrichmentPrompt,
   collectSearchUrls,
@@ -1097,6 +1099,55 @@ RAPPEL FINAL : ${formatJson}
 
     const hasAnnexes = annexes.length > 0;
     const lotAnnexes = body.lotAnnexes ?? [];
+    /**
+     * Relecture finale : retire les hashtags inconnus, puis un second modèle signale les phrases
+     * qui ajoutent une affirmation absente des faits ; elles sont retirées du corps (titres signalés).
+     * En cas d'échec ou de délai dépassé, les annonces sont renvoyées telles quelles.
+     */
+    const finalReview = async (annonces: GeneratedAnnonces): Promise<GeneratedAnnonces> => {
+      const cleaned: GeneratedAnnonces = { ...annonces };
+      for (const key of PLATFORM_KEYS) {
+        const block = cleaned[key];
+        if (block?.corps) cleaned[key] = { ...block, corps: sanitizeHashtags(block.corps, factsCtx) };
+      }
+
+      try {
+        const { message, index } = buildJudgeInput(factsCtx.factsText, cleaned);
+        if (index.size === 0) return cleaned;
+
+        const judged = await Promise.race([
+          callAnthropicWithRetry(apiKey, {
+            model: "claude-sonnet-4-5",
+            max_tokens: 1500,
+            system: JUDGE_SYSTEM,
+            messages: [
+              { role: "user", content: message },
+              { role: "assistant", content: "{" },
+            ],
+          }),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 45000)),
+        ]);
+        if (!judged || !judged.response.ok) {
+          console.warn("[programme-neuf] relecture finale indisponible");
+          return cleaned;
+        }
+
+        const issues = parseJudgeOutput("{" + extractTextFromAnthropic(judged.json), index);
+        console.log(`[programme-neuf] relecture finale : ${issues.length} phrase(s) retirée(s)`, JSON.stringify(issues));
+        if (issues.length === 0) return cleaned;
+
+        const result: GeneratedAnnonces = { ...cleaned };
+        for (const key of PLATFORM_KEYS) {
+          const block = result[key];
+          if (block) result[key] = stripFactIssues(key, block, issues);
+        }
+        return result;
+      } catch (e) {
+        console.error("[programme-neuf] relecture finale ignorée :", e);
+        return cleaned;
+      }
+    };
+
     const generateLotOnly = body.generateLotOnly ?? false;
 
     let programmeAnnonces: GeneratedAnnonces;
@@ -1150,11 +1201,11 @@ RAPPEL FINAL : ${formatJson}
       programmeAnnonces = {} as GeneratedAnnonces;
       const lotResult = await generateSplitAnnonces("lot");
       if (lotResult instanceof NextResponse) return lotResult;
-      lotAnnonces = lotResult;
+      lotAnnonces = await finalReview(lotResult);
     } else {
       const programmeResult = await generateSplitAnnonces("programme");
       if (programmeResult instanceof NextResponse) return programmeResult;
-      programmeAnnonces = programmeResult;
+      programmeAnnonces = await finalReview(programmeResult);
     }
 
     const residenceLabel =

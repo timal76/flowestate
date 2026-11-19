@@ -9,6 +9,7 @@ import {
   buildFactsPrompt,
   collectFactIssues,
   parseDeliveryEnd,
+  sanitizeHashtags,
   stripFactIssues,
   verifySentence,
 } from "../lib/programme-facts";
@@ -82,6 +83,13 @@ const MUST_FLAG: Array<[string, string]> = [
   ["Aucun appel de charge surprise.", "formule"],
   ["Prestations soignées et de qualité.", "qualificatif"],
   ["L'usufruit est confié à un gestionnaire spécialisé.", "qualificatif"],
+  ["Pendant 20 ans, vous êtes propriétaire du sol et des murs.", "rôle juridique"],
+  ["Vous devenez propriétaire à 61 % de la valeur en pleine propriété.", "rôle juridique"],
+  ["Répartition équilibrée des typologies.", "qualificatif"],
+  ["Une exposition au marché parisien encadré et transparent.", "qualificatif"],
+  ["C'est un vrai levier pour investir plus à Paris.", "qualificatif"],
+  ["Écoles et lycées partout.", "qualificatif"],
+  ["20 ans de sérénité.", "qualificatif"],
 ];
 
 const MUST_PASS = [
@@ -193,6 +201,32 @@ for (const forbidden of ["haussmann", "agréé", "décennale", "appels de fonds"
   if (ok) console.log("OK strip multi-paragraphes");
   else {
     console.error("FAIL strip multi-paragraphes: " + JSON.stringify(stripped.corps));
+    failed++;
+  }
+}
+
+// Hashtags : on garde les génériques, la ville et ce qui figure dans les faits ; on retire fautes et lieux inventés
+{
+  const hashCtx = buildFactsContext({
+    extractedData: { nom: "Patio Villiers", ville: "Paris", quartier: "17e arrondissement, Plaine-Monceau" },
+    now: NOW,
+  });
+  const out = sanitizeHashtags(
+    "Texte. #immobilierneuf #nueproprieté #paris17 #PlaineMonceau #planemonceau #villiersstation #patrimoine #Paris",
+    hashCtx,
+  );
+  const ok =
+    out.includes("#immobilierneuf") &&
+    out.includes("#nueproprieté") &&
+    out.includes("#paris17") &&
+    out.includes("#PlaineMonceau") &&
+    out.includes("#patrimoine") &&
+    out.includes("#Paris") &&
+    !out.includes("#planemonceau") &&
+    !out.includes("#villiersstation");
+  if (ok) console.log("OK hashtags");
+  else {
+    console.error("FAIL hashtags: " + out);
     failed++;
   }
 }
