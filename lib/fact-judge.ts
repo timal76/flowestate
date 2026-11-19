@@ -12,7 +12,7 @@ export const JUDGE_SYSTEM = `Tu es un vérificateur factuel d'annonces immobili�
 Signale une phrase uniquement si elle contient clairement l'un de ces défauts :
 - un chiffre, un équipement, une caractéristique ou un lieu absent des faits ;
 - un jugement de valeur ou un qualificatif non présent dans les faits (qualité, standing, quartier reconnu ou recherché, équilibré, transparent, sérénité, etc.) ;
-- une affirmation juridique, fiscale, financière ou de marché non présente dans les faits (levier, rendement, rentabilité, valorisation, sécurité du placement, exposition au marché) ;
+- une affirmation juridique, fiscale, financière ou de marché non présente dans les faits (levier, rendement, rentabilité, valorisation, sécurité du placement, exposition au marché, « élimine les contraintes fiscales », économies d'impôt) ;
 - un rôle juridique inexact : en nue-propriété, pendant le démembrement le client est nu-propriétaire, pas propriétaire du sol et des murs ni plein propriétaire ; il ne touche pas de loyer et n'occupe pas le bien ;
 - un équipement de l'immeuble ou d'un seul type de lot attribué à tous les logements ;
 - une proximité ou une distance présentée de façon plus favorable que les faits ;

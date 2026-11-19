@@ -95,6 +95,12 @@ const MUST_FLAG: Array<[string, string]> = [
   ["Un vrai placement patrimonial sans les tracas.", "qualificatif"],
   ["Contactez-nous pour visiter les modèles disponibles.", "offre"],
   ["Une situation stratégique dans le quartier.", "qualificatif"],
+  ["L'immeuble conjugue matériaux authentiques et performance énergétique.", "qualificatif"],
+  ["Les coursives intérieures créent une circulation fluide entre les logements.", "qualificatif"],
+  ["Ce dispositif élimine les contraintes administratives et fiscales.", "qualificatif"],
+  ["Une architecture de caractère.", "qualificatif"],
+  ["Un investissement pensé pour durer, sans les complications.", "qualificatif"],
+  ["Local à vélos sécurisé et ascenseur facilitent la vie.", "qualificatif"],
 ];
 
 const MUST_PASS = [
