@@ -12,6 +12,7 @@ export type Dispositif = "nue-propriete" | "lmnp" | "pinel" | "autre";
 export type FactsContext = {
   /** Texte brut de tous les faits autorisés. */
   factsText: string;
+  externalFacts: ExternalFact[];
   /** Même texte, sans accents ni majuscules, séparateurs de milliers retirés. */
   folded: string;
   /** Tous les nombres présents dans les faits (séparateurs de milliers retirés). */
@@ -34,6 +35,8 @@ export type FactIssue = {
   sentence: string;
   reason: string;
 };
+
+import { formatExternalFactsBlock, type ExternalFact } from "@/lib/web-enrichment";
 
 /* ------------------------------------------------------------------ */
 /* Normalisation                                                       */
@@ -140,6 +143,7 @@ function formatToday(now: Date): string {
 /* ------------------------------------------------------------------ */
 
 export function buildFactsContext(input: {
+  externalFacts?: ExternalFact[];
   extractedData: Record<string, unknown>;
   additionalInfo?: string;
   priceFrom?: string;
@@ -154,6 +158,7 @@ export function buildFactsContext(input: {
     input.additionalInfo ?? "",
     input.priceFrom ?? "",
     input.annexesDescription ?? "",
+    formatExternalFactsBlock(input.externalFacts ?? []),
   ]
     .filter(Boolean)
     .join("\n");
@@ -188,6 +193,7 @@ export function buildFactsContext(input: {
 
   return {
     factsText,
+    externalFacts: input.externalFacts ?? [],
     folded,
     numbers,
     webYears,
@@ -227,11 +233,18 @@ export function buildFactsPrompt(ctx: FactsContext, compactProgrammeJson: string
 Date du jour : ${ctx.todayLabel}.
 Données du programme (plaquette promoteur) :
 ${compactProgrammeJson}
-Sont aussi des faits autorisés : les informations complémentaires et le prix indicatif de l'agent, ainsi que l'analyse des documents annexes, quand ils sont fournis plus bas.
+Sont aussi des faits autorisés : les informations complémentaires et le prix indicatif de l'agent, ainsi que l'analyse des documents annexes, quand ils sont fournis plus bas.${
+    ctx.externalFacts.length
+      ? `
+
+FAITS EXTERNES VÉRIFIÉS (issus de pages web consultées, avec leur source ; ils complètent la plaquette) :
+${formatExternalFactsBlock(ctx.externalFacts)}`
+      : ""
+  }
 
 RÈGLES D'USAGE DES FAITS (ABSOLUES) :
 1. Tout élément précis que tu écris (montant, date, durée, pourcentage, surface, nombre de lots, équipement, garantie, label, matériau, style architectural, nom de lieu proche) doit figurer dans les faits autorisés. Sinon, tu ne l'écris pas. En cas de doute, tu omets.
-2. Les données web locales servent uniquement à citer des lieux, des lignes de transport ou des commerces du quartier. Aucun chiffre, aucune date, aucun projet futur, aucune promesse.
+2. Tu peux citer les FAITS EXTERNES VÉRIFIÉS ci-dessus, tels qu'ils sont écrits, sans les enrichir ni les extrapoler. Aucune autre information sur le quartier, la ville ou le marché : ni chiffre, ni date, ni projet futur, ni promesse en dehors de ces faits.
 3. Reprends chaque prix avec son qualificatif exact : un prix « moyen » s'écrit « prix moyen » et jamais « à partir de ».
 4. ${deliveryRule}
 5. L'angle et le profil prospect servent à choisir le ton et les arguments. Ne cite jamais l'âge, le budget ni la situation du profil comme un fait du programme.
@@ -283,6 +296,7 @@ const PERCENT_RE = /(\d+(?:[.,]\d+)?)\s*%/g;
 const SURFACE_RE = /(\d+(?:[.,]\d+)?)\s*m(?:2|²)/g;
 const DURATION_RE = /(\d+)\s*ans\b/g;
 const COUNT_RE = /(\d+)\s*(?:logements?|lots?|appartements?|studios?)\b/g;
+const TRAVEL_RE = /(\d+)\s*(?:min(?:utes?)?|km|kilometres?)\b/g;
 const YEAR_RE = /\b(20\d{2})\b/g;
 const FROM_PRICE_RE = /(?:a\s+partir\s+de|des)\s+(\d+(?:[.,]\d+)?)\s*(?:€|euros?\b)/g;
 
@@ -319,6 +333,9 @@ export function verifySentence(sentence: string, ctx: FactsContext): string[] {
   }
   for (const match of folded.matchAll(DURATION_RE)) {
     if (!ctx.numbers.has(match[1])) reasons.push(`durée « ${match[0].trim()} » absente des faits`);
+  }
+  for (const match of folded.matchAll(TRAVEL_RE)) {
+    if (!ctx.numbers.has(match[1])) reasons.push(`durée ou distance « ${match[0].trim()} » absente des faits`);
   }
   for (const match of folded.matchAll(COUNT_RE)) {
     if (!ctx.numbers.has(match[1])) reasons.push(`nombre « ${match[0].trim()} » absent des faits`);
