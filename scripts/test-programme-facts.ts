@@ -34,7 +34,7 @@ const EXTRACTED = {
 
 const ctx = buildFactsContext({
   extractedData: EXTRACTED,
-  additionalInfo: "Métro Villiers à 5 minutes, parc Monceau à proximité.",
+  additionalInfo: "Métro Villiers à 5 minutes, parc Monceau à proximité. Chauffage : pompe à chaleur individuelle pour les studios du R+6, chauffage individuel électrique pour les autres logements.",
   priceFrom: "326 500 € (prix moyen d'un studio en nue-propriété)",
   now: NOW,
 });
@@ -66,6 +66,14 @@ const MUST_FLAG: Array<[string, string]> = [
   ["Un patio privé au cœur de l'îlot.", "qualificatif"],
   ["Vous êtes un investisseur fortement imposé en quête de patrimoine.", "profil"],
   ["Une approche novatrice du patrimoine.", "qualificatif"],
+  ["Nue-propriété Paris 17e, 61% moins cher, 20 ans.", "décote"],
+  ["Vous achetez la nue-propriété à un prix réduit de 61% par rapport à la pleine propriété.", "décote"],
+  ["Une décote substantielle (61 %) sur la pleine propriété.", "décote"],
+  ["Cette structure reflète une réduction d'environ 61% par rapport à la pleine propriété.", "décote"],
+  ["Un ascenseur desservant tous les étages.", "desserte"],
+  ["Chauffage pompe à chaleur, eau chaude collective, ascenseur.", "pompe à chaleur"],
+  ["Un gestionnaire spécialisé gère l'usufruit.", "qualificatif"],
+  ["Un quartier établi où les familles s'ancrent durablement.", "qualificatif"],
 ];
 
 const MUST_PASS = [
@@ -80,6 +88,9 @@ const MUST_PASS = [
   "L'immeuble dispose d'un ascenseur, d'un local à vélos et de contrôles d'accès.",
   "Les studios du dernier étage sont chauffés par une pompe à chaleur individuelle.",
   "Façade greige, ossature bois et toitures végétalisées.",
+  "Vous achetez à 61 % de la valeur en pleine propriété.",
+  "Chauffage individuel électrique, eau chaude collective par pompe à chaleur.",
+  "Les studios du R+6 sont chauffés par une pompe à chaleur individuelle.",
 ];
 
 let failed = 0;
