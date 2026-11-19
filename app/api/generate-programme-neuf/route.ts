@@ -459,7 +459,7 @@ MENTIONS LÉGALES OBLIGATOIRES :
 - TVA réduite : toujours "selon conditions de ressources, en résidence principale pendant au minimum 10 ans"
 - Pinel : toujours "sous conditions en vigueur — à vérifier avec votre conseiller fiscal"
 - PTZ : toujours "réservé aux primo-accédants selon conditions de ressources"
-- Prix : toujours "à partir de X€" si fourchette, jamais de prix inventé
+- Prix : utiliser uniquement les montants fournis, avec leur libellé exact (« à partir de » seulement pour un prix minimum réel, « prix moyen » pour une moyenne) ; jamais de prix inventé
 
 DONNÉES WEB :
 - Utiliser UNIQUEMENT les données accompagnées d'une source dans les données web
@@ -470,7 +470,7 @@ DONNÉES WEB :
 - PINEL HORS ANGLE INVESTISSEUR : si l'angle ou le profil prospect contient "retraite", "résidence secondaire", "pied-à-terre", "senior", "bord de mer", ne jamais mentionner le dispositif Pinel ni le rendement locatif. Ces mentions sont INTERDITES sur ces angles.
 - TRAIN PARIS-LE HAVRE : la liaison Paris Saint-Lazare - Le Havre est un Intercités ou TER Normandie. Ne jamais écrire "TGV" pour cette liaison. Écrire "train direct" ou "Intercités".
 - TARIFS TRANSPORT : ne jamais indiquer de prix de billets de train sans source officielle SNCF confirmée. Écrire "tarifs variables selon disponibilités — voir sncf-connect.com" si nécessaire.
-- RE2020 ÉCONOMIES : ne jamais écrire "factures divisées par X" sans source officielle. Écrire uniquement "charges énergétiques maîtrisées grâce aux normes RE2020" ou "performance énergétique optimisée RE2020".
+- RE2020 ÉCONOMIES : ne jamais écrire "factures divisées par X" sans source officielle. Ne citer la RE2020 ou un niveau de performance que s'il figure dans les faits fournis.
 - VIS-À-VIS : ne jamais affirmer "sans vis-à-vis" ou "vue dégagée" sauf si explicitement confirmé dans les plans ou documents fournis.
 - "HAVRE DE PAIX" : cette expression reste INTERDITE sous toutes ses formes. "Votre havre normand" ou "refuge normand" sont acceptés car ils font référence à la ville.
 
@@ -485,12 +485,12 @@ ANNONCE 2 — SELOGER :
 - Corps : 2 500 caractères max
 - Structure : accroche storytelling ancrée dans le quotidien (2-3 lignes) → présentation du programme avec données concrètes → agencement et prestations détaillés (utiliser les plans si disponibles) → localisation avec faits précis et chiffrés → dispositifs fiscaux → appel à l'action
 - Ton : professionnel, expert, rassurant
-- Vocabulaire technique : "performance énergétique RE2020", "agencement optimisé", "livraison VEFA", "garantie décennale"
+- Vocabulaire technique : uniquement les termes présents dans les faits fournis
 
 ANNONCE 3 — SITE DE L'AGENCE :
 - Titre : libre, accrocheur, peut être une question ou une affirmation forte
-- Corps : 3 500 caractères max, liberté éditoriale totale
-- Structure : headline émotionnelle et inattendue → storytelling ancré dans la vie réelle du quartier → détail complet du programme avec données plans si disponibles → argument différenciant principal (ce que les autres ne diront pas) → pourquoi maintenant (marché, fiscal) → dispositifs fiscaux détaillés → appel à l'action fort
+- Corps : 3 500 caractères max
+- Structure : headline émotionnelle et inattendue → storytelling ancré dans la vie réelle du quartier → détail complet du programme avec données plans si disponibles → argument principal tiré des faits → dispositif et conditions (uniquement ce qui figure dans les faits) → dispositifs fiscaux détaillés → appel à l'action fort
 - Peut inclure des sous-titres
 - Ton : adapté au ton choisi par l'agent, mais toujours ancré dans le concret
 

@@ -269,7 +269,7 @@ const UNSUPPORTED_TERMS: TermRule[] = [
   { re: /\bpourquoi\s+maintenant\b/, label: "formule d'urgence" },
   { re: /\bfortement\s+impose\w*/, label: "situation fiscale du profil cible" },
   {
-    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
+    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|etabli\w*|attractif\w*|privilegi\w+|modulable\w*|specialis\w+|substantiel\w*|soucieu\w+|durablement|ancr\w+|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
     label: "qualificatif ou superlatif non sourcé",
   },
   {
@@ -351,6 +351,29 @@ export function verifySentence(sentence: string, ctx: FactsContext): string[] {
     )
   ) {
     reasons.push("équipement de l'immeuble ou de certains lots attribué à chaque logement");
+  }
+
+  if (/\b(?:tous\s+les\s+etages|acces\s+direct|desservant)\b/.test(folded)) {
+    reasons.push("précision d'accès ou de desserte absente des faits");
+  }
+
+  // Dans une vente en nue-propriété, 61 % est la part de valeur payée : « 61 % moins cher » est faux.
+  if (
+    ctx.dispositif === "nue-propriete" &&
+    /\b\d{1,3}(?:[.,]\d+)?\s*%[^.;:]{0,25}\b(?:moins\s+cher|de\s+(?:reduction|decote|remise|moins)|d'economie)|\b(?:decote|reduction|remise|reduit\w*|economie)\b[^.;:]{0,25}\d{1,3}(?:[.,]\d+)?\s*%/.test(
+      folded,
+    )
+  ) {
+    reasons.push("pourcentage de nue-propriété présenté comme une décote (il s'agit de la part de valeur payée)");
+  }
+
+  if (
+    /chauffage[^.;]{0,40}pompe\s+a\s+chaleur/.test(folded) &&
+    !/\b(?:studios?|r\+6|dernier\s+etage|selon|certain\w*|electrique|autres\s+logements)\b/.test(folded) &&
+    /pompe\s+a\s+chaleur\s+individuelle/.test(ctx.folded) &&
+    /electrique/.test(ctx.folded)
+  ) {
+    reasons.push("pompe à chaleur présentée comme chauffage de tous les logements");
   }
 
   if (/\bvous\s+etes\s+(?:un|une)\b/.test(folded)) {
