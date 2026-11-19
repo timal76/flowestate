@@ -16,6 +16,12 @@ import {
   stripFactIssues,
   type FactIssue,
 } from "@/lib/programme-facts";
+import {
+  buildEnrichmentPrompt,
+  collectSearchUrls,
+  validateExternalFacts,
+  type ExternalFact,
+} from "@/lib/web-enrichment";
 import { ExtractionError, extractProgrammeFromPdfBase64 } from "@/lib/programme-extraction";
 import { checkProgrammesNeufsLimit } from "@/lib/check-generation-limit";
 import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
@@ -231,158 +237,6 @@ function buildInterditsDynamiques(
   }
 
   return interdits.map((i) => `- ${i}`).join("\n");
-}
-
-function buildWebSearchPrompt(
-  ville: string,
-  quartier: string,
-  address: string,
-  angle: string,
-  prospectProfile: string,
-): string {
-  const location = `${ville}${quartier ? `, ${quartier}` : ""}${address ? `, ${address}` : ""}`;
-
-  // Détection du profil dominant
-  const angleLC = (angle + " " + prospectProfile).toLowerCase();
-
-  const isRetraite =
-    angleLC.includes("retrait") ||
-    angleLC.includes("senior") ||
-    angleLC.includes("personnes âgées") ||
-    angleLC.includes("bord de mer") ||
-    angleLC.includes("résidence secondaire");
-
-  const isInvestisseur =
-    angleLC.includes("invest") ||
-    angleLC.includes("pinel") ||
-    angleLC.includes("lmnp") ||
-    angleLC.includes("rendement") ||
-    angleLC.includes("locatif") ||
-    angleLC.includes("rentabil");
-
-  const isFamille =
-    angleLC.includes("famil") ||
-    angleLC.includes("enfant") ||
-    angleLC.includes("école") ||
-    angleLC.includes("primo") ||
-    angleLC.includes("accédant");
-
-  const isResidenceSecondaire =
-    angleLC.includes("résidence secondaire") ||
-    angleLC.includes("pied-à-terre") ||
-    angleLC.includes("week-end") ||
-    angleLC.includes("vacances");
-
-  let specificSearches = "";
-  let specificFields = "";
-
-  if (isRetraite) {
-    specificSearches = `
-RECHERCHES PRIORITAIRES PROFIL RETRAITÉ :
-1. Services médicaux : "médecins généralistes ${location}" OR "cabinet médical ${ville} ${quartier}" OR "hôpital ${ville} distance"
-2. Mobilité sans voiture : "bus ${ville} ${quartier} fréquence" OR "lignes bus ${ville} site:reseau-astuce.fr"
-3. Activités seniors : "associations seniors ${ville}" OR "clubs retraités ${ville}" OR "activités personnes âgées ${ville}"
-4. Qualité de vie : "espaces verts ${ville} ${quartier}" OR "promenades bord mer ${ville}" OR "plages ${ville} accessibilité PMR"
-5. Commerces de proximité : "marché ${ville} ${quartier} horaires" OR "commerces alimentaires ${ville} ${quartier}"`;
-
-    specificFields = `
-  "services_medicaux_proximite": null,
-  "mobilite_sans_voiture": null,
-  "activites_seniors": null,
-  "espaces_verts_promenades": null,
-  "marches_commerces_proximite": null,
-  "accessibilite_pmr": null,`;
-  }
-
-  if (isInvestisseur) {
-    specificSearches = `
-RECHERCHES PRIORITAIRES PROFIL INVESTISSEUR :
-1. Prix marché : "prix m2 ${ville} ${quartier} DVF 2024" OR site:dvf.gouv.fr "${ville}"
-2. Loyers officiels : "loyer median ${ville} T3 observatoire 2024" OR site:observatoires-des-loyers.fr "${ville}"
-3. Demande locative : "vacance locative ${ville} 2024" OR "tension locative ${ville}" OR site:insee.fr "${ville} logement"
-4. Projets valorisation : "projet urbain ${ville} ${quartier} 2025 2026" OR site:lehavre.fr "Arcole Brindeau"
-5. Rendement : "rendement locatif ${ville} neuf 2024" OR "investissement immobilier ${ville} rentabilité"`;
-
-    specificFields = `
-  "prix_m2_dvf": null,
-  "source_prix": null,
-  "loyer_median_officiel": null,
-  "source_loyers": null,
-  "taux_vacance_locative": null,
-  "projets_valorisation": null,
-  "rendement_moyen_secteur": null,`;
-  }
-
-  if (isFamille) {
-    specificSearches = `
-RECHERCHES PRIORITAIRES PROFIL FAMILLE/PRIMO-ACCÉDANT :
-1. Écoles : "écoles maternelles élémentaires ${ville} ${quartier} distance" OR "carte scolaire ${ville} ${quartier}"
-2. Crèches : "crèches ${ville} ${quartier}" OR "halte garderie ${ville} ${quartier}"
-3. Espaces jeux : "aires de jeux ${ville} ${quartier}" OR "parcs familiaux ${ville} ${quartier}"
-4. Transports scolaires : "transport scolaire ${ville}" OR "bus scolaire ${ville}"
-5. Sécurité : "quartier familial ${ville} ${quartier}" OR "sécurité ${ville} ${quartier} statistiques"`;
-
-    specificFields = `
-  "ecoles_maternelles_primaires": null,
-  "colleges_lycees": null,
-  "creches_proximite": null,
-  "aires_jeux_parcs": null,
-  "transport_scolaire": null,`;
-  }
-
-  if (isResidenceSecondaire) {
-    specificSearches = `
-RECHERCHES PRIORITAIRES RÉSIDENCE SECONDAIRE :
-1. Accessibilité Paris : "train ${ville} Paris horaires fréquence" OR site:sncf.com "${ville} Paris"
-2. Activités loisirs : "activités nautiques ${ville}" OR "sports bord mer ${ville}" OR "loisirs ${ville} tourisme"
-3. Restaurants gastronomie : "restaurants ${ville} ${quartier} fruits de mer" OR "gastronomie normande ${ville}"
-4. Culture patrimoine : "musées ${ville}" OR "patrimoine UNESCO ${ville}" OR "visites culturelles ${ville}"
-5. Location saisonnière potentiel : "location saisonnière ${ville} prix semaine" OR "Airbnb ${ville} rentabilité"`;
-
-    specificFields = `
-  "accessibilite_paris": null,
-  "activites_nautiques_loisirs": null,
-  "restaurants_gastronomie": null,
-  "culture_patrimoine": null,
-  "potentiel_location_saisonniere": null,`;
-  }
-
-  // Si aucun profil détecté, recherches génériques
-  if (!isRetraite && !isInvestisseur && !isFamille && !isResidenceSecondaire) {
-    specificSearches = `
-RECHERCHES GÉNÉRALES :
-1. "prix m2 ${location} 2024" OR site:dvf.gouv.fr
-2. "commerces services ${location}"
-3. "transports ${location} bus tram"
-4. "projets urbains ${ville} 2025" OR site:lehavre.fr
-5. "qualité de vie ${ville} ${quartier}"`;
-
-    specificFields = `
-  "prix_m2": null,
-  "commerces": null,
-  "transports": null,
-  "projets_urbains": null,`;
-  }
-
-  return `Tu es un analyste immobilier rigoureux. Effectue des recherches ciblées pour enrichir une annonce immobilière.
-
-LOCALISATION : ${location}
-ANGLE AGENT : ${angle}
-PROFIL PROSPECT : ${prospectProfile}
-
-${specificSearches}
-
-RÈGLES ABSOLUES :
-- Cite la source exacte pour chaque donnée chiffrée
-- Niveau de certitude : (CERTIFIÉ source officielle) ou (PROBABLE source reconnue) ou null si introuvable
-- INTERDIT : estimations personnelles, pourcentages sans source, "constat de marché observé"
-- Maximum 3 recherches web, sois précis et concis
-
-Retourne un JSON sans markdown :
-{${specificFields}
-  "donnees_communes": null,
-  "avertissements": []
-}`;
 }
 
 const GENERATION_SYSTEM = `INSTRUCTION TECHNIQUE ABSOLUE : Ta réponse doit être un JSON valide et UNIQUEMENT un JSON. Elle commence par { et se termine par }. Aucun caractère avant le {. Aucun caractère après le }. Aucun backtick. Aucun \`\`\`json. Aucun commentaire. Aucun texte introductif. Uniquement {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}
@@ -764,60 +618,33 @@ export async function POST(request: Request) {
             ? extractedData["nom de la résidence"]
             : "";
 
-    const webSearchPrompt = buildWebSearchPrompt(
-      ville,
-      quartier,
-      address,
-      angle,
-      prospectProfile || "",
-    );
-
-    let webData: unknown = null;
+    // Enrichissement externe : uniquement des faits sourcés, dont l'URL a réellement été renvoyée
+    // par la recherche web. En cas d'échec, la génération continue avec la seule plaquette.
+    let externalFacts: ExternalFact[] = [];
     if (!isLeHavre) {
       const location = `${ville}${quartier ? `, ${quartier}` : ""}${address ? `, ${address}` : ""}`;
-
-      const parisSearchPrompt = isParis
-        ? `Tu es un expert immobilier parisien. Effectue des recherches ciblées pour enrichir une annonce programme neuf.
-
-LOCALISATION : ${location}
-ANGLE : ${angle}
-PROFIL : ${prospectProfile}
-
-Recherche ces informations SANS mentionner d'années dans tes résultats :
-1. Prix médian appartements neuf dans ce quartier/arrondissement
-2. Transports : lignes de métro/RER/tramway à proximité, fréquences
-3. Projets urbains officiels en cours dans ce secteur
-4. Services médicaux, commerces, écoles de qualité à proximité
-5. Atouts lifestyle du quartier (parcs, gastronomie, culture)
-
-RÈGLES :
-- Données vérifiables uniquement
-- Pas de prix au m² chiffrés — utiliser des formulations relatives ("secteur accessible", "quartier premium")
-- Pas d'années dans les données
-- Pas de sources citées
-
-Retourne un JSON sans markdown avec les données utiles pour rédiger une annonce.`
-        : webSearchPrompt;
-
-      const webSearchCall = await callAnthropicWithRetry(apiKey, {
-        model: "claude-sonnet-4-5",
-        max_tokens: 300,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 1 }],
-        messages: [{ role: "user", content: parisSearchPrompt }],
-      });
-
-      if (!webSearchCall.response.ok) {
-        return anthropicErrorResponse(webSearchCall.response, webSearchCall.json);
-      }
-
-      const webSearchText = extractTextFromAnthropic(webSearchCall.json);
-      webData = webSearchText;
-      if (webSearchText) {
-        try {
-          webData = parseJsonFromText(webSearchText);
-        } catch {
-          webData = webSearchText;
+      try {
+        const enrichmentCall = await callAnthropicWithRetry(apiKey, {
+          model: "claude-sonnet-4-5",
+          max_tokens: 3000,
+          tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+          messages: [{ role: "user", content: buildEnrichmentPrompt(location) }],
+        });
+        if (enrichmentCall.response.ok) {
+          const searchUrls = collectSearchUrls(
+            enrichmentCall.json as Parameters<typeof collectSearchUrls>[0],
+          );
+          const text = extractTextFromAnthropic(enrichmentCall.json);
+          const { kept, rejected } = validateExternalFacts(parseJsonFromText(text), searchUrls);
+          externalFacts = kept;
+          console.log(
+            `[programme-neuf] enrichissement web : ${kept.length} faits sourcés retenus, ${rejected} écartés, ${searchUrls.size} pages consultées`,
+          );
+        } else {
+          console.error("[programme-neuf] enrichissement web indisponible :", enrichmentCall.response.status);
         }
+      } catch (e) {
+        console.error("[programme-neuf] enrichissement web ignoré :", e);
       }
     }
 
@@ -870,8 +697,7 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
       additionalInfo,
       priceFrom,
       annexesDescription,
-      webText:
-        typeof webData === "string" ? webData : webData ? JSON.stringify(webData) : "",
+      externalFacts,
     });
     const factsPrompt = buildFactsPrompt(factsCtx, JSON.stringify(essentialExtractedData));
     const deliveryLine = factsCtx.deliveryPast
@@ -958,8 +784,7 @@ ${factsPrompt}
 ${hardcodedData ? `DONNÉES LOCALES OFFICIELLES VÉRIFIÉES (Le Havre) :
 ${hardcodedData}
 
-IMPORTANT : Ces données sont utilisées comme connaissance de fond uniquement. Ne jamais citer les sources, ne jamais mentionner d'années liées aux données de marché dans les annonces. Utiliser des formulations intemporelles : "prix médian du secteur", "loyer de marché", "demande structurelle".` : `DONNÉES WEB LOCALES (source secondaire : lieux, transports et commerces uniquement ; aucun chiffre, aucune date) :
-${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}`}
+IMPORTANT : Ces données sont utilisées comme connaissance de fond uniquement. Ne jamais citer les sources, ne jamais mentionner d'années liées aux données de marché dans les annonces. Utiliser des formulations intemporelles : "prix médian du secteur", "loyer de marché", "demande structurelle".` : ""}
 
 ${addressBlock ? `${addressBlock}\n` : ""}${annexesBlock ? `${annexesBlock}\n` : ""}
 PARAMÈTRES AGENT :
@@ -985,11 +810,6 @@ DONNÉES CRITIQUES À UTILISER QUAND ELLES EXISTENT DANS LES FAITS :
 - Domotique : ${extractedData.domotique || "non mentionné"}
 - Prestations complètes : ${JSON.stringify(extractedData.prestations ?? [])}
 - Dispositifs fiscaux : ${fiscalLine}
-- Données web NON FIABLES à exclure : ${JSON.stringify(
-        typeof webData === "object" && webData !== null && "avertissements" in webData
-          ? (webData as { avertissements: unknown }).avertissements
-          : [],
-      )}
 
 LISTE NOIRE DYNAMIQUE — INFORMATIONS INTERDITES POUR CE PROGRAMME :
 Ces informations ne sont PAS confirmées dans les documents fournis et ne doivent JAMAIS apparaître :
@@ -1376,6 +1196,7 @@ RAPPEL FINAL : ${formatJson}
       lot: lotAnnonces,
       scoring,
       extractedData,
+      sources: externalFacts.map(({ fact, sourceName, sourceUrl }) => ({ fact, sourceName, sourceUrl })),
     });
   } catch (err) {
     console.error("[programme-neuf] CRASH:", err);
