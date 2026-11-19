@@ -216,10 +216,10 @@ export function buildFactsContext(input: {
 
 function buildDispositifRules(dispositif: Dispositif): string {
   if (dispositif === "nue-propriete") {
-    return `10. DISPOSITIF NUE-PROPRIÉTÉ : l'acquéreur achète la nue-propriété (jamais la « pleine propriété » à l'achat). Pendant toute la durée du démembrement il ne perçoit aucun loyer, ne gère rien et n'occupe pas le bien. Il retrouve la pleine propriété à l'issue. N'emploie ni « rendement », ni « revenus locatifs », ni « capitalisation ». Ne suggère jamais d'habiter le bien pendant le démembrement.`;
+    return `11. DISPOSITIF NUE-PROPRIÉTÉ : l'acquéreur achète la nue-propriété (jamais la « pleine propriété » à l'achat). Pendant toute la durée du démembrement il ne perçoit aucun loyer, ne gère rien et n'occupe pas le bien. Il retrouve la pleine propriété à l'issue. N'emploie ni « rendement », ni « revenus locatifs », ni « capitalisation ». Ne suggère jamais d'habiter le bien pendant le démembrement.`;
   }
   if (dispositif === "lmnp" || dispositif === "pinel") {
-    return `10. DISPOSITIF FISCAL : ne chiffre aucun avantage fiscal ni aucun rendement. Renvoie vers le conseiller pour l'étude du dispositif.`;
+    return `11. DISPOSITIF FISCAL : ne chiffre aucun avantage fiscal ni aucun rendement. Renvoie vers le conseiller pour l'étude du dispositif.`;
   }
   return "";
 }
@@ -251,7 +251,8 @@ RÈGLES D'USAGE DES FAITS (ABSOLUES) :
 6. Aucune formule d'urgence ou de rareté qui ne soit pas dans les faits.
 7. Décris, ne qualifie pas : n'ajoute aucun superlatif ni adjectif de standing, d'innovation, de durabilité ou d'écologie qui ne figure pas dans les faits.
 8. Un équipement de l'immeuble (ascenseur, accès, local à vélos, patio, toitures) n'est jamais attribué à chaque logement. Un équipement présent dans certains logements seulement est cité avec sa restriction.
-9. N'écris jamais « vous êtes un investisseur… » ni aucune description du profil cible : écris pour lui sans le désigner.${
+9. Pour un fait externe, ne présume pas de la distance au programme : écris « dans le quartier » ou cite l'élément tel que la source le décrit, sans « à proximité » ni « à deux pas ».
+10. N'écris jamais « vous êtes un investisseur… » ni aucune description du profil cible : écris pour lui sans le désigner.${
     buildDispositifRules(ctx.dispositif) ? `\n${buildDispositifRules(ctx.dispositif)}` : ""
   }`;
 }
@@ -260,7 +261,7 @@ RÈGLES D'USAGE DES FAITS (ABSOLUES) :
 /* Vérification post-génération                                        */
 /* ------------------------------------------------------------------ */
 
-function splitSentences(text: string): string[] {
+export function splitSentences(text: string): string[] {
   return text
     .split(/(?<=[.!?])\s+|\n+/)
     .map((s) => s.trim())
@@ -282,7 +283,7 @@ const UNSUPPORTED_TERMS: TermRule[] = [
   { re: /\bpourquoi\s+maintenant\b/, label: "formule d'urgence" },
   { re: /\bfortement\s+impose\w*/, label: "situation fiscale du profil cible" },
   {
-    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|etabli\w*|attractif\w*|privilegi\w+|modulable\w*|specialis\w+|specialiste\w*|substantiel\w*|soucieu\w+|durablement|ancr\w+|soigne\w*|de\s+qualite|haute\s+qualite|surprise|tracas|sans\s+souci|serein\w*|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
+    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|etabli\w*|attractif\w*|privilegi\w+|modulable\w*|specialis\w+|specialiste\w*|substantiel\w*|soucieu\w+|durablement|ancr\w+|soigne\w*|de\s+qualite|haute\s+qualite|surprise|tracas|sans\s+souci|serein\w*|serenite|equilibr\w+|encadr\w+|transparen\w+|levier|diversification|partout|reconnu\w*|coherent\w*|exposition\s+(?:immobiliere|au\s+marche)|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
     label: "qualificatif ou superlatif non sourcé",
   },
   {
@@ -400,6 +401,13 @@ export function verifySentence(sentence: string, ctx: FactsContext): string[] {
     /\bvous\s+(?:restituez|rendez|perdez|revendez)\b[^.;]{0,30}pleine\s+propriete/.test(folded)
   ) {
     reasons.push("la pleine propriété est récupérée par le nue-propriétaire, pas restituée");
+  }
+
+  if (
+    ctx.dispositif === "nue-propriete" &&
+    /\bproprietaire\s+(?:du\s+sol|des\s+murs)\b|\b(?:devenez|etes)\s+proprietaire\s+a\s+\d/.test(folded)
+  ) {
+    reasons.push("rôle juridique inexact : pendant le démembrement le client est nu-propriétaire, pas plein propriétaire");
   }
 
   if (/\binvestisseurs?\s+(?:patrimoni\w+|fortement)|\bprofil\s+(?:investisseur|patrimonial)/.test(folded)) {
@@ -529,4 +537,30 @@ export function buildFactsCorrectionMessage(issues: FactIssue[]): string {
 ${lines}
 Réécris UNIQUEMENT ces passages en retirant toute information qui ne figure pas dans les faits (si besoin, supprime la phrase). Garde le reste du texte strictement identique.
 Retourne le même format JSON.`;
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Hashtags                                                            */
+/* ------------------------------------------------------------------ */
+
+const GENERIC_HASHTAG =
+  /^(?:immobilier\w*|programme\w*|neuf\w*|invest\w*|patrimoin\w*|nuepropriet\w*|demembrement\w*|lmnp|lmp|pinel|ptz|logement\w*|appartement\w*|achat\w*|residence\w*|vefa|primoaccedant\w*|conseilimmo|agenceimmo\w*|projetimmo\w*|proprietaire\w*|usufruit\w*)$/;
+
+/** Retire les hashtags qui ne sont ni génériques ni présents dans les faits (fautes, lieux inventés). */
+export function sanitizeHashtags(text: string, ctx: FactsContext): string {
+  const compactFacts = foldText(ctx.factsText).replace(/[^a-z0-9]/g, "");
+  const ville =
+    foldText(ctx.factsText.match(/"ville"\s*:\s*"([^"]+)"/)?.[1] ?? "").replace(/[^a-z0-9]/g, "");
+
+  return text
+    .replace(/(^|\s)#([\p{L}\p{N}_]+)/gu, (full, lead: string, tag: string) => {
+      const folded = foldText(tag).replace(/[^a-z0-9]/g, "");
+      const isGeneric = GENERIC_HASHTAG.test(folded);
+      const isVille = ville !== "" && (folded === ville || new RegExp(`^${ville}\\d{0,2}e?$`).test(folded));
+      const inFacts = folded.length >= 4 && compactFacts.includes(folded);
+      return isGeneric || isVille || inFacts ? full : lead;
+    })
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+$/gm, "");
 }
