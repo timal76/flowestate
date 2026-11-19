@@ -34,7 +34,7 @@ avec un langage QUALIFIÉ uniquement :
 - "potentiel locatif à confirmer avec votre conseiller"
 
 Ne jamais transformer un angle marketing ou un profil cible en fait de marché ou en promesse.
-La "garantie décennale" (mention légale constructeur) reste autorisée ; toute autre "garantie" est interdite.`;
+Aucune garantie n'est mentionnée (décennale, biennale, parfait achèvement, etc.), sauf si le mot figure explicitement dans les faits fournis ; en cas de doute, ne pas en parler.`;
 
 /** Repli accentué → ASCII pour matching insensible aux accents. */
 function fold(text: string): string {

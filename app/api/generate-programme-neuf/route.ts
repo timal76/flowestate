@@ -8,6 +8,15 @@ import {
   stripViolations,
 } from "@/lib/compliance";
 import { getLeHavreDataForPrompt } from "@/lib/data/le-havre";
+import {
+  buildFactsContext,
+  buildFactsCorrectionMessage,
+  buildFactsPrompt,
+  collectFactIssues,
+  stripFactIssues,
+  type FactIssue,
+} from "@/lib/programme-facts";
+import { ExtractionError, extractProgrammeFromPdfBase64 } from "@/lib/programme-extraction";
 import { checkProgrammesNeufsLimit } from "@/lib/check-generation-limit";
 import { generationLimitErrorResponse } from "@/lib/generation-limit-api";
 import { recordGenerationFromRequest, resolveGenerationUserId } from "@/lib/record-generation";
@@ -118,36 +127,14 @@ function cleanPdfBase64(input: string): string {
   return trimmed;
 }
 
-const ESSENTIAL_EXTRACTION_KEYS = [
-  "nom",
-  "promoteur",
-  "ville",
-  "quartier",
-  "adresse",
-  "types_biens",
-  "surface_min",
-  "surface_max",
-  "nb_lots",
-  "prix_min",
-  "prix_max",
-  "taux_tva",
-  "ptz",
-  "pinel",
-  "lmnp",
-  "livraison",
-  "prestations",
-  "domotique",
-  "stationnement",
-  "re2020",
-  "transports",
-  "commerces",
-  "ecoles",
-] as const;
+/** Champs promoteur volontairement exclus du prompt (formulations marketing à ne pas reprendre). */
+const EXCLUDED_EXTRACTION_KEYS = new Set(["arguments_promoteur"]);
 
+/** Garde tous les champs renseignés (dispositif, répartition, etc. compris), sans bruit. */
 function compactExtractedData(data: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
-  for (const key of ESSENTIAL_EXTRACTION_KEYS) {
-    const value = data[key];
+  for (const [key, value] of Object.entries(data)) {
+    if (EXCLUDED_EXTRACTION_KEYS.has(key)) continue;
     if (value === null || value === undefined || value === "") continue;
     if (Array.isArray(value) && value.length === 0) continue;
     result[key] = value;
@@ -397,27 +384,6 @@ Retourne un JSON sans markdown :
   "avertissements": []
 }`;
 }
-
-const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
-
-Format exact :
-{"nom":null,"promoteur":null,"ville":null,"quartier":null,"adresse":null,"types_biens":null,"surface_min":null,"surface_max":null,"nb_lots":null,"prix_min":null,"prix_max":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"re2020":null,"livraison":null,"prestations":[],"domotique":null,"stationnement":null,"commerces_rdc":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[],"baignoire":null,"hauteur_plafond":null,"orientation":null,"vue":null,"cuisine_equipee":null,"double_exposition":null,"ascenseur":null,"digicode":null,"interphone":null,"gardien":null,"piscine":null,"terrasse_confirmee":null,"balcon_confirme":null}
-
-RÈGLES ABSOLUES :
-- Copie mot pour mot les informations présentes dans le document, sans reformuler
-- Pour "livraison" : copie exactement ce qui est écrit (ex: "T1 2026", "premier trimestre 2026")
-- Pour "prestations" : liste exhaustive de TOUT ce qui est mentionné dans le document
-- Pour "domotique" : note exactement le nom du système et si il est offert ou non
-- Pour "arguments_promoteur" : liste tous les angles marketing utilisés
-- "baignoire" : null sauf si le mot "baignoire" est explicitement écrit dans le document
-- "hauteur_plafond" : null sauf si une hauteur précise est indiquée dans le document
-- "orientation" : null sauf si une orientation cardinale (sud, nord, est, ouest) est explicitement indiquée
-- "vue" : null sauf si une vue est explicitement garantie dans le document
-- "cuisine_equipee" : null sauf si les équipements sont listés comme inclus (pas optionnels)
-- "ascenseur" : null sauf si explicitement mentionné
-- "terrasse_confirmee" : copier exactement le terme utilisé (terrasse ou balcon)
-- Si une information est absente : null
-- Zéro invention, zéro interprétation, zéro extrapolation`;
 
 const GENERATION_SYSTEM = `INSTRUCTION TECHNIQUE ABSOLUE : Ta réponse doit être un JSON valide et UNIQUEMENT un JSON. Elle commence par { et se termine par }. Aucun caractère avant le {. Aucun caractère après le }. Aucun backtick. Aucun \`\`\`json. Aucun commentaire. Aucun texte introductif. Uniquement {"leboncoin":{"titre":"...","corps":"..."},"seloger":{"titre":"...","corps":"..."},"siteAgence":{"titre":"...","corps":"..."}}
 
@@ -698,7 +664,18 @@ export async function POST(request: Request) {
     if (body.extractedProgramData && Object.keys(body.extractedProgramData).length > 0) {
       extractedData = body.extractedProgramData;
       skipPdfExtraction = true;
-    } else if (!body.pdfBase64?.trim?.() && !body.extractedProgramData) {
+    } else if (!body.pdfBase64?.trim?.()) {
+      // Ni données extraites exploitables, ni PDF : on distingue une extraction vide d'un PDF absent.
+      if (body.extractedProgramData) {
+        return NextResponse.json(
+          {
+            error:
+              "Impossible d'analyser la plaquette, réessayez ou utilisez un PDF plus léger.",
+            code: "EXTRACTION_EMPTY",
+          },
+          { status: 422 },
+        );
+      }
       return NextResponse.json({ error: "Le PDF est requis." }, { status: 400 });
     }
 
@@ -737,56 +714,13 @@ export async function POST(request: Request) {
       if (!pdfData || pdfData.length < 10) {
         return NextResponse.json({ error: "Le PDF invalide." }, { status: 400 });
       }
-      const extractionCall = await callAnthropicWithRetry(apiKey, {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
-        system: EXTRACTION_SYSTEM,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "document",
-                source: {
-                  type: "base64",
-                  media_type: "application/pdf",
-                  data: pdfData,
-                },
-              },
-              {
-                type: "text",
-                text: "Sois ultra concis. Retourne uniquement le JSON avec les champs non-null. Maximum 500 tokens.\n\nAnalyse cette plaquette promoteur et extrais toutes les informations demandées.",
-              },
-            ],
-          },
-        ],
-      });
-
-      if (!extractionCall.response.ok) {
-        return anthropicErrorResponse(extractionCall.response, extractionCall.json);
-      }
-
-      const extractionText = extractTextFromAnthropic(extractionCall.json);
-      console.log("EXTRACTION RAW:", extractionText?.substring(0, 500));
-      if (!extractionText) {
-        return NextResponse.json(
-          { error: "Impossible d'extraire les informations du PDF." },
-          { status: 502 },
-        );
-      }
-
       try {
-        extractedData = parseJsonFromText(extractionText) as Record<string, unknown>;
-      } catch (e) {
-        console.error("PARSE ERROR:", e, "RAW:", extractionText?.substring(0, 200));
-        extractedData = {
-          nom: null,
-          ville: body.address?.split(",").pop()?.trim() || "Paris",
-          quartier: null,
-          promoteur: null,
-          types_biens: null,
-          arguments_promoteur: [],
-        };
+        extractedData = await extractProgrammeFromPdfBase64(apiKey, pdfData);
+      } catch (err) {
+        if (err instanceof ExtractionError) {
+          return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+        }
+        throw err;
       }
     }
 
@@ -908,7 +842,7 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
         model: "claude-haiku-4-5-20251001",
         max_tokens: 600,
         system:
-          "Tu es un expert en immobilier neuf. Analyse ces documents annexes (plans de logements, vues 3D, photos) et extrais les informations utiles pour rédiger une annonce commerciale : agencement des pièces, volumes, points forts architecturaux, qualité des espaces, orientation, luminosité apparente, qualité des finitions visibles. Sois précis et factuel. Retourne un texte structuré en bullet points.",
+          "Tu es un expert en immobilier neuf. Analyse ces documents annexes (plans de logements, vues 3D, photos). Relève UNIQUEMENT ce qui est écrit ou coté sur les documents : agencement et noms des pièces, surfaces cotées, présence d'une terrasse ou d'un balcon et sa surface, étage. N'infère ni orientation, ni luminosité, ni finitions, ni style, ni équipement qui ne soit pas écrit. Retourne un texte factuel en bullet points.",
         messages: [
           {
             role: "user",
@@ -929,6 +863,29 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
     }
 
     const essentialExtractedData = compactExtractedData(extractedData);
+
+    const factsCtx = buildFactsContext({
+      extractedData,
+      additionalInfo,
+      priceFrom,
+      annexesDescription,
+      webText:
+        typeof webData === "string" ? webData : webData ? JSON.stringify(webData) : "",
+    });
+    const factsPrompt = buildFactsPrompt(factsCtx, JSON.stringify(essentialExtractedData));
+    const deliveryLine = factsCtx.deliveryPast
+      ? "dépassée à la date du jour, ne pas la mentionner"
+      : String(extractedData.livraison || "non disponible dans la plaquette (ne rien inventer)");
+    const fiscalLine =
+      [
+        extractedData.dispositif ? `dispositif : ${String(extractedData.dispositif)}` : "",
+        extractedData.taux_tva ? `TVA ${String(extractedData.taux_tva)}` : "",
+        extractedData.ptz ? `PTZ : ${String(extractedData.ptz)}` : "",
+        extractedData.pinel ? `Pinel : ${String(extractedData.pinel)}` : "",
+        extractedData.lmnp ? `LMNP : ${String(extractedData.lmnp)}` : "",
+      ]
+        .filter(Boolean)
+        .join(", ") || "aucun dispositif mentionné dans la plaquette";
 
     const buildGenerationUserPrompt = (
       mode: "programme" | "lot" | "programme-court" | "programme-site" | "lot-court" | "lot-site",
@@ -977,31 +934,30 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
 
       const titleRulesBlock = isCourt
         ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
-${allPlatforms.includes("leboncoin") ? "- Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train." : ""}
-${allPlatforms.includes("seloger") ? "- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée." : ""}
+${allPlatforms.includes("leboncoin") ? "- Leboncoin (60 car max) : DOIT contenir une surface, un prix ou la ville, tirés des FAITS AUTORISÉS." : ""}
+${allPlatforms.includes("seloger") ? "- SeLoger (100 car max) : DOIT contenir ville + type de bien + caractéristique chiffrée tirée des FAITS AUTORISÉS." : ""}
 ${allPlatforms.includes("instagram") ? "- Instagram : accroche lifestyle max 10 mots, corps 150-220 mots, 8-10 hashtags en fin." : ""}
 ${allPlatforms.includes("linkedin") ? "- LinkedIn : accroche chiffrée 100 car max, corps 300-400 mots expert, 3-5 hashtags pro." : ""}
 ${allPlatforms.includes("facebook") ? "- Facebook : accroche narrative 80 car max, corps 200-300 mots conversationnel, 5-7 hashtags." : ""}`
         : isSiteOnly
           ? `RÈGLES OBLIGATOIRES POUR LES TITRES :
-- Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"`
+- Site agence : titre libre mais DOIT contenir une affirmation forte appuyée sur un chiffre tiré des FAITS AUTORISÉS.`
           : `RÈGLES OBLIGATOIRES POUR LES TITRES :
-- Leboncoin (60 car max) : DOIT contenir surface OU prix OU trajet train. Ex: "2h05 Paris • T3 64m² neuf • Livraison T1 2026"
-- SeLoger (100 car max) : DOIT contenir ville + type + caractéristique chiffrée. Ex: "Le Havre Arcole Brindeau — T3 neuf 64m² + balcon 28m² — 2 400€/m² secteur — Livraison T1 2026"
-- Site agence : titre libre mais DOIT contenir une affirmation forte avec chiffre. Ex: "Votre refuge normand à 2h05 de Paris — 15% sous le prix du centre UNESCO"`;
+- Leboncoin (60 car max) : DOIT contenir une surface, un prix ou la ville, tirés des FAITS AUTORISÉS.
+- SeLoger (100 car max) : DOIT contenir ville + type de bien + caractéristique chiffrée tirée des FAITS AUTORISÉS.
+- Site agence : titre libre mais DOIT contenir une affirmation forte appuyée sur un chiffre tiré des FAITS AUTORISÉS.`;
 
       return `
 ${introLine}
 
 ${modeInstruction}
 ${programmeStrictRule ? `\n${programmeStrictRule}\n` : ""}
-DONNÉES EXTRAITES DE LA PLAQUETTE (JSON) :
-${JSON.stringify(essentialExtractedData)}
+${factsPrompt}
 
 ${hardcodedData ? `DONNÉES LOCALES OFFICIELLES VÉRIFIÉES (Le Havre) :
 ${hardcodedData}
 
-IMPORTANT : Ces données sont utilisées comme connaissance de fond uniquement. Ne jamais citer les sources, ne jamais mentionner d'années liées aux données de marché dans les annonces. Utiliser des formulations intemporelles : "prix médian du secteur", "loyer de marché", "demande structurelle".` : `DONNÉES WEB LOCALES :
+IMPORTANT : Ces données sont utilisées comme connaissance de fond uniquement. Ne jamais citer les sources, ne jamais mentionner d'années liées aux données de marché dans les annonces. Utiliser des formulations intemporelles : "prix médian du secteur", "loyer de marché", "demande structurelle".` : `DONNÉES WEB LOCALES (source secondaire : lieux, transports et commerces uniquement ; aucun chiffre, aucune date) :
 ${typeof webData === "string" ? webData : JSON.stringify(webData, null, 2)}`}
 
 ${addressBlock ? `${addressBlock}\n` : ""}${annexesBlock ? `${annexesBlock}\n` : ""}
@@ -1009,7 +965,7 @@ PARAMÈTRES AGENT :
 - Angle souhaité : ${angle}
 - Profil prospect détaillé : ${prospectProfile || "Non renseigné"}
 - Ton souhaité : ${tone}
-${priceFrom ? `- Prix à partir de (prioritaire si cohérent avec la plaquette) : ${priceFrom}` : "- Prix à partir de : utiliser les données de la plaquette"}
+${priceFrom ? `- Prix indicatif fourni par l'agent (à reprendre avec son qualificatif exact, ne jamais transformer « moyen » en « à partir de ») : ${priceFrom}` : "- Prix : utiliser uniquement les données de la plaquette, avec leur qualificatif exact"}
 ${additionalInfo ? `- Informations complémentaires : ${additionalInfo}` : ""}
 
 IMPORTANT — ANGLE ET PROFIL : Angle et profil décrivent la cible, ne pas reprendre leurs affirmations comme des faits ou des promesses.
@@ -1023,11 +979,11 @@ ${competitorAds}
 INSTRUCTIONS : Analyse le style, le vocabulaire, la structure et les arguments de ces annonces concurrentes. Tes annonces doivent être fondamentalement différentes sur tous ces points : accroche, angle narratif, arguments mis en avant, vocabulaire utilisé, structure du texte. Si un concurrent commence par le nom de la résidence, toi tu commences par une situation concrète. Si un concurrent liste les prestations, toi tu racontes une journée type. L'objectif est qu'un prospect qui a lu les annonces concurrentes soit frappé par la différence de ton et d'approche.
 ` : ""}
 
-DONNÉES CRITIQUES À INCLURE OBLIGATOIREMENT :
-- Date de livraison : ${extractedData.livraison || "non disponible dans la plaquette"}
+DONNÉES CRITIQUES À UTILISER QUAND ELLES EXISTENT DANS LES FAITS :
+- Date de livraison : ${deliveryLine}
 - Domotique : ${extractedData.domotique || "non mentionné"}
-- Prestations complètes : ${JSON.stringify(extractedData.prestations)}
-- Dispositifs fiscaux : TVA ${extractedData.taux_tva || "non précisé"}, PTZ : ${extractedData.ptz}, Pinel : ${extractedData.pinel}
+- Prestations complètes : ${JSON.stringify(extractedData.prestations ?? [])}
+- Dispositifs fiscaux : ${fiscalLine}
 - Données web NON FIABLES à exclure : ${JSON.stringify(
         typeof webData === "object" && webData !== null && "avertissements" in webData
           ? (webData as { avertissements: unknown }).avertissements
@@ -1062,6 +1018,7 @@ Avant de retourner le JSON, vérifie CHAQUE annonce :
 5. Aucune source citée (source : X)
 6. Aucune année passée (2024, 2025) — seules les années futures de projets (2027, 2028) sont autorisées
 7. Texte en prose continue uniquement
+8. Chaque montant, date, durée, surface, garantie, label, style architectural et nom de lieu écrit figure dans les FAITS AUTORISÉS (sinon supprime-le)
 
 Si tu trouves une violation, corrige-la avant de retourner le JSON.
 
@@ -1148,6 +1105,24 @@ RAPPEL FINAL : ${formatJson}
     const buildFormatReminder = (platformList: string[]) =>
       `{${platformList.map((p) => `"${p}":{"titre":"...","corps":"..."}`).join(",")}}`;
 
+    /**
+     * Dernier filet : après le retry, retire du corps les phrases qui contiennent encore
+     * une information absente des faits, et signale les titres concernés.
+     */
+    const finalizeAnnonces = (annonces: GeneratedAnnonces, label: string): GeneratedAnnonces => {
+      const flagged = flagRemainingViolations(annonces);
+      const issues: FactIssue[] = collectFactIssues(annonces, factsCtx);
+      if (issues.length === 0) return flagged;
+
+      console.warn(`[programme-neuf] ${label}: écarts restants après retry`, JSON.stringify(issues));
+      const result: GeneratedAnnonces = { ...flagged };
+      for (const key of PLATFORM_KEYS) {
+        const block = result[key];
+        if (block) result[key] = stripFactIssues(key, block, issues);
+      }
+      return result;
+    };
+
     const generateWithCompliance = async (opts: {
       label: string;
       maxTokens: number;
@@ -1180,12 +1155,21 @@ RAPPEL FINAL : ${formatJson}
       if (annonces instanceof NextResponse) return annonces;
 
       const violations = collectAnnonceViolations(annonces);
-      if (violations.length === 0) return flagRemainingViolations(annonces);
+      const factIssues = collectFactIssues(annonces, factsCtx);
+      if (violations.length === 0 && factIssues.length === 0) {
+        return flagRemainingViolations(annonces);
+      }
+
+      console.warn(
+        `[programme-neuf] ${opts.label}: ${violations.length} violation(s) conformité, ${factIssues.length} écart(s) aux faits`,
+        JSON.stringify(factIssues),
+      );
 
       const correctionUser =
         opts.userContent +
         "\n\n" +
-        buildComplianceCorrectionMessage(violations) +
+        (violations.length > 0 ? buildComplianceCorrectionMessage(violations) + "\n" : "") +
+        (factIssues.length > 0 ? buildFactsCorrectionMessage(factIssues) + "\n" : "") +
         "\nTexte à corriger (JSON) :\n" +
         JSON.stringify(annonces);
 
@@ -1193,14 +1177,14 @@ RAPPEL FINAL : ${formatJson}
       if (retry.response.ok) {
         const retried = parseGeneratedAnnonces(
           extractTextFromAnthropic(retry.json),
-          `${opts.label}-compliance-retry`,
+          `${opts.label}-retry`,
         );
         if (!(retried instanceof NextResponse)) {
           annonces = retried;
         }
       }
 
-      return flagRemainingViolations(annonces);
+      return finalizeAnnonces(annonces, opts.label);
     };
 
     const generateSplitAnnonces = async (
@@ -1252,7 +1236,7 @@ RAPPEL FINAL : ${formatJson}
         const portailFormat = buildFormatReminder(portailsToGenerate);
         const parsed = await generateWithCompliance({
           label: `${baseMode}-portails`,
-          maxTokens: 1500,
+          maxTokens: 2000,
           systemSuffix: portailFormat,
           userContent:
             buildGenerationUserPrompt(courtMode, portailsToGenerate) +
@@ -1265,7 +1249,7 @@ RAPPEL FINAL : ${formatJson}
         const reseauxFormat = buildFormatReminder(reseauxToGenerate);
         const parsed = await generateWithCompliance({
           label: `${baseMode}-reseaux`,
-          maxTokens: 1500,
+          maxTokens: 3000,
           systemSuffix: reseauxFormat,
           userContent:
             buildGenerationUserPrompt(courtMode, reseauxToGenerate) +
