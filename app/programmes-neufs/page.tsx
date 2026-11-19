@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
-import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useState } from "react";
+import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import SiteHeader from "@/components/site-header";
@@ -158,17 +158,86 @@ async function compressPdfToBase64(file: File): Promise<string> {
   }
 }
 
+/** Les angles sont optionnels : aucune erreur ici ne doit bloquer la génération. */
 async function generateAngleSuggestions(
   extractedData: Record<string, unknown>,
 ): Promise<AngleSuggestion[]> {
-  const response = await fetch("/api/suggest-angles", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ extractedData }),
-  });
-  if (!response.ok) return [];
-  const data = (await response.json()) as { suggestions: AngleSuggestion[] };
-  return data.suggestions || [];
+  try {
+    const response = await fetch("/api/suggest-angles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ extractedData }),
+    });
+    if (!response.ok) return [];
+    const data = (await response.json()) as { suggestions?: AngleSuggestion[] };
+    return data.suggestions || [];
+  } catch (err) {
+    console.error("Suggestions error", err);
+    return [];
+  }
+}
+
+const EXTRACTION_FALLBACK_MESSAGE =
+  "Impossible d'analyser la plaquette, réessayez ou utilisez un PDF plus léger.";
+
+type ExtractionResult =
+  | { ok: true; data: Record<string, unknown> }
+  | { ok: false; message: string };
+
+function pdfCacheKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+/**
+ * Envoie le PDF dans le Storage, lance l'extraction serveur, puis supprime le PDF du Storage
+ * (bucket public). Le résultat est conservé en mémoire par la page : une génération qui échoue
+ * ensuite n'oblige pas à ré-extraire. Ne renvoie jamais de données vides.
+ */
+async function extractPdfViaStorage(file: File): Promise<ExtractionResult> {
+  let supabaseClient: ReturnType<typeof import("@supabase/supabase-js").createClient> | null = null;
+  let fileName = "";
+
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    supabaseClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+
+    fileName = `plaquettes/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabaseClient.storage
+      .from("plaquettes")
+      .upload(fileName, file, { contentType: "application/pdf" });
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = supabaseClient.storage.from("plaquettes").getPublicUrl(fileName);
+
+    const response = await fetch("/api/extract-programme", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pdfUrl: urlData.publicUrl }),
+    });
+
+    const json = (await response.json().catch(() => ({}))) as {
+      extractedData?: Record<string, unknown>;
+      error?: string;
+    };
+
+    if (!response.ok) {
+      return { ok: false, message: json.error || EXTRACTION_FALLBACK_MESSAGE };
+    }
+    if (!json.extractedData || Object.keys(json.extractedData).length === 0) {
+      return { ok: false, message: EXTRACTION_FALLBACK_MESSAGE };
+    }
+    return { ok: true, data: json.extractedData };
+  } catch (err) {
+    console.error("Extraction error", err);
+    return { ok: false, message: "Erreur lors de l'envoi de la plaquette. Réessayez." };
+  } finally {
+    if (supabaseClient && fileName) {
+      void supabaseClient.storage.from("plaquettes").remove([fileName]);
+    }
+  }
 }
 
 export default function ProgrammesNeufsPage() {
@@ -210,6 +279,7 @@ export default function ProgrammesNeufsPage() {
     linkedin: false,
     facebook: false,
   });
+  const extractionRef = useRef<{ key: string; promise: Promise<ExtractionResult> } | null>(null);
   const [angleSuggestions, setAngleSuggestions] = useState<AngleSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
@@ -316,44 +386,22 @@ export default function ProgrammesNeufsPage() {
     setAngleSuggestions([]);
     setIsLoadingSuggestions(true);
 
+    const key = pdfCacheKey(file);
+    const promise = extractPdfViaStorage(file);
+    extractionRef.current = { key, promise };
+
     void (async () => {
       try {
-        const { createClient } = await import("@supabase/supabase-js");
-        const supabaseClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        );
-
-        const fileName = `plaquettes/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabaseClient.storage
-          .from("plaquettes")
-          .upload(fileName, file, { contentType: "application/pdf" });
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = supabaseClient.storage.from("plaquettes").getPublicUrl(fileName);
-
-        const extractRes = await fetch("/api/extract-programme", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pdfUrl: urlData.publicUrl }),
-        });
-
-        if (extractRes.ok) {
-          const extractJson = (await extractRes.json()) as {
-            extractedData: Record<string, unknown>;
-          };
-          console.log("[debug extractedData]", extractJson.extractedData);
-          const suggestions = await generateAngleSuggestions(extractJson.extractedData);
-          console.log("[debug suggestions]", suggestions);
-          setAngleSuggestions(suggestions);
+        const result = await promise;
+        if (extractionRef.current?.key !== key) return;
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
         }
-
-        void supabaseClient.storage.from("plaquettes").remove([fileName]);
-      } catch (err) {
-        console.error("Suggestions error", err);
+        const suggestions = await generateAngleSuggestions(result.data);
+        if (extractionRef.current?.key === key) setAngleSuggestions(suggestions);
       } finally {
-        setIsLoadingSuggestions(false);
+        if (extractionRef.current?.key === key) setIsLoadingSuggestions(false);
       }
     })();
 
@@ -588,60 +636,36 @@ export default function ProgrammesNeufsPage() {
       let extractedDataFromPdf: Record<string, unknown> | undefined;
       let pdfBase64: string | undefined;
 
-      if (pdfFile.size > 3 * 1024 * 1024) {
-        toast.loading("Upload de la plaquette...", { id: "upload" });
+      // 1) Réutilise l'extraction lancée à l'ajout du PDF (en cours ou terminée).
+      const key = pdfCacheKey(pdfFile);
+      let extraction: ExtractionResult | undefined;
+      if (extractionRef.current?.key === key) {
+        toast.loading("Analyse de la plaquette...", { id: "extract" });
+        extraction = await extractionRef.current.promise;
+        toast.dismiss("extract");
+      }
 
-        try {
-          const { createClient } = await import("@supabase/supabase-js");
-          const supabaseClient = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          );
-
-          const fileName = `plaquettes/${Date.now()}_${pdfFile.name}`;
-          const { error: uploadError } = await supabaseClient.storage
-            .from("plaquettes")
-            .upload(fileName, pdfFile, { contentType: "application/pdf" });
-
-          if (uploadError) throw uploadError;
-
-          const { data: urlData } = supabaseClient.storage.from("plaquettes").getPublicUrl(fileName);
-
-          toast.dismiss("upload");
-          toast.loading("Analyse de la plaquette...", { id: "extract" });
-
-          const extractRes = await fetch("/api/extract-programme", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pdfUrl: urlData.publicUrl }),
-          });
-
-          toast.dismiss("extract");
-
-          if (extractRes.ok) {
-            const extractJson = (await extractRes.json()) as {
-              extractedData: Record<string, unknown>;
-            };
-            extractedDataFromPdf = extractJson.extractedData;
-            toast.success("Plaquette analysée !");
-
-            setIsLoadingSuggestions(true);
-            const suggestions = await generateAngleSuggestions(extractedDataFromPdf);
-            setAngleSuggestions(suggestions);
-            setIsLoadingSuggestions(false);
-
-            void supabaseClient.storage.from("plaquettes").remove([fileName]);
-          }
-        } catch (err) {
-          toast.dismiss("upload");
-          toast.dismiss("extract");
-          console.error("Upload error:", err);
-          toast.error("Erreur upload. Réessayez.");
-          setIsLoading(false);
-          return;
+      // 2) Sinon (ou en cas d'échec), nouvelle tentative d'extraction.
+      if (!extraction?.ok) {
+        toast.loading("Analyse de la plaquette...", { id: "extract" });
+        extraction = await extractPdfViaStorage(pdfFile);
+        toast.dismiss("extract");
+        if (extraction.ok) {
+          extractionRef.current = { key, promise: Promise.resolve(extraction) };
         }
-      } else {
+      }
+
+      if (extraction.ok) {
+        extractedDataFromPdf = extraction.data;
+      } else if (pdfFile.size <= 3 * 1024 * 1024) {
+        // Petit PDF : le serveur peut l'extraire lui-même (avec retries) à partir du base64.
         pdfBase64 = await fileToBase64(pdfFile);
+      } else {
+        // Jamais de génération sans données de plaquette exploitables.
+        setGenerationError(extraction.message);
+        toast.error(extraction.message);
+        setIsLoading(false);
+        return;
       }
 
       const annexes =

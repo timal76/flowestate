@@ -7,7 +7,10 @@ import {
   stripViolations,
 } from "@/lib/compliance";
 
-export const maxDuration = 30;
+export const maxDuration = 45;
+
+/** Les angles sont optionnels : un échec ne doit jamais bloquer le flux. */
+const SUGGEST_TIMEOUT_MS = 12_000;
 
 type AngleSuggestion = {
   angle: string;
@@ -38,27 +41,39 @@ async function callSuggest(
   apiKey: string,
   prompt: string,
 ): Promise<AngleSuggestion[]> {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
+  let text = "";
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: AbortSignal.timeout(SUGGEST_TIMEOUT_MS),
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
 
-  const json = (await response.json()) as { content?: Array<{ type?: string; text?: string }> };
-  const text =
-    json.content
-      ?.filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim() || "";
+    if (!response.ok) {
+      console.error("[suggest-angles] Anthropic error status:", response.status);
+      return [];
+    }
+
+    const json = (await response.json()) as { content?: Array<{ type?: string; text?: string }> };
+    text =
+      json.content
+        ?.filter((b) => b.type === "text")
+        .map((b) => b.text)
+        .join("")
+        .trim() || "";
+  } catch (err) {
+    console.error("[suggest-angles] request failed:", err);
+    return [];
+  }
 
   try {
     const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
@@ -82,8 +97,16 @@ export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return NextResponse.json({ suggestions: [] });
 
-  const body = (await request.json()) as { extractedData: Record<string, unknown> };
-  const data = body.extractedData;
+  let data: Record<string, unknown> | undefined;
+  try {
+    const body = (await request.json()) as { extractedData?: Record<string, unknown> };
+    data = body.extractedData;
+  } catch {
+    return NextResponse.json({ suggestions: [] });
+  }
+  if (!data || Object.keys(data).length === 0) {
+    return NextResponse.json({ suggestions: [] });
+  }
 
   const basePrompt = `Tu es un expert en marketing immobilier neuf en France. Analyse ces données extraites d'une plaquette promoteur et propose 3 angles marketing différents et pertinents.
 

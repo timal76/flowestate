@@ -1,89 +1,76 @@
 import { NextResponse } from "next/server";
 
-import { COMPLIANCE_RULES } from "@/lib/compliance";
+import { ExtractionError, extractProgrammeFromPdfBase64 } from "@/lib/programme-extraction";
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "20mb",
-    },
-  },
-};
+/** 3 tentatives de 35 s maximum + pauses, sur des PDF jusqu'à 20 Mo. */
+export const maxDuration = 120;
 
-export const maxDuration = 60;
+/** Limite de l'API Anthropic pour une requête (PDF encodé en base64 inclus). */
+const MAX_PDF_BYTES = 24 * 1024 * 1024;
+
+function isAllowedPdfUrl(rawUrl: string): boolean {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "https:") return false;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) return true;
+    return url.hostname === new URL(supabaseUrl).hostname;
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return NextResponse.json({ error: "API key manquante" }, { status: 500 });
 
-  const body = (await request.json()) as { pdfUrl?: string; pdfBase64?: string };
-
-  const EXTRACTION_SYSTEM = `Tu es un expert en immobilier neuf français. Analyse ce document et retourne UNIQUEMENT un objet JSON brut. Commence par { et termine par }. Zéro texte avant ou après. Zéro backtick. Zéro markdown.
-${COMPLIANCE_RULES}
-Format exact :
-{"nom":null,"promoteur":null,"ville":null,"quartier":null,"adresse":null,"types_biens":null,"surface_min":null,"surface_max":null,"nb_lots":null,"prix_min":null,"prix_max":null,"tva_reduite":null,"taux_tva":null,"ptz":null,"lmnp":null,"pinel":null,"re2020":null,"livraison":null,"prestations":[],"domotique":null,"stationnement":null,"commerces_rdc":null,"transports":[],"commerces":[],"ecoles":[],"arguments_promoteur":[],"baignoire":null,"hauteur_plafond":null,"orientation":null,"vue":null,"cuisine_equipee":null,"double_exposition":null,"ascenseur":null,"digicode":null,"interphone":null,"gardien":null,"piscine":null,"terrasse_confirmee":null,"balcon_confirme":null}
-RÈGLES : Copie mot pour mot. Zéro invention. Si absent : null. Ne reformule jamais les arguments promoteur en promesses de valorisation ou de rendement.`;
+  let body: { pdfUrl?: string; pdfBase64?: string };
+  try {
+    body = (await request.json()) as { pdfUrl?: string; pdfBase64?: string };
+  } catch {
+    return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
+  }
 
   let pdfData: string;
 
   if (body.pdfUrl) {
-    const pdfRes = await fetch(body.pdfUrl);
-    if (!pdfRes.ok) return NextResponse.json({ error: "Impossible de télécharger le PDF" }, { status: 400 });
-    const arrayBuffer = await pdfRes.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let binary = "";
-    for (let i = 0; i < uint8Array.length; i += 8192) {
-      binary += String.fromCharCode(...uint8Array.subarray(i, i + 8192));
+    if (!isAllowedPdfUrl(body.pdfUrl)) {
+      return NextResponse.json({ error: "URL du PDF non autorisée" }, { status: 400 });
     }
-    pdfData = btoa(binary);
+    let pdfRes: Response;
+    try {
+      pdfRes = await fetch(body.pdfUrl, { signal: AbortSignal.timeout(30_000) });
+    } catch {
+      return NextResponse.json({ error: "Impossible de télécharger le PDF" }, { status: 400 });
+    }
+    if (!pdfRes.ok) {
+      return NextResponse.json({ error: "Impossible de télécharger le PDF" }, { status: 400 });
+    }
+    const buffer = Buffer.from(await pdfRes.arrayBuffer());
+    if (buffer.length > MAX_PDF_BYTES) {
+      return NextResponse.json(
+        { error: "Le PDF est trop volumineux pour être analysé. Utilisez un PDF plus léger." },
+        { status: 413 },
+      );
+    }
+    pdfData = buffer.toString("base64");
   } else if (body.pdfBase64) {
     pdfData = body.pdfBase64.includes(",") ? body.pdfBase64.split(",")[1] : body.pdfBase64;
   } else {
     return NextResponse.json({ error: "PDF requis" }, { status: 400 });
   }
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 800,
-      system: EXTRACTION_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: { type: "base64", media_type: "application/pdf", data: pdfData },
-            },
-            { type: "text", text: "Extrais toutes les informations. Retourne uniquement le JSON." },
-          ],
-        },
-      ],
-    }),
-  });
-
-  const json = (await response.json()) as { content?: Array<{ type?: string; text?: string }> };
-  const text =
-    json.content
-      ?.filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim() || "";
-
   try {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    const parsed = JSON.parse(text.slice(start, end + 1));
-    console.log("[extract-programme] parsed keys:", Object.keys(parsed));
-    console.log("[extract-programme] nom:", parsed.nom, "ville:", parsed.ville);
-    return NextResponse.json({ extractedData: parsed });
-  } catch {
-    return NextResponse.json({ extractedData: {} });
+    const extractedData = await extractProgrammeFromPdfBase64(apiKey, pdfData);
+    return NextResponse.json({ extractedData });
+  } catch (err) {
+    if (err instanceof ExtractionError) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    }
+    console.error("[extract-programme] unexpected error:", err);
+    return NextResponse.json(
+      { error: "Impossible d'analyser la plaquette. Réessayez.", code: "EXTRACTION_UPSTREAM" },
+      { status: 500 },
+    );
   }
 }

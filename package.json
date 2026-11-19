@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test:compliance": "npx tsx scripts/test-compliance.ts",
-    "test:price-input": "npx tsx scripts/test-price-input.ts"
+    "test:price-input": "npx tsx scripts/test-price-input.ts",
+    "test:programme-facts": "npx tsx scripts/test-programme-facts.ts",
+    "test:extraction": "npx tsx scripts/test-extraction.ts"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.4.0",
