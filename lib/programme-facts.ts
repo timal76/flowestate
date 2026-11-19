@@ -210,10 +210,10 @@ export function buildFactsContext(input: {
 
 function buildDispositifRules(dispositif: Dispositif): string {
   if (dispositif === "nue-propriete") {
-    return `7. DISPOSITIF NUE-PROPRIÉTÉ : l'acquéreur achète la nue-propriété (jamais la « pleine propriété » à l'achat). Pendant toute la durée du démembrement il ne perçoit aucun loyer, ne gère rien et n'occupe pas le bien. Il retrouve la pleine propriété à l'issue. N'emploie ni « rendement », ni « revenus locatifs », ni « capitalisation ». Ne suggère jamais d'habiter le bien pendant le démembrement.`;
+    return `10. DISPOSITIF NUE-PROPRIÉTÉ : l'acquéreur achète la nue-propriété (jamais la « pleine propriété » à l'achat). Pendant toute la durée du démembrement il ne perçoit aucun loyer, ne gère rien et n'occupe pas le bien. Il retrouve la pleine propriété à l'issue. N'emploie ni « rendement », ni « revenus locatifs », ni « capitalisation ». Ne suggère jamais d'habiter le bien pendant le démembrement.`;
   }
   if (dispositif === "lmnp" || dispositif === "pinel") {
-    return `7. DISPOSITIF FISCAL : ne chiffre aucun avantage fiscal ni aucun rendement. Renvoie vers le conseiller pour l'étude du dispositif.`;
+    return `10. DISPOSITIF FISCAL : ne chiffre aucun avantage fiscal ni aucun rendement. Renvoie vers le conseiller pour l'étude du dispositif.`;
   }
   return "";
 }
@@ -235,7 +235,10 @@ RÈGLES D'USAGE DES FAITS (ABSOLUES) :
 3. Reprends chaque prix avec son qualificatif exact : un prix « moyen » s'écrit « prix moyen » et jamais « à partir de ».
 4. ${deliveryRule}
 5. L'angle et le profil prospect servent à choisir le ton et les arguments. Ne cite jamais l'âge, le budget ni la situation du profil comme un fait du programme.
-6. Aucune formule d'urgence ou de rareté qui ne soit pas dans les faits.${
+6. Aucune formule d'urgence ou de rareté qui ne soit pas dans les faits.
+7. Décris, ne qualifie pas : n'ajoute aucun superlatif ni adjectif de standing, d'innovation, de durabilité ou d'écologie qui ne figure pas dans les faits.
+8. Un équipement de l'immeuble (ascenseur, accès, local à vélos, patio, toitures) n'est jamais attribué à chaque logement. Un équipement présent dans certains logements seulement est cité avec sa restriction.
+9. N'écris jamais « vous êtes un investisseur… » ni aucune description du profil cible : écris pour lui sans le désigner.${
     buildDispositifRules(ctx.dispositif) ? `\n${buildDispositifRules(ctx.dispositif)}` : ""
   }`;
 }
@@ -264,6 +267,11 @@ const UNSUPPORTED_TERMS: TermRule[] = [
   { re: /\bpierre\s+de\s+taille\b/, label: "pierre de taille" },
   { re: /\b(?:re\s?2020|rt\s?2012|bbc|hqe|nf\s+habitat)\b/, label: "label ou norme" },
   { re: /\bpourquoi\s+maintenant\b/, label: "formule d'urgence" },
+  { re: /\bfortement\s+impose\w*/, label: "situation fiscale du profil cible" },
+  {
+    re: /\b(?:intemporel\w*|perenne\w*|raffin\w+|novateur\w*|novatrice|innovant\w*|optimis\w+|premium|prestig\w+|haut\s+de\s+gamme|luxueu\w+|meilleur\w*|ecolog\w+|durab\w+|priv(?:e|ee|es|ees|atif|atifs|ative|atives))\b/,
+    label: "qualificatif ou superlatif non sourcé",
+  },
   {
     re: /\b(?:rares?|rarete|dernieres?\s+opportunites?|derniers?\s+lots?|exceptionnel(?:le)?s?|unique)\b/,
     label: "formule de rareté ou d'urgence",
@@ -332,6 +340,21 @@ export function verifySentence(sentence: string, ctx: FactsContext): string[] {
       /\btrimestre\b/.test(folded) ||
       /\bt[1-4]\b/.test(folded);
     if (mentionsDeliveryDate) reasons.push("date de livraison dépassée à ne pas mentionner");
+  }
+
+  if (
+    /\b(?:chaque|chacun\w*|tous\s+les|toutes\s+les)\s+(?:logements?|unites?|appartements?|lots?|studios?)\b/.test(
+      folded,
+    ) &&
+    /\b(?:ascenseur|local\s+a\s+velos?|controles?\s+d'acces|acces\s+securise|patio|toitures?|pompe\s+a\s+chaleur|terrasse|balcon|kitchenette)\b/.test(
+      folded,
+    )
+  ) {
+    reasons.push("équipement de l'immeuble ou de certains lots attribué à chaque logement");
+  }
+
+  if (/\bvous\s+etes\s+(?:un|une)\b/.test(folded)) {
+    reasons.push("profil du prospect cité comme un fait");
   }
 
   for (const match of folded.matchAll(FROM_PRICE_RE)) {

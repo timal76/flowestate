@@ -57,6 +57,15 @@ const MUST_FLAG: Array<[string, string]> = [
   ["En 2046 vous retrouvez la pleine propriété.", "2046"],
   ["Programme livré en 2024.", "année passée"],
   ["Usufruit débute au 3e trimestre 2026.", "date de livraison"],
+  ["Parquet, chauffage écologique, ascenseur et accès sécurisé dans chaque unité.", "chaque logement"],
+  ["Chaque logement : parquet contrecollé, kitchenette, pompe à chaleur.", "chaque logement"],
+  ["Une opportunité unique en démembrement.", "rareté"],
+  ["Les meilleurs lycées parisiens à proximité.", "qualificatif"],
+  ["Une architecture raffinée et intemporelle.", "qualificatif"],
+  ["Eau chaude collective optimisée.", "qualificatif"],
+  ["Un patio privé au cœur de l'îlot.", "qualificatif"],
+  ["Vous êtes un investisseur fortement imposé en quête de patrimoine.", "profil"],
+  ["Une approche novatrice du patrimoine.", "qualificatif"],
 ];
 
 const MUST_PASS = [
@@ -68,6 +77,9 @@ const MUST_PASS = [
   "Les deux-pièces affichent un prix moyen de 360 000 €.",
   "Métro Villiers à 5 minutes.",
   "Revente possible à tout moment.",
+  "L'immeuble dispose d'un ascenseur, d'un local à vélos et de contrôles d'accès.",
+  "Les studios du dernier étage sont chauffés par une pompe à chaleur individuelle.",
+  "Façade greige, ossature bois et toitures végétalisées.",
 ];
 
 let failed = 0;
@@ -135,7 +147,7 @@ if (
 
 // Le bloc de faits injecté ne nomme aucun terme interdit et porte la règle du dispositif
 const prompt = buildFactsPrompt(ctx, JSON.stringify(EXTRACTED));
-const mustContain = ["FAITS AUTORISÉS", "NUE-PROPRIÉTÉ", "DÉPASSÉE", "18 novembre 2026"];
+const mustContain = ["FAITS AUTORISÉS", "NUE-PROPRIÉTÉ", "DÉPASSÉE", "18 novembre 2026", "Décris, ne qualifie pas"];
 for (const needle of mustContain) {
   if (!prompt.includes(needle)) {
     console.error(`FAIL prompt: manque ${JSON.stringify(needle)}`);

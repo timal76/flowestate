@@ -864,8 +864,9 @@ Retourne un JSON sans markdown avec les données utiles pour rédiger une annonc
 
     const essentialExtractedData = compactExtractedData(extractedData);
 
+    // Mêmes faits que ceux du prompt (arguments_promoteur exclus) pour que le contrôle ne les autorise pas.
     const factsCtx = buildFactsContext({
-      extractedData,
+      extractedData: essentialExtractedData,
       additionalInfo,
       priceFrom,
       annexesDescription,
