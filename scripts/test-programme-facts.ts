@@ -101,6 +101,11 @@ const MUST_FLAG: Array<[string, string]> = [
   ["Une architecture de caractère.", "qualificatif"],
   ["Un investissement pensé pour durer, sans les complications.", "qualificatif"],
   ["Local à vélos sécurisé et ascenseur facilitent la vie.", "qualificatif"],
+  ["Chacun pensé pour le confort et l'efficacité énergétique.", "qualificatif"],
+  ["Studios et 2 pièces répartis sur 6 étages, face au patio végétal.", "qualificatif"],
+  ["Studios, 2 et 4 pièces dans un immeuble en bois et enduit à la chaux.", "qualificatif"],
+  ["L'état d'avancement permet une commercialisation progressive.", "qualificatif"],
+  ["Les prestations reflètent un confort d'usage pensé pour le locataire.", "qualificatif"],
 ];
 
 const MUST_PASS = [

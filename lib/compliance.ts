@@ -30,7 +30,7 @@ CE QUI EST AUTORISÉ : décrire le bien, l'emplacement, les prestations, la cibl
 avec un langage QUALIFIÉ uniquement :
 - "pensé pour", "peut convenir à", "susceptible d'intéresser", "orienté vers"
 - "les dispositifs fiscaux applicables sont à étudier avec votre conseiller"
-- "secteur établi", "quartier reconnu", "localisation recherchée"
+- une description du quartier uniquement avec des faits présents dans les données (jamais « secteur établi », « quartier reconnu » ou « localisation recherchée » sans source)
 - "potentiel locatif à confirmer avec votre conseiller"
 
 Ne jamais transformer un angle marketing ou un profil cible en fait de marché ou en promesse.
@@ -76,7 +76,7 @@ const STABILITY_ADJ =
 const NEAR = "\\w*\\s*";
 
 const VIOLATION_PATTERNS: PatternDef[] = [
-  { re: /\bassure(?:e|es|s)?\b/g },
+  { re: /\bassure(?:e|es|s)?\b(?!\s+par\b)/g },
   { re: /\bgarant(?:ie|ies|i|issant|it)\b/g, skipDecennale: true },
   { re: /\bsans\s+risque\b/g },
   { re: /\baucun\s+risque\b/g },
